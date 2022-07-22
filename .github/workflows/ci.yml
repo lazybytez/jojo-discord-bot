@@ -1,0 +1,29 @@
+# Continues integration workflow to continuously check 
+# code quality and run tests before merging PRs
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      IS_CI: true
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Run Go linters
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.47
