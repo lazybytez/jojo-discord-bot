@@ -5,9 +5,12 @@ module.exports = {
     rules: {
         'subject-max-length': [2, 'always', 50],
         'scope-enum': [2, 'always', [
-            'deps',
-            'devops'
-            //TODO: extend me
+            'deps', // Changes done on anything dependency related
+            'devops', // Changes done on technical processes
+            'api', // Changes in /api/ directory
+            'comp', // Changes in /component/ directory
+            'int', // Changes in /internal/ directory
+            'core' // Changes on files in project root
         ]]
     }
 };
