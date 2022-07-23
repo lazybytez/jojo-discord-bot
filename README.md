@@ -6,17 +6,27 @@
   ![stars][stars]
 
 ## Description
-This is an open source Discord bot is mainly developed by Lazy Bytez.  
-If you want to take place in the development of the bot please check out the [Contributing](https://github.com/lazybytez/jojo-discord-bot#contributing) section.  
+This is an open source Discord bot mainly developed by Lazy Bytez.  
+If you want to take part in the development of the bot please check out the [Contributing](https://github.com/lazybytez/jojo-discord-bot#contributing) section.  
 
-Open source doesn't mean everyone can do whatever they want with the bot.  
-There is a strict [LICENSE](https://github.com/lazybytez/jojo-discord-bot/blob/main/LICENSE) we want you to respect.
+Open source doesn't mean everyone can do whatever they want with the bot so there is a strict [LICENSE](https://github.com/lazybytez/jojo-discord-bot/blob/main/LICENSE) we want you to respect.
 
 ## Getting started
+### Requirements  
+1. [Go 1.18](https://go.dev/doc/install)
+2. Git
+
+### Create .env
+```bash
+cp .env.example .env
+```
+If you want to test, always insert the Token of your TestBot in the `.env`, because this file won't be committed to git.
+
 ### Install dependencies
 ```bash
 go get
 ```
+
 ### Compile and run (for development usage)
 ```bash
 go run .
@@ -28,7 +38,11 @@ go build .
 ```
 
 ## Contributing
-If you want to take part in contribution, like fixing issues and contributing directly to the code base, plase visit the [How to Contribute][github-contribute] document.
+If you want to take part in contribution, like fixing issues and contributing directly to the code base, please visit the [How to Contribute][github-contribute] document.
+
+### Recommended IDEs
+- [GoLand](https://www.jetbrains.com/de-de/go/) (paid)
+- [Visual Studio Code](https://code.visualstudio.com/) (free) with [Go Language Extension](https://marketplace.visualstudio.com/items?itemName=golang.go) (free)
 
 ## Useful links
 [License][github-license] - 
