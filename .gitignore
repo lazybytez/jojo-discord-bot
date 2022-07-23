@@ -6,3 +6,22 @@
 *.njsproj
 *.sln
 *.sw?
+
+# Secrets
+.env
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
