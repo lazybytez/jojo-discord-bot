@@ -7,7 +7,7 @@
 
 ## Description
 This is an open source Discord bot is mainly developed by Lazy Bytez.  
-If you want to help with the development of the bot please check out the [Contributing](https://github.com/lazybytez/jojo-discord-bot#contributing) section.  
+If you want to take place in the development of the bot please check out the [Contributing](https://github.com/lazybytez/jojo-discord-bot#contributing) section.  
 
 Open source doesn't mean everyone can do whatever they want with the bot.  
 There is a strict [LICENSE](https://github.com/lazybytez/jojo-discord-bot/blob/main/LICENSE) we want you to respect.
