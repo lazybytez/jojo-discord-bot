@@ -1,6 +1,7 @@
 package internal
 
 import (
+    "github.com/lazybytez/jojo-discord-bot/components"
     "github.com/rs/zerolog/log"
     "os"
     "os/signal"
@@ -12,6 +13,9 @@ import (
 // and get the application up and running properly.
 func Bootstrap() {
     startBot(Config.token)
+
+    components.RegisterComponents(discord)
+
     waitForTerminate()
 }
 

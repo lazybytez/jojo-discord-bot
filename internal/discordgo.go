@@ -26,7 +26,7 @@ func startBot(token string) {
         ExitFatal(fmt.Sprintf("Failed to open bot connection to Discord, error was: %v!", err.Error()))
     }
 
-    fmt.Println(discord.Token)
+    updateIntents()
 }
 
 // stopBot tries to stop the bot.
@@ -40,4 +40,10 @@ func stopBot() {
     if nil != discord {
         _ = discord.Close()
     }
+}
+
+// updateIntents to receive all necessary permissions
+// for the bot
+func updateIntents() {
+    discord.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 }
