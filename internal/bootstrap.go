@@ -29,7 +29,7 @@ func waitForTerminate() {
     log.Info().Msg("Bot is running.  Press CTRL-C to exit.")
 
     c := make(chan os.Signal, 1)
-    signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+    signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
     <-c
 
     ExitGracefully("Bot has been terminated gracefully!")
