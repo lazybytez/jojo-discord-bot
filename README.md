@@ -1,5 +1,7 @@
 # JOJO Discord Bot
 
+![license-info][license-info]
+![discord-info][discord-info]
 ![commit-info][commit-info]
 ![contributors-info][contributors-info]
 ![reposize-info][reposize-info]
@@ -128,6 +130,10 @@ Also see [CONTRIBUTING.md#commits](https://github.com/lazybytez/.github/blob/mai
 [github-issues]: https://github.com/lazybytez/general-template/issues
 
 [github-pulls]: https://github.com/lazybytez/general-template/pulls
+
+[license-info]: https://img.shields.io/github/license/lazybytez/jojo-discord-bot?logo=gnu&style=for-the-badge&colorA=302D41&colorB=f9e2af&logoColor=f9e2af
+
+[discord-info]: https://img.shields.io/discord/735171597362659328?label=Discord&logo=discord&logoColor=b4befe&style=for-the-badge&colorA=302D41&colorB=b4befe
 
 [commit-info]: https://img.shields.io/github/last-commit/lazybytez/general-template?style=for-the-badge&colorA=302D41&colorB=b4befe
 
