@@ -5,6 +5,8 @@ import (
     "github.com/bwmarrin/discordgo"
 )
 
+const tokenPrefix = "Bot "
+
 var discord *discordgo.Session
 
 // startBot initializes a discordgo.Session using
@@ -14,9 +16,14 @@ var discord *discordgo.Session
 // the bot will exit with a fatal error.
 func startBot(token string) {
     var err error
-    discord, err = discordgo.New("Bot " + token)
+    discord, err = discordgo.New(tokenPrefix + token)
     if nil != err {
-        ExitFatal(fmt.Sprintf("Failed to initialize Discord connection, error was: %v!", err.Error()))
+        ExitFatal(fmt.Sprintf("Failed to create discordgo session, error was: %v!", err.Error()))
+    }
+
+    err = discord.Open()
+    if nil != err {
+        ExitFatal(fmt.Sprintf("Failed to open bot connection to Discord, error was: %v!", err.Error()))
     }
 
     fmt.Println(discord.Token)
