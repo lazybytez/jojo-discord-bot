@@ -16,6 +16,9 @@ type Component struct {
 
 // LoadableComponent is the interface that allows a component to be registered.
 // It must be implemented by new components to make it possible to register them
+//
+// The function returns the original component for use yb the registration
+// system
 type LoadableComponent interface {
-    LoadComponent(discord *discordgo.Session) error
+    LoadComponent(discord *discordgo.Session) (*Component, error)
 }

@@ -6,23 +6,28 @@ import (
     "github.com/rs/zerolog/log"
 )
 
-type Component component.Component
+// Component struct that acts as the type for the
+// Ping-Pong component of the application.
+type Component struct {
+    component.Component
+}
 
 // ComponentInstance is the instance of the ping pong component.
 // Can be used to register the component or get information about it.
 var ComponentInstance = &Component{
-    Name:         "Ping Pong Component",
-    Description:  "This Component plays pingpong with you and returns Laytency (maybe)",
-    DmPermission: true,
+    component.Component{
+        Name:         "Ping Pong Component",
+        Description:  "This Component plays pingpong with you and returns Laytency (maybe)",
+        DmPermission: true,
+    },
 }
 
 // LoadComponent loads the Ping-Pong Component
-func (c *Component) LoadComponent(discord *discordgo.Session) error {
+func (c *Component) LoadComponent(discord *discordgo.Session) (*component.Component, error) {
     // Register the messageCreate func as a callback for MessageCreate events.
     discord.AddHandler(onMessageCreate)
 
-    c.Loaded = true
-    return nil
+    return &c.Component, nil
 }
 
 // onMessageCreate listens for new messages and replies with

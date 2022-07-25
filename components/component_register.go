@@ -1,17 +1,17 @@
 package components
 
 import (
-	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/components/pingpong"
-	"github.com/lazybytez/jojo-discord-bot/internal/component"
-	"github.com/rs/zerolog/log"
+    "github.com/bwmarrin/discordgo"
+    "github.com/lazybytez/jojo-discord-bot/components/pingpong"
+    "github.com/lazybytez/jojo-discord-bot/internal/component"
+    "github.com/rs/zerolog/log"
 )
 
 // Components contains all components that should be available.
 //
 // Enabled components should be registered here.
 var Components = []component.LoadableComponent{
-	pingpong.ComponentInstance,
+    pingpong.ComponentInstance,
 }
 
 // RegisterComponents handles the initialization of
@@ -21,12 +21,14 @@ var Components = []component.LoadableComponent{
 // an error will be printed into the log.
 // The application will continue to run as nothing happened.
 func RegisterComponents(discord *discordgo.Session) {
-	for _, loadableComponent := range Components {
-		err := loadableComponent.LoadComponent(discord)
-		if nil != err {
-			notifyComponentLoadFailed(err)
-		}
-	}
+    for _, comp := range Components {
+        comp, err := comp.LoadComponent(discord)
+        if nil != err {
+            notifyComponentLoadFailed(comp, err)
+            continue
+        }
+        comp.Loaded = true
+    }
 }
 
 // notifyComponentLoadFailed prints a message to the log
@@ -34,6 +36,6 @@ func RegisterComponents(discord *discordgo.Session) {
 //
 // This function is used by RegisterComponents to notify component
 // loading failures.
-func notifyComponentLoadFailed(err error) {
-	log.Warn().Msgf("Failed to load component: %v", err.Error())
+func notifyComponentLoadFailed(comp *component.Component, err error) {
+    log.Warn().Msgf("Failed to load component with name \"%v\": %v", comp.Name, err.Error())
 }
