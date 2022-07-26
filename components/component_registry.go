@@ -57,7 +57,7 @@ func UnloadComponents(discord *discordgo.Session) {
             continue
         }
 
-        if comp.Loaded == false {
+        if !comp.Loaded {
             log.LogWarn(LogComponentRegistry, "Component \"%v\" has not been loaded, skipping!", comp.Name)
             continue
         }
