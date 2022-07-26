@@ -42,6 +42,8 @@ func LoadComponent(discord *discordgo.Session) error {
     // Register the messageCreate func as a callback for MessageCreate events.
     discord.AddHandler(onMessageCreate)
 
+    C.Logger().Warn("DAS IST EIN TEST!")
+
     return nil
 }
 

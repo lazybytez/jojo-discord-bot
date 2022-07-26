@@ -33,21 +33,21 @@ func (c *Component) Logger() Logger {
 // This function appends the name of the Component from the receiver
 // to the log message.
 func (c *ComponentLogger) Debug(format string, v ...interface{}) {
-    log.Debug(c.owner.Name, format, v)
+    log.Debug(c.owner.Name, format, v...)
 }
 
 // Info logs a message with level info.
 // This function appends the name of the Component from the receiver
 // to the log message.
 func (c *ComponentLogger) Info(format string, v ...interface{}) {
-    log.Info(c.owner.Name, format, v)
+    log.Info(c.owner.Name, format, v...)
 }
 
 // Warn logs a message with level warnings.
 // This function appends the name of the Component from the receiver
 // to the log message.
 func (c *ComponentLogger) Warn(format string, v ...interface{}) {
-    log.Warn(c.owner.Name, format, v)
+    log.Warn(c.owner.Name, format, v...)
 }
 
 // Err logs a message with level error.
@@ -56,5 +56,5 @@ func (c *ComponentLogger) Warn(format string, v ...interface{}) {
 //
 // The supplied error will be applied to the log message.
 func (c *ComponentLogger) Err(err error, format string, v ...interface{}) {
-    log.Err(c.owner.Name, err, format, v)
+    log.Err(c.owner.Name, err, format, v...)
 }
