@@ -1,6 +1,7 @@
 package internal
 
 import (
+    "github.com/lazybytez/jojo-discord-bot/components"
     "github.com/rs/zerolog/log"
     "os"
 )
@@ -32,5 +33,6 @@ func ExitFatal(reason string) {
 // and connections are freed before the application terminates
 // gracefully.
 func releaseResources() {
+    components.UnloadComponents(discord)
     stopBot()
 }
