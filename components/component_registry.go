@@ -15,7 +15,7 @@ const LogComponentRegistry = "Component Manager"
 //
 // Enabled components should be registered here.
 var Components = []*api.Component{
-    pingpong.ComponentInstance,
+    pingpong.C,
 }
 
 // RegisterComponents handles the initialization of
@@ -27,12 +27,12 @@ var Components = []*api.Component{
 func RegisterComponents(discord *discordgo.Session) {
     log.Info(LogComponentRegistry, "Starting component load sequence...")
     for _, comp := range Components {
-        if nil == comp.LoadComponent {
+        if nil == comp.Lifecycle.LoadComponent {
             log.Debug(LogComponentRegistry, "Component \"%v\" does not have an load callback, not loading it!", comp.Name)
             continue
         }
 
-        if !comp.Enabled {
+        if !comp.State.Enabled {
             log.Info(LogComponentRegistry, "Component \"%v\" is not enabled, skipping!", comp.Name)
             continue
         }
@@ -57,12 +57,12 @@ func RegisterComponents(discord *discordgo.Session) {
 func UnloadComponents(discord *discordgo.Session) {
     log.Info(LogComponentRegistry, "Starting component unload sequence...")
     for _, comp := range Components {
-        if nil == comp.UnloadComponent {
+        if nil == comp.Lifecycle.UnloadComponent {
             log.Debug(LogComponentRegistry, "Component \"%v\" does not have an unload callback, skipping!", comp.Name)
             continue
         }
 
-        if !comp.Loaded {
+        if !comp.State.Loaded {
             log.Warn(LogComponentRegistry, "Component \"%v\" has not been loaded, skipping!", comp.Name)
             continue
         }
