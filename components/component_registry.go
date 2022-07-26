@@ -32,6 +32,11 @@ func RegisterComponents(discord *discordgo.Session) {
             continue
         }
 
+        if !comp.Enabled {
+            log.LogInfo(LogComponentRegistry, "Component \"%v\" is not enabled, skipping!", comp.Name)
+            continue
+        }
+
         log.LogInfo(LogComponentRegistry, "Loading component \"%v\"...", comp.Name)
         err := comp.RegisterComponent(discord)
         if nil != err {
