@@ -1,11 +1,16 @@
+<div align="center">
+
 # JOJO Discord Bot
 
 ![license-info][license-info]
 ![discord-info][discord-info]
+
 ![commit-info][commit-info]
 ![contributors-info][contributors-info]
 ![reposize-info][reposize-info]
 ![stars][stars]
+
+</div>
 
 ## Description
 
