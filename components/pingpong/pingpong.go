@@ -3,7 +3,6 @@ package pingpong
 import (
     "github.com/bwmarrin/discordgo"
     "github.com/lazybytez/jojo-discord-bot/api"
-    "github.com/rs/zerolog/log"
 )
 
 // This component is an example on how to create a component
@@ -42,8 +41,6 @@ func LoadComponent(discord *discordgo.Session) error {
     // Register the messageCreate func as a callback for MessageCreate events.
     discord.AddHandler(onMessageCreate)
 
-    C.Logger().Warn("DAS IST EIN TEST!")
-
     return nil
 }
 
@@ -57,14 +54,20 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
     if m.Content == "ping" {
         _, err := s.ChannelMessageSend(m.ChannelID, "Pong!")
         if nil != err {
-            log.Warn().Msgf("Failed to deliver \"Pong!\" message: %v", err.Error())
+            C.Logger().Warn("Failed to deliver \"Pong!\" message: %v", err.Error())
+
+            return
         }
+        C.Logger().Info("Send \"Pong!\" into channel with ID \"%v\"", m.ChannelID)
     }
 
     if m.Content == "pong" {
         _, err := s.ChannelMessageSend(m.ChannelID, "Ping!")
         if nil != err {
-            log.Warn().Msgf("Failed to deliver \"Ping!\" message: %v", err.Error())
+            C.Logger().Warn("Failed to deliver \"Ping!\" message: %v", err.Error())
+
+            return
         }
+        C.Logger().Info("Send \"Ping!\" into channel with ID \"%v\"", m.ChannelID)
     }
 }
