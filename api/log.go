@@ -3,8 +3,8 @@ package api
 import "github.com/lazybytez/jojo-discord-bot/api/log"
 
 // ComponentLogger is a type that is used to hold
-// the component that keeps the information about the
-// component used by the logging functions.
+// the owner that keeps the information about the
+// owner used by the logging functions.
 type ComponentLogger struct {
     owner *Component
 }
@@ -17,7 +17,7 @@ type Logger interface {
     Err(err error, format string, v ...interface{})
 }
 
-// Logger is used to obtain the Logger of a component
+// Logger is used to obtain the Logger of a owner
 //
 // On first call, this function initializes the private Component.logger
 // field. On consecutive calls, the already present Logger will be used.

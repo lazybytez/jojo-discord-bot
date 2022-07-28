@@ -29,6 +29,18 @@ func ExitFatal(reason string) {
     log.Fatal().Msg(reason)
 }
 
+// ExitFatalGracefully shutdowns the application gracefully with a
+// non-zero exit code.
+// The routines to properly stop the application are not applied on
+// a ExitFatal exit. The function should be only called when the application cannot
+// recover, which is typically the case when core connections cannot be established
+// or an initialization routine fails.
+func ExitFatalGracefully(reason string) {
+    releaseResources()
+
+    log.Fatal().Msg(reason)
+}
+
 // releaseResources ensures that all allocated resources, locks
 // and connections are freed before the application terminates
 // gracefully.
