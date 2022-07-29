@@ -105,9 +105,31 @@ type ComponentHandlerContainer struct {
 //
 // Under the hood, DiscordGo event handlers are used.
 type ComponentHandlerManager interface {
+    // Register can be used to register a new discordgo.AssignedEventHandler.
+    //
+    // The passed handler function will be:
+    //   1. registered in DiscordGo as a handler
+    //   2. prepared to allow decorations
+    //   3. saved with a name that allows to retrieve it later on
+    //
+    // The passed name for the handler is concatenated with the name of the
+    // component that owns the handler (separated by underscore).
+    //
+    // The handler must have the same format as when a handler is registered in
+    // plain DiscordGo. See the documentation about discordgo.AddHandler
+    // for additional information.
+    //
+    // In general, the common format for a handler function is:
+    //   func (session *discordgo.Session, event <event to call, e.g. discordgo.MessageCreate)
     Register(name string, handler interface{}) (string, error)
+
     RegisterOnce(name string, handler interface{})
-    Unregister(name string)
+
+    // Unregister removes the handler with the given name (if existing) from
+    // the registered handlers.
+    //
+    // If the specified handler does not exist, an error will be returned.
+    Unregister(name string) error
 
     addDiscordGoHandler(assignedEvent AssignedEventHandler)
     addComponentHandler(name string, handler AssignedEventHandler)
@@ -139,6 +161,9 @@ func (c *Component) HandlerManager() ComponentHandlerManager {
 //   1. registered in DiscordGo as a handler
 //   2. prepared to allow decorations
 //   3. saved with a name that allows to retrieve it later on
+//
+// The passed name for the handler is concatenated with the name of the
+// component that owns the handler (separated by underscore).
 //
 // The handler must have the same format as when a handler is registered in
 // plain DiscordGo. See the documentation about discordgo.AddHandler
@@ -210,6 +235,37 @@ func (c ComponentHandlerContainer) addDiscordGoHandler(assignedEvent AssignedEve
     c.owner.discord.AddHandler(typedHandler.Interface())
 }
 
+// === One-Time Handlers
+
+// RegisterOnce TODO: Implement when decorating is possible
+func (c ComponentHandlerContainer) RegisterOnce(name string, handler interface{}) {
+
+}
+
+// === Handler removal
+
+// Unregister removes the handler with the given name (if existing) from
+// the registered handlers.
+//
+// If the specified handler does not exist, an error will be returned.
+func (c ComponentHandlerContainer) Unregister(name string) error {
+    handlerName := GetHandlerName(c.owner, name)
+    handler, ok := GetHandler(handlerName)
+
+    if ok {
+        return errors.InvalidArgumentError(fmt.Sprintf(
+            "There is no handler called \"%v\" registered that could be unregistered!",
+            handlerName))
+    }
+
+    handler.unregister()
+    removeComponentHandler(handlerName)
+
+    return nil
+}
+
+// === Handler management
+
 // addComponentHandler adds a new handler to the registered handlers.
 //
 // Note that adding a handler with a name that is already in the map
@@ -219,6 +275,15 @@ func (c ComponentHandlerContainer) addComponentHandler(name string, handler Assi
     defer handlerComponentMapping.Unlock()
 
     handlerComponentMapping.handlers[name] = handler
+}
+
+// removeComponentHandler removes the handler with the specified name
+// from the registered handlers.
+func removeComponentHandler(name string) {
+    handlerComponentMapping.Lock()
+    defer handlerComponentMapping.Unlock()
+
+    delete(handlerComponentMapping.handlers, name)
 }
 
 // GetHandler returns a handler by its fully qualified name (id).
@@ -238,12 +303,4 @@ func GetHandler(name string) (AssignedEventHandler, bool) {
 // handler names.
 func GetHandlerName(c *Component, name string) string {
     return util.StringToSnakeCase(fmt.Sprintf("%v_%v", c.Name, name))
-}
-
-// RegisterOnce TODO: Implement when decorating is possible
-func (c ComponentHandlerContainer) RegisterOnce(name string, handler interface{}) {
-}
-
-func (c ComponentHandlerContainer) Unregister(name string) {
-
 }
