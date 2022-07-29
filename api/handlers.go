@@ -9,7 +9,25 @@ import (
     "sync"
 )
 
-type DiscordGoHandler func(session *discordgo.Session, e interface{})
+// Management tools that allow registering, unregistering
+// and decorating DiscordGo event handlers.
+//
+// This acts as a wrapper structure to allow the bot framework
+// to take some actions in-between like logging handler
+// registration.
+//
+// Also, this allows to decorate existing handlers and add
+// custom functionality to them by intercepting their call.
+// This is form example useful for the handlers that are removed after
+// being called once.
+// With the decorator feature, we can clean up out own handler list
+// when the event handler is called.
+//
+// Note: This might not be the best way of implementing those features.
+//       The implementation should be checked and reworked later on when
+//       we know better ways of implementing this stuff.
+//       The current interface should allow keeping the API,
+//       even when the implementation details change.
 
 // componentHandlerMap is a wrapper that holds the map that contains
 // the handler name -> handler mapping. It embeds sync.RWMutex
@@ -17,6 +35,7 @@ type DiscordGoHandler func(session *discordgo.Session, e interface{})
 type componentHandlerMap struct {
     sync.RWMutex
     handlers map[string]AssignedEventHandler
+    //decorators map[string][]string
 }
 
 // handlerComponentMapping is a map that holds references to function's
@@ -52,7 +71,7 @@ type AssignedEventHandler struct {
 type AssignedEventHandlerAccess interface {
     GetName() string
     GetComponent() *Component
-    GetHandler() DiscordGoHandler
+    GetHandler() interface{}
 }
 
 // GetName returns the name of the handler assigned to the AssignedEventHandler
@@ -87,8 +106,11 @@ type ComponentHandlerContainer struct {
 // Under the hood, DiscordGo event handlers are used.
 type ComponentHandlerManager interface {
     Register(name string, handler interface{}) (string, error)
-    RegisterOnce(name string, handler DiscordGoHandler)
+    RegisterOnce(name string, handler interface{})
     Unregister(name string)
+
+    addDiscordGoHandler(assignedEvent AssignedEventHandler)
+    addComponentHandler(name string, handler AssignedEventHandler)
 }
 
 // HandlerManager returns the management interface for event handlers.
@@ -109,6 +131,21 @@ func (c *Component) HandlerManager() ComponentHandlerManager {
     return c.handlerManager
 }
 
+// === Handler registration
+
+// Register can be used to register a new discordgo.AssignedEventHandler.
+//
+// The passed handler function will be:
+//   1. registered in DiscordGo as a handler
+//   2. prepared to allow decorations
+//   3. saved with a name that allows to retrieve it later on
+//
+// The handler must have the same format as when a handler is registered in
+// plain DiscordGo. See the documentation about discordgo.AddHandler
+// for additional information.
+//
+// In general, the common format for a handler function is:
+//   func (session *discordgo.Session, event <event to call, e.g. discordgo.MessageCreate)
 func (c ComponentHandlerContainer) Register(name string, handler interface{}) (string, error) {
     handlerName := GetHandlerName(c.owner, name)
 
@@ -125,35 +162,24 @@ func (c ComponentHandlerContainer) Register(name string, handler interface{}) (s
         component: c.owner,
         handler:   handler,
     }
+    c.addComponentHandler(handlerName, assignedEvent)
 
-    handlerProxy := func(session *discordgo.Session, e interface{}) {
-        decorateHandler(assignedEvent, session, e)
-    }
-    assignedEvent.handler = handler
-    addHandler(handlerName, assignedEvent)
-    c.owner.discord.AddHandler(handlerProxy)
+    c.addDiscordGoHandler(assignedEvent)
 
     return handlerName, nil
 }
 
-// addHandler adds a new handler to the registered handlers.
-//
-// Note that adding a handler with a name that is already in the map
-// will override the existing handler (but not unregister it from DiscordGo!).
-func addHandler(name string, handler AssignedEventHandler) {
-    handlerComponentMapping.Lock()
-    handlerComponentMapping.handlers[name] = handler
-    handlerComponentMapping.Unlock()
-}
+// createHandlerProxy creates a closure that acts as a proxy for the original handler function.
+// This allows us to delegate the triggered event to the decorateHandler function.
+// The decorateHandler than allows to intercept the original event handler with
+// custom decorator functions. This can be useful in some edge-cases.
+func createHandlerProxy(handler AssignedEventHandler) func(args []reflect.Value) []reflect.Value {
+    return func(args []reflect.Value) []reflect.Value {
+        decorateArguments := append([]reflect.Value{reflect.ValueOf(handler)}, args...)
+        reflect.ValueOf(decorateHandler).Call(decorateArguments)
 
-// GetHandler returns a handler by its fully qualified name (id).
-// The required ID can be obtained using GetHandlerName.
-func GetHandler(name string) (AssignedEventHandler, bool) {
-    handlerComponentMapping.RLock()
-    handler, ok := handlerComponentMapping.handlers[name]
-    handlerComponentMapping.RUnlock()
-
-    return handler, ok
+        return []reflect.Value{}
+    }
 }
 
 // decorateHandler is the internal replacement used when an event happens in discord.
@@ -167,22 +193,43 @@ func decorateHandler(assignedEvent AssignedEventHandler, session *discordgo.Sess
         return
     }
 
-    fmt.Println(reflect.TypeOf(assignedEvent.handler))
-    switch c := assignedEvent.handler.(type) {
-    case func(*discordgo.Session, discordgo.Event):
-        c(session, e.(discordgo.Event))
-    default:
-        assignedEvent.component.Logger().Warn(fmt.Sprintf(
-            "Failed to call handler with id \"%v\"! The type of the signature in the passed handler is wrong!",
-            assignedEvent.name))
-    }
+    sessionRef := reflect.ValueOf(session)
+    eRef := reflect.ValueOf(e)
+
+    reflect.ValueOf(assignedEvent.handler).Call([]reflect.Value{sessionRef, eRef})
 }
 
-func (c ComponentHandlerContainer) RegisterOnce(name string, handler DiscordGoHandler) {
+// addDiscordGoHandler generates a handler proxy and registers it for DiscordGo.
+// This function first
+func (c ComponentHandlerContainer) addDiscordGoHandler(assignedEvent AssignedEventHandler) {
+    handlerProxy := createHandlerProxy(assignedEvent)
+
+    originalType := reflect.TypeOf(assignedEvent.handler)
+    typedHandler := reflect.MakeFunc(originalType, handlerProxy)
+
+    c.owner.discord.AddHandler(typedHandler.Interface())
 }
 
-func (c ComponentHandlerContainer) Unregister(name string) {
+// addComponentHandler adds a new handler to the registered handlers.
+//
+// Note that adding a handler with a name that is already in the map
+// will override the existing handler (but not unregister it from DiscordGo!).
+func (c ComponentHandlerContainer) addComponentHandler(name string, handler AssignedEventHandler) {
+    handlerComponentMapping.Lock()
+    defer handlerComponentMapping.Unlock()
 
+    handlerComponentMapping.handlers[name] = handler
+}
+
+// GetHandler returns a handler by its fully qualified name (id).
+// The required ID can be obtained using GetHandlerName.
+func GetHandler(name string) (AssignedEventHandler, bool) {
+    handlerComponentMapping.RLock()
+    defer handlerComponentMapping.RUnlock()
+
+    handler, ok := handlerComponentMapping.handlers[name]
+
+    return handler, ok
 }
 
 // GetHandlerName returns the name of a handler for a component.
@@ -191,4 +238,12 @@ func (c ComponentHandlerContainer) Unregister(name string) {
 // handler names.
 func GetHandlerName(c *Component, name string) string {
     return util.StringToSnakeCase(fmt.Sprintf("%v_%v", c.Name, name))
+}
+
+// RegisterOnce TODO: Implement when decorating is possible
+func (c ComponentHandlerContainer) RegisterOnce(name string, handler interface{}) {
+}
+
+func (c ComponentHandlerContainer) Unregister(name string) {
+
 }
