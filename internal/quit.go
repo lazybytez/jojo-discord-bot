@@ -13,15 +13,15 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 package internal
 
 import (
-    "github.com/lazybytez/jojo-discord-bot/components"
-    "github.com/rs/zerolog/log"
-    "os"
+	"github.com/lazybytez/jojo-discord-bot/components"
+	"github.com/rs/zerolog/log"
+	"os"
 )
 
 // ExitGracefully shutdowns the bot gracefully.
@@ -31,10 +31,10 @@ import (
 // The function tries to ensure that all allocated resources like
 // connections or locks are freed/closed correctly.
 func ExitGracefully(reason string) {
-    releaseResources()
+	releaseResources()
 
-    log.Info().Msg(reason)
-    os.Exit(0)
+	log.Info().Msg(reason)
+	os.Exit(0)
 }
 
 // ExitFatal shutdowns the application ungracefully with a
@@ -44,7 +44,7 @@ func ExitGracefully(reason string) {
 // recover, which is typically the case when core connections cannot be established
 // or an initialization routine fails.
 func ExitFatal(reason string) {
-    log.Fatal().Msg(reason)
+	log.Fatal().Msg(reason)
 }
 
 // ExitFatalGracefully shutdowns the application gracefully with a
@@ -54,15 +54,15 @@ func ExitFatal(reason string) {
 // recover, which is typically the case when core connections cannot be established
 // or an initialization routine fails.
 func ExitFatalGracefully(reason string) {
-    releaseResources()
+	releaseResources()
 
-    log.Fatal().Msg(reason)
+	log.Fatal().Msg(reason)
 }
 
 // releaseResources ensures that all allocated resources, locks
 // and connections are freed before the application terminates
 // gracefully.
 func releaseResources() {
-    components.UnloadComponents(discord)
-    stopBot()
+	components.UnloadComponents(discord)
+	stopBot()
 }
