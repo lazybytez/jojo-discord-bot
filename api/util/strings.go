@@ -19,8 +19,8 @@
 package util
 
 import (
-    "regexp"
-    "strings"
+	"regexp"
+	"strings"
 )
 
 // snakeCaseFirstCap matches the first char and can be used to turn it into lowercase
@@ -36,8 +36,8 @@ var snakeCaseAllCap = regexp.MustCompile(`([a-z\\d])([A-Z])`)
 //   - ThisIsATest => this_is_a_test
 //   - $ThisIsATest => $_this_is_a_test
 func StringToSnakeCase(str string) string {
-    snake := snakeCaseFirstCap.ReplaceAllString(str, "${1}_${2}")
-    snake = snakeCaseAllCap.ReplaceAllString(snake, "${1}_${2}")
+	snake := snakeCaseFirstCap.ReplaceAllString(str, "${1}_${2}")
+	snake = snakeCaseAllCap.ReplaceAllString(snake, "${1}_${2}")
 
-    return strings.ToLower(snake)
+	return strings.ToLower(snake)
 }
