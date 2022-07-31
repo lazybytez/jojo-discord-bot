@@ -36,8 +36,7 @@ import (
 // to allow support for concurrency.
 type componentHandlerMap struct {
     sync.RWMutex
-    handlers   map[string]AssignedEventHandler
-    decorators map[string]*decoratorChain
+    handlers map[string]*AssignedEventHandler
 }
 
 // handlerComponentMapping is a map that holds references to function's
@@ -50,8 +49,7 @@ type componentHandlerMap struct {
 // The reason for doing this is, to allow future adjustments of handlers,
 // by holding a reference that can be edited.
 var handlerComponentMapping = componentHandlerMap{
-    handlers:   make(map[string]AssignedEventHandler),
-    decorators: make(map[string]*decoratorChain),
+    handlers: make(map[string]*AssignedEventHandler),
 }
 
 // AssignedEventHandler holds the necessary data to handle events
@@ -60,9 +58,10 @@ var handlerComponentMapping = componentHandlerMap{
 // The original handler function is then replaced with a proxy function
 // that allows us to add special features.
 type AssignedEventHandler struct {
-    name      string
-    component *Component
-    handler   interface{}
+    name       string
+    component  *Component
+    handler    interface{}
+    decorators *decoratorChain
 
     unregister func()
 }
@@ -171,8 +170,8 @@ type ComponentHandlerManager interface {
     //   - originalHandler must be the type of the original handlers function
     AddDecorator(name string, decorator interface{}) error
 
-    addDiscordGoHandler(assignedEvent AssignedEventHandler)
-    addComponentHandler(name string, handler AssignedEventHandler)
+    addDiscordGoHandler(assignedEvent *AssignedEventHandler)
+    addComponentHandler(name string, handler *AssignedEventHandler)
 }
 
 // HandlerManager returns the management interface for event handlers.
@@ -185,7 +184,7 @@ type ComponentHandlerManager interface {
 // event handler status.
 func (c *Component) HandlerManager() ComponentHandlerManager {
     if nil == c.handlerManager {
-        c.handlerManager = ComponentHandlerContainer{
+        c.handlerManager = &ComponentHandlerContainer{
             owner: c,
         }
     }
@@ -226,7 +225,7 @@ type decoratorChainAccess interface {
 
 // Add can be used to add a new element to a decoratorChain.
 // The element will be appended at the end of the chain.
-func (dC decoratorChain) Add(decorator interface{}) {
+func (dC *decoratorChain) Add(decorator interface{}) {
     dCElement := &decoratorChainElement{
         value: decorator,
     }
@@ -243,13 +242,13 @@ func (dC decoratorChain) Add(decorator interface{}) {
 }
 
 // Obtain returns the first element of the decoratorChain.
-func (dC decoratorChain) Obtain() *decoratorChainElement {
+func (dC *decoratorChain) Obtain() *decoratorChainElement {
     return dC.head
 }
 
 // IsEmpty checks if the chain is empty.
 // The chain is considered empty, when no head is present.
-func (dC decoratorChain) IsEmpty() bool {
+func (dC *decoratorChain) IsEmpty() bool {
     return nil == dC.head
 }
 
@@ -271,7 +270,7 @@ func (dC decoratorChain) IsEmpty() bool {
 //
 // In general, the common format for a handler function is:
 //   func (session *discordgo.Session, event <event to call, e.g. discordgo.MessageCreate)
-func (c ComponentHandlerContainer) Register(name string, handler interface{}) (string, error) {
+func (c *ComponentHandlerContainer) Register(name string, handler interface{}) (string, error) {
     handlerName := GetHandlerName(c.owner, name)
 
     if _, ok := GetHandler(handlerName); ok {
@@ -282,7 +281,7 @@ func (c ComponentHandlerContainer) Register(name string, handler interface{}) (s
             handlerName))
     }
 
-    assignedEvent := AssignedEventHandler{
+    assignedEvent := &AssignedEventHandler{
         name:      handlerName,
         component: c.owner,
         handler:   handler,
@@ -300,16 +299,16 @@ func (c ComponentHandlerContainer) Register(name string, handler interface{}) (s
 }
 
 // createHandlerProxy creates a closure that acts as a proxy for the original handler function.
-// This allows us to delegate the triggered event to the decorateHandler function.
-// The decorateHandler than allows to intercept the original event handler with
+// This allows us to delegate the triggered event to the callOriginalHandler function.
+// The callOriginalHandler than allows to intercept the original event handler with
 // custom decorator functions. This can be useful in some edge-cases.
-func createHandlerProxy(handler AssignedEventHandler) func(args []reflect.Value) []reflect.Value {
+func createHandlerProxy(handler *AssignedEventHandler) func(args []reflect.Value) []reflect.Value {
     return func(args []reflect.Value) []reflect.Value {
-        decorators, ok := handlerComponentMapping.decorators[handler.name]
+        decorators := handler.decorators
 
-        if !ok || nil == decorators.head {
+        if nil == decorators || nil == decorators.Obtain() {
             decorateArguments := append([]reflect.Value{reflect.ValueOf(handler)}, args...)
-            reflect.ValueOf(decorateHandler).Call(decorateArguments)
+            reflect.ValueOf(callOriginalHandler).Call(decorateArguments)
 
             return []reflect.Value{}
         }
@@ -318,22 +317,25 @@ func createHandlerProxy(handler AssignedEventHandler) func(args []reflect.Value)
         currentDecorator := decorators.Obtain()
         for currentDecorator != nil {
             decoratorHandlerWrapper := func(args []reflect.Value) []reflect.Value {
-                if nil == currentDecorator.next {
+                if nil == currentDecorator || nil == currentDecorator.next {
                     callOriginal = true
-                }
+                    currentDecorator = nil
 
-                currentDecorator = currentDecorator.next
+                    return []reflect.Value{}
+                }
 
                 return []reflect.Value{}
             }
 
+            decoratorHandlerEventHandler := reflect.MakeFunc(reflect.TypeOf(handler.handler), decoratorHandlerWrapper)
+
             loopHandler := currentDecorator
-            currentDecorator = nil
 
             decorateArguments := append([]reflect.Value{reflect.ValueOf(handler)}, args...)
-            decorateArguments = append([]reflect.Value{reflect.ValueOf(handler)}, reflect.ValueOf(decoratorHandlerWrapper))
+            decorateArguments = append(decorateArguments, decoratorHandlerEventHandler)
 
-            reflect.ValueOf(loopHandler).Call(decorateArguments)
+            currentDecorator = currentDecorator.next
+            reflect.ValueOf(loopHandler.value).Call(decorateArguments)
         }
 
         if !callOriginal {
@@ -341,23 +343,14 @@ func createHandlerProxy(handler AssignedEventHandler) func(args []reflect.Value)
         }
 
         decorateArguments := append([]reflect.Value{reflect.ValueOf(handler)}, args...)
-        reflect.ValueOf(decorateHandler).Call(decorateArguments)
+        reflect.ValueOf(callOriginalHandler).Call(decorateArguments)
 
         return []reflect.Value{}
     }
 }
 
-// decorateHandler is the internal replacement used when an event happens in discord.
-func decorateHandler(assignedEvent AssignedEventHandler, session *discordgo.Session, e interface{}) {
-    if _, ok := GetHandler(assignedEvent.name); !ok {
-        assignedEvent.component.Logger().Warn(fmt.Sprintf(
-            "Potentially orphaned event handler named \"%v\" has been called! "+
-                "Ensure to properly unregister no longer needed handlers!",
-            assignedEvent.name))
-
-        return
-    }
-
+// callOriginalHandler is the internal replacement used when an event happens in discord.
+func callOriginalHandler(assignedEvent *AssignedEventHandler, session *discordgo.Session, e interface{}) {
     sessionRef := reflect.ValueOf(session)
     eRef := reflect.ValueOf(e)
 
@@ -365,7 +358,7 @@ func decorateHandler(assignedEvent AssignedEventHandler, session *discordgo.Sess
 }
 
 // addDiscordGoHandler generates a handler proxy and registers it for DiscordGo.
-func (c ComponentHandlerContainer) addDiscordGoHandler(assignedEvent AssignedEventHandler) {
+func (c *ComponentHandlerContainer) addDiscordGoHandler(assignedEvent *AssignedEventHandler) {
     handlerProxy := createHandlerProxy(assignedEvent)
 
     originalType := reflect.TypeOf(assignedEvent.handler)
@@ -394,7 +387,7 @@ func (c ComponentHandlerContainer) addDiscordGoHandler(assignedEvent AssignedEve
 //
 // In general, the common format for a handler function is:
 //   func (session *discordgo.Session, event <event to call, e.g. discordgo.MessageCreate)
-func (c ComponentHandlerContainer) RegisterOnce(
+func (c *ComponentHandlerContainer) RegisterOnce(
     name string,
     handler interface{},
 ) (string, error) {
@@ -408,7 +401,7 @@ func (c ComponentHandlerContainer) RegisterOnce(
             handlerName))
     }
 
-    assignedEvent := AssignedEventHandler{
+    assignedEvent := &AssignedEventHandler{
         name:      handlerName,
         component: c.owner,
         handler:   handler,
@@ -433,7 +426,7 @@ func (c ComponentHandlerContainer) RegisterOnce(
 }
 
 // addDiscordGoOnceTimeHandler generates a handler proxy and registers it for DiscordGo.
-func (c ComponentHandlerContainer) addDiscordGoOnceTimeHandler(assignedEvent AssignedEventHandler) {
+func (c *ComponentHandlerContainer) addDiscordGoOnceTimeHandler(assignedEvent *AssignedEventHandler) {
     handlerProxy := createHandlerProxy(assignedEvent)
 
     originalType := reflect.TypeOf(assignedEvent.handler)
@@ -445,14 +438,12 @@ func (c ComponentHandlerContainer) addDiscordGoOnceTimeHandler(assignedEvent Ass
 // decorateOneTimeHandler is the decorator function used in one-time
 // event handlers. It ensures that the executed handler is removed properly.
 func decorateOneTimeHandler(
-    assignedEvent AssignedEventHandler,
+    assignedEvent *AssignedEventHandler,
     session *discordgo.Session,
     event interface{},
     originalHandler interface{},
 ) {
     removeComponentHandler(assignedEvent.name)
-
-    fmt.Println("YEP; THIS DECORATOR WORKED!")
 
     reflect.ValueOf(originalHandler).Call([]reflect.Value{
         reflect.ValueOf(session),
@@ -466,7 +457,7 @@ func decorateOneTimeHandler(
 // the registered handlers.
 //
 // If the specified handler does not exist, an error will be returned.
-func (c ComponentHandlerContainer) Unregister(name string) error {
+func (c *ComponentHandlerContainer) Unregister(name string) error {
     handlerName := GetHandlerName(c.owner, name)
     handler, ok := GetHandler(handlerName)
 
@@ -504,30 +495,31 @@ func (c ComponentHandlerContainer) Unregister(name string) error {
 //
 // Note that the name parameter is not the name for the decorator.
 // It is the name of the handler that should be decorated
-func (c ComponentHandlerContainer) AddDecorator(name string, decorator interface{}) error {
+func (c *ComponentHandlerContainer) AddDecorator(name string, decorator interface{}) error {
     handlerName := GetHandlerName(c.owner, name)
+    handler, ok := GetHandler(handlerName)
 
-    if _, ok := GetHandler(handlerName); !ok {
+    if !ok {
         return errors.New(fmt.Sprintf(
             "Tried to decorate non-existent handler with name \"%v\"!",
             handlerName))
     }
 
-    c.appendDecorator(handlerName, decorator)
+    c.appendDecorator(handler, decorator)
 
     return nil
 }
 
-// appendDecorator takes the name of a handler and a decorator and appends it to
-// the appropriate decorator list in componentHandlerMap.decorators
-func (c ComponentHandlerContainer) appendDecorator(handlerName string, decorator interface{}) {
-    if nil == handlerComponentMapping.decorators[handlerName] {
+// appendDecorator takes a handler and a decorator and appends it to
+// the appropriate decorator list of the AssignedEventHandler
+func (c *ComponentHandlerContainer) appendDecorator(handler *AssignedEventHandler, decorator interface{}) {
+    if nil == handler.decorators {
         dC := decoratorChain{}
 
-        handlerComponentMapping.decorators[handlerName] = &dC
+        handler.decorators = &dC
     }
 
-    handlerComponentMapping.decorators[handlerName].Add(decorator)
+    handler.decorators.Add(decorator)
 }
 
 // === Handler management
@@ -536,7 +528,7 @@ func (c ComponentHandlerContainer) appendDecorator(handlerName string, decorator
 //
 // Note that adding a handler with a name that is already in the map
 // will override the existing handler (but not unregister it from DiscordGo!).
-func (c ComponentHandlerContainer) addComponentHandler(name string, handler AssignedEventHandler) {
+func (c *ComponentHandlerContainer) addComponentHandler(name string, handler *AssignedEventHandler) {
     handlerComponentMapping.Lock()
     defer handlerComponentMapping.Unlock()
 
@@ -553,12 +545,11 @@ func removeComponentHandler(name string) {
     defer handlerComponentMapping.Unlock()
 
     delete(handlerComponentMapping.handlers, name)
-    delete(handlerComponentMapping.decorators, name)
 }
 
 // GetHandler returns a handler by its fully qualified name (id).
 // The required ID can be obtained using GetHandlerName.
-func GetHandler(name string) (AssignedEventHandler, bool) {
+func GetHandler(name string) (*AssignedEventHandler, bool) {
     handlerComponentMapping.RLock()
     defer handlerComponentMapping.RUnlock()
 
