@@ -19,7 +19,6 @@
 package api
 
 import (
-	"errors"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api/util"
@@ -420,9 +419,9 @@ func (c *ComponentHandlerContainer) Unregister(name string) error {
 	handler, ok := GetHandler(handlerName)
 
 	if ok {
-		return errors.New(fmt.Sprintf(
-			"There is no handler called \"%v\" registered that could be unregistered!",
-			handlerName))
+		return fmt.Errorf(
+			"there is no handler called \"%v\" registered that could be unregistered",
+			handlerName)
 	}
 
 	handler.unregister()
