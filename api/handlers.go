@@ -274,11 +274,11 @@ func (c *ComponentHandlerContainer) Register(name string, handler interface{}) (
     handlerName := GetHandlerName(c.owner, name)
 
     if _, ok := GetHandler(handlerName); ok {
-        return handlerName, errors.New(fmt.Sprintf(
-            "An handler for component \"%v\" with name \"%v\" is already registered (ID: \"%v\")",
+        return handlerName, fmt.Errorf(
+            "an handler for component \"%v\" with name \"%v\" is already registered (ID: \"%v\")",
             c.owner.Name,
             name,
-            handlerName))
+            handlerName)
     }
 
     assignedEvent := &AssignedEventHandler{
@@ -394,11 +394,11 @@ func (c *ComponentHandlerContainer) RegisterOnce(
     handlerName := GetHandlerName(c.owner, name)
 
     if _, ok := GetHandler(handlerName); ok {
-        return handlerName, errors.New(fmt.Sprintf(
-            "An handler for component \"%v\" with name \"%v\" is already registered (ID: \"%v\")",
+        return handlerName, fmt.Errorf(
+            "an handler for component \"%v\" with name \"%v\" is already registered (ID: \"%v\")",
             c.owner.Name,
             name,
-            handlerName))
+            handlerName)
     }
 
     assignedEvent := &AssignedEventHandler{
@@ -409,9 +409,9 @@ func (c *ComponentHandlerContainer) RegisterOnce(
     c.addComponentHandler(handlerName, assignedEvent)
     err := c.AddDecorator(name, decorateOneTimeHandler)
     if nil != err {
-        return handlerName, errors.New(fmt.Sprintf(
-            "Failed to register cleanup decorator for one-time handler with name \"%v\"",
-            handlerName))
+        return handlerName, fmt.Errorf(
+            "failed to register cleanup decorator for one-time handler with name \"%v\"",
+            handlerName)
     }
 
     c.addDiscordGoOnceTimeHandler(assignedEvent)

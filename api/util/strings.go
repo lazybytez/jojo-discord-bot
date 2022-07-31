@@ -1,6 +1,9 @@
 package util
 
-import "regexp"
+import (
+    "regexp"
+    "strings"
+)
 
 // snakeCaseFirstCap matches the first char and can be used to turn it into lowercase
 // and add an underscore between a leading special character and the rest of the string
@@ -16,7 +19,7 @@ var snakeCaseAllCap = regexp.MustCompile("([a-z\\d])([A-Z])")
 //   - $ThisIsATest => $_this_is_a_test
 func StringToSnakeCase(str string) string {
     snake := snakeCaseFirstCap.ReplaceAllString(str, "${1}_${2}")
-    snake = snakeCaseAllCap.ReplaceAllString(str, "${1}_${2}")
+    snake = snakeCaseAllCap.ReplaceAllString(snake, "${1}_${2}")
 
-    return snake
+    return strings.ToLower(snake)
 }
