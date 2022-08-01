@@ -60,7 +60,7 @@ type componentHandlerMap struct {
 // that are registered as handlers and maps them to their owning components.
 //
 // Note that the key of the map equals the handler name.
-// The handler name is always the owner name in snake-case
+// The handler name is always the component name in snake-case
 // followed by the handler name defined by the developer.
 //
 // The reason for doing this is, to allow future adjustments of handlers,

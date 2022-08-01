@@ -19,8 +19,8 @@
 package internal
 
 import (
-    "fmt"
-    "github.com/bwmarrin/discordgo"
+	"fmt"
+	"github.com/bwmarrin/discordgo"
 )
 
 const tokenPrefix = "Bot "
@@ -33,18 +33,18 @@ var discord *discordgo.Session
 // If initializing the discordgo.Session fails,
 // the bot will exit with a fatal error.
 func startBot(token string) {
-    var err error
-    discord, err = discordgo.New(tokenPrefix + token)
-    if nil != err {
-        ExitFatal(fmt.Sprintf("Failed to create discordgo session, error was: %v!", err.Error()))
-    }
+	var err error
+	discord, err = discordgo.New(tokenPrefix + token)
+	if nil != err {
+		ExitFatal(fmt.Sprintf("Failed to create discordgo session, error was: %v!", err.Error()))
+	}
 
-    err = discord.Open()
-    if nil != err {
-        ExitFatal(fmt.Sprintf("Failed to open bot connection to Discord, error was: %v!", err.Error()))
-    }
+	err = discord.Open()
+	if nil != err {
+		ExitFatal(fmt.Sprintf("Failed to open bot connection to Discord, error was: %v!", err.Error()))
+	}
 
-    updateIntents()
+	updateIntents()
 }
 
 // stopBot tries to stop the bot.
@@ -55,13 +55,13 @@ func startBot(token string) {
 //
 // If closing the session throws an error, the error is ignored.
 func stopBot() {
-    if nil != discord {
-        _ = discord.Close()
-    }
+	if nil != discord {
+		_ = discord.Close()
+	}
 }
 
 // updateIntents to receive all necessary permissions
 // for the bot
 func updateIntents() {
-    discord.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
+	discord.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 }
