@@ -1,7 +1,7 @@
 # Checks for Git branches and commit messages to keep consistency
 name: Git
 
-on: ["pull_request"]
+on: [ "pull_request" ]
 
 jobs:
   # Verify that the branch name matches the format
