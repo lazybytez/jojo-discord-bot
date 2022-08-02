@@ -60,9 +60,10 @@ type Component struct {
 	// These are private and only managed by the API system.
 	// Their initialization happens through call to the methods
 	// used to get them (Example: logger -> Component.Logger()).
-	logger         Logger
-	handlerManager ComponentHandlerManager
-	discord        *discordgo.Session
+	logger              Logger
+	handlerManager      ComponentHandlerManager
+	slashCommandManager SlashCommandManager
+	discord             *discordgo.Session
 }
 
 // RegistrableComponent is the interface that allows a component to be
@@ -92,8 +93,12 @@ func (c *Component) RegisterComponent(discord *discordgo.Session) error {
 // automatically calls the UnregisterComponent method for all Component instances in
 // the components.Components array.
 //
+// The function takes care of tasks like unregistering slash-commands and so on.
+//
 // It is used to give components the ability to gracefully shutdown.
 func (c *Component) UnregisterComponent(discord *discordgo.Session) error {
+	c.HandlerManager().unregisterAll()
+
 	err := c.Lifecycle.UnloadComponent(discord)
 
 	if err != nil {
