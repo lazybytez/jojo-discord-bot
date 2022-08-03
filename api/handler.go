@@ -189,6 +189,7 @@ type ComponentHandlerManager interface {
 
 	addDiscordGoHandler(assignedEvent *AssignedEventHandler)
 	addComponentHandler(name string, handler *AssignedEventHandler)
+	unregisterAll()
 }
 
 // HandlerManager returns the management interface for event handlers.
@@ -428,6 +429,14 @@ func (c *ComponentHandlerContainer) Unregister(name string) error {
 	removeComponentHandler(handlerName)
 
 	return nil
+}
+
+// unregisterAll takes care of unregistering all handlers
+// attached to the component that owns the ComponentHandlerContainer
+func (c *ComponentHandlerContainer) unregisterAll() {
+	for _, handler := range handlerComponentMapping.handlers {
+		_ = c.Unregister(handler.name)
+	}
 }
 
 // === Handler management

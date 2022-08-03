@@ -22,7 +22,7 @@ import "github.com/lazybytez/jojo-discord-bot/api/log"
 
 // ComponentLogger is a type that is used to hold
 // the owner that keeps the information about the
-// component used by the logging functions.
+// component used by the logging methods.
 type ComponentLogger struct {
 	owner *Component
 }
