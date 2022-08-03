@@ -27,19 +27,30 @@ const tokenPrefix = "Bot "
 
 var discord *discordgo.Session
 
-// startBot initializes a discordgo.Session using
-// the provided token.
+// createSession creates a discordgo.Session,
+// but does not open the connection yet.
 //
-// If initializing the discordgo.Session fails,
-// the bot will exit with a fatal error.
-func startBot(token string) {
+// The token that is passed will be used to
+// configure the session.
+func createSession(token string) {
+	if nil != discord {
+		ExitFatal("DiscordGo session can be created only once!")
+	}
+
 	var err error
 	discord, err = discordgo.New(tokenPrefix + token)
 	if nil != err {
 		ExitFatal(fmt.Sprintf("Failed to create discordgo session, error was: %v!", err.Error()))
 	}
+}
 
-	err = discord.Open()
+// startBot opens the connection and configures the bots intents.
+func startBot() {
+	if nil == discord {
+		ExitFatal("Session must be first created before the bot can be started")
+	}
+
+	err := discord.Open()
 	if nil != err {
 		ExitFatal(fmt.Sprintf("Failed to open bot connection to Discord, error was: %v!", err.Error()))
 	}

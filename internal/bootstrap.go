@@ -26,13 +26,13 @@ import (
 	"syscall"
 )
 
-// Bootstrap hadles the start of the application.
+// Bootstrap handles the start of the application.
 // It is responsible to execute the startup sequence
 // and get the application up and running properly.
 func Bootstrap() {
-	startBot(Config.token)
-
+	createSession(Config.token)
 	components.RegisterComponents(discord)
+	startBot()
 
 	waitForTerminate()
 }
