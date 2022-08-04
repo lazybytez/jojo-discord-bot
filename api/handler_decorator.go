@@ -26,15 +26,15 @@ import (
 // and decorating DiscordGo event handlers.
 //
 // This acts as a wrapper structure to allow the bot framework
-// to take some actions in-between like logging handler
+// to take some actions in-between like logging Handler
 // registration.
 //
 // Also, this allows to decorate existing handlers and add
 // custom functionality to them by intercepting their call.
 // This is form example useful for the handlers that are removed after
 // being called once.
-// With the decorator feature, we can clean up out own handler list
-// when the event handler is called.
+// With the decorator feature, we can clean up out own Handler list
+// when the event Handler is called.
 //
 // Note: This might not be the best way of implementing those features.
 //       The implementation should be checked and reworked later on when
@@ -52,7 +52,7 @@ type decoratorChainElement struct {
 }
 
 // DecoratorChain is a really simple "singly-linked list" optimized
-// for use with the component event handler decorator system.
+// for use with the component event Handler decorator system.
 //
 // Using the Obtain function the head element of the chain is returned.
 // Then, the next links on the decoratorChainElement can be used to
@@ -97,7 +97,7 @@ func (dC *decoratorChain) IsEmpty() bool {
 // Decorator management
 
 // AddDecorator allows to register a new decorator for an event
-// handler.
+// Handler.
 //
 // Decorators will be called one after another until a decorator does not call
 // a following one (this causes the event handling to be cancelled).
@@ -111,18 +111,18 @@ func (dC *decoratorChain) IsEmpty() bool {
 //   )
 //
 // Unclear params:
-//   - event must be the event that is handled by the original handler
+//   - event must be the event that is handled by the original Handler
 //   - originalHandler must be the type of the original handlers function
 //
 // Note that the name parameter is not the name for the decorator.
-// It is the name of the handler that should be decorated
+// It is the name of the Handler that should be decorated
 func (c *ComponentHandlerContainer) AddDecorator(name string, decorator interface{}) error {
 	handlerName := GetHandlerName(c.owner, name)
 	handler, ok := GetHandler(handlerName)
 
 	if !ok {
 		return fmt.Errorf(
-			"tried to decorate non-existent handler with name \"%v\"",
+			"tried to decorate non-existent Handler with name \"%v\"",
 			handlerName)
 	}
 
@@ -131,7 +131,7 @@ func (c *ComponentHandlerContainer) AddDecorator(name string, decorator interfac
 	return nil
 }
 
-// appendDecorator takes a handler and a decorator and appends it to
+// appendDecorator takes a Handler and a decorator and appends it to
 // the appropriate decorator list of the AssignedEventHandler
 func (c *ComponentHandlerContainer) appendDecorator(handler *AssignedEventHandler, decorator interface{}) {
 	if nil == handler.decorators {

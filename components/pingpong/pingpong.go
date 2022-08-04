@@ -59,6 +59,9 @@ func LoadComponent(discord *discordgo.Session) error {
 	// Register the messageCreate func as a callback for MessageCreate events.
 	_, _ = C.HandlerManager().Register("pingpong", onMessageCreate)
 
+	_ = C.SlashCommandManager().Register(pingCommand)
+	_ = C.SlashCommandManager().Register(pongCommand)
+
 	return nil
 }
 
