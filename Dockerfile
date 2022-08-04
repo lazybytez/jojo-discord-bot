@@ -1,6 +1,7 @@
 # First build application
 FROM golang:1.18-alpine
 
+RUN mkdir /app
 WORKDIR /app
 
 # Pre-download to enable dependency caching
@@ -9,7 +10,7 @@ RUN go mod download && go mod verify
 
 # Copy source and start build
 COPY . .
-RUN go build -v -o /app/jojo-discord-bot ./...
+RUN go build -v -o /app ./...
 
 # Throw away last step and put binary in basic alpine image
 FROM alpine:latest
