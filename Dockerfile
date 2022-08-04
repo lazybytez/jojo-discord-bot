@@ -32,7 +32,7 @@ LABEL maintainer="contact@lazybytez.de"
 # Open Container annotations
 LABEL org.opencontainers.image.title="JOJO Discord Bot"
 LABEL org.opencontainers.image.description="An advanced multi-purpose discord bot"
-LABEL org.opencontainers.image.vendor ="Lazy Bytez"
+LABEL org.opencontainers.image.vendor="Lazy Bytez"
 LABEL org.opencontainers.image.source="https://github.com/lazybytez/jojo-discord-bot"
 LABEL org.opencontainers.image.licenses="AGPL-3.0"
 
