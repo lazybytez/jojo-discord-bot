@@ -27,6 +27,10 @@ import (
 // as value and the name of the discordgo.ApplicationCommand as key.
 var componentCommandMap map[string]*Command
 
+// isInitialized holds the current state if the
+// command handling is fully initialized or not
+var isInitialized = false
+
 // init slash command sub-system
 func init() {
 	componentCommandMap = make(map[string]*Command)
@@ -39,6 +43,7 @@ func init() {
 type Command struct {
 	Cmd     *discordgo.ApplicationCommand
 	Handler func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	c       *Component
 }
 
 // ComponentSlashCommandManager is a type that is used to hold
@@ -77,7 +82,25 @@ func InitCommandHandling(session *discordgo.Session) error {
 		}
 	})
 
+	for _, command := range componentCommandMap {
+		createCommand(session, command)
+	}
+
+	isInitialized = true
+
 	return nil
+}
+
+func createCommand(session *discordgo.Session, command *Command) {
+	_, err := session.ApplicationCommandCreate(session.State.User.ID, "", command.Cmd)
+
+	if nil != err {
+		command.c.Logger().Err(
+			err,
+			"Failed to register the slash-Cmd \"%v\" for component \"%v\": Could not create application Cmd!",
+			command.Cmd.Name,
+			command.c.Name)
+	}
 }
 
 // DeinitCommandHandling unregisters the event Handler
@@ -92,6 +115,8 @@ func DeinitCommandHandling(session *discordgo.Session) {
 	for _, command := range componentCommandMap {
 		_ = session.ApplicationCommandDelete(session.State.User.ID, "", command.Cmd.ID)
 	}
+
+	isInitialized = false
 }
 
 // SlashCommandManager is used to obtain the components slash Command management
@@ -112,53 +137,11 @@ func (c *Component) SlashCommandManager() SlashCommandManager {
 // The Command holds the common discordgo.ApplicationCommand
 // and the function that should handle the command.
 func (c *ComponentSlashCommandManager) Register(cmd *Command) error {
-	var err error
+	cmd.c = c.owner
+
+	err := c.validateCommand(cmd)
+
 	if nil != err {
-		c.owner.Logger().Err(
-			err,
-			"Failed to register the slash-Cmd \"%v\" for component \"%v\": Could not create application Cmd!",
-			cmd.Cmd.Name,
-			c.owner.Name)
-
-		return err
-	}
-
-	if nil == cmd.Cmd {
-		err = errors.New("the discordgo.ApplicationCommand of the passed command is nil")
-
-		c.owner.Logger().Err(
-			err,
-			"Failed to register the slash-Cmd \"%v\" for component \"%v\": %v!",
-			cmd.Cmd.Name,
-			c.owner.Name,
-			err.Error())
-
-		return err
-	}
-
-	if nil == cmd.Handler {
-		err = errors.New("the Handler of the passed command is nil")
-
-		c.owner.Logger().Err(
-			err,
-			"Failed to register the slash-Cmd \"%v\" for component \"%v\": %v!",
-			cmd.Cmd.Name,
-			c.owner.Name,
-			err.Error())
-
-		return err
-	}
-
-	if nil == cmd.Handler {
-		err = errors.New("the Handler of the passed command is nil")
-
-		c.owner.Logger().Err(
-			err,
-			"Failed to register the slash-Cmd \"%v\" for component \"%v\": %v!",
-			cmd.Cmd.Name,
-			c.owner.Name,
-			err.Error())
-
 		return err
 	}
 
@@ -177,13 +160,54 @@ func (c *ComponentSlashCommandManager) Register(cmd *Command) error {
 
 	componentCommandMap[cmd.Cmd.Name] = cmd
 
+	if isInitialized {
+		createCommand(c.owner.discord, cmd)
+	}
+
 	return nil
 }
 
-// FinishCommandRegistration is called by the internal system
-// and finishes the final registration steps necessary to get commands working.
-func FinishCommandRegistration(session *discordgo.Session) {
-	for _, command := range componentCommandMap {
-		_, _ = session.ApplicationCommandCreate(session.State.User.ID, "", command.Cmd)
+// validateCommand validates the passed command to ensure it is valid
+// and can be registered properly.
+func (c *ComponentSlashCommandManager) validateCommand(cmd *Command) error {
+	if nil == cmd.Cmd {
+		err := errors.New("the discordgo.ApplicationCommand of the passed command is nil")
+
+		c.owner.Logger().Err(
+			err,
+			"Failed to register the slash-Cmd \"%v\" for component \"%v\": %v!",
+			cmd.Cmd.Name,
+			c.owner.Name,
+			err.Error())
+
+		return err
 	}
+
+	if nil == cmd.Handler {
+		err := errors.New("the Handler of the passed command is nil")
+
+		c.owner.Logger().Err(
+			err,
+			"Failed to register the slash-Cmd \"%v\" for component \"%v\": %v!",
+			cmd.Cmd.Name,
+			c.owner.Name,
+			err.Error())
+
+		return err
+	}
+
+	if nil == cmd.Handler {
+		err := errors.New("the Handler of the passed command is nil")
+
+		c.owner.Logger().Err(
+			err,
+			"Failed to register the slash-Cmd \"%v\" for component \"%v\": %v!",
+			cmd.Cmd.Name,
+			c.owner.Name,
+			err.Error())
+
+		return err
+	}
+
+	return nil
 }

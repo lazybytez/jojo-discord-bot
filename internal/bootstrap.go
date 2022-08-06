@@ -33,13 +33,12 @@ import (
 func Bootstrap() {
 	createSession(Config.token)
 
-	if err := api.InitCommandHandling(discord); nil != err {
-		ExitGracefully(err.Error())
-	}
 	components.RegisterComponents(discord)
 
 	startBot()
-	api.FinishCommandRegistration(discord)
+	if err := api.InitCommandHandling(discord); nil != err {
+		ExitGracefully(err.Error())
+	}
 
 	waitForTerminate()
 }
