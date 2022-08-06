@@ -23,6 +23,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// TODO: Improve this system in a future revision.
+
 // componentCommandMap is a map that holds the discordgo.ApplicationCommand
 // as value and the name of the discordgo.ApplicationCommand as key.
 var componentCommandMap map[string]*Command
