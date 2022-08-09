@@ -19,6 +19,7 @@
 package internal
 
 import (
+	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/components"
 	"github.com/rs/zerolog/log"
 	"os"
@@ -31,8 +32,13 @@ import (
 // and get the application up and running properly.
 func Bootstrap() {
 	createSession(Config.token)
+
 	components.RegisterComponents(discord)
+
 	startBot()
+	if err := api.InitCommandHandling(discord); nil != err {
+		ExitGracefully(err.Error())
+	}
 
 	waitForTerminate()
 }
