@@ -4,6 +4,8 @@ name: CD
 
 on:
   push:
+    branches:
+      - 'develop'
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
 
@@ -33,14 +35,14 @@ jobs:
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        uses: docker/metadata-action@v4
         with:
           images: ghcr.io/lazybytez/jojo-discord-bot
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=edge,enable=true,priority=700,prefix=,suffix=,branch=$repo.default_branch
+            type=edge,branch=develop
 
       - name: Build and publish images
         uses: docker/build-push-action@v3
