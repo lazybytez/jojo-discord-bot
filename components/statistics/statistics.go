@@ -16,25 +16,37 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package components
+package statistics
 
 import (
+	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/api/components/bot_core"
-	"github.com/lazybytez/jojo-discord-bot/api/components/bot_log"
-	"github.com/lazybytez/jojo-discord-bot/components/pingpong"
-	"github.com/lazybytez/jojo-discord-bot/components/statistics"
 )
 
-// Components contains all components that should be available.
-//
-// Enabled components should be registered here.
-// When access to components is necessary use api.Components instead.
-// Note that api.Components can only being accessed after the system has been initialized,
-// which means the earliest point is in the LoadComponent lifecycle hooks.
-var Components = []*api.Component{
-	bot_core.C,
-	bot_log.C,
-	pingpong.C,
-	statistics.C,
+// C is the instance of the statistics component.
+var C *api.Component
+
+// init initializes the component with its metadata
+func init() {
+	C = &api.Component{
+		// Metadata
+		Name:         "Statistics Component",
+		Description:  "This Component returns statistics about the bot and the runtime.",
+		DmPermission: true,
+
+		State: api.State{
+			Enabled: true,
+		},
+
+		Lifecycle: api.LifecycleHooks{
+			LoadComponent: LoadComponent,
+		},
+	}
+}
+
+// LoadComponent loads the Ping-Pong Component
+func LoadComponent(discord *discordgo.Session) error {
+	_ = C.SlashCommandManager().Register(statsCommand)
+
+	return nil
 }
