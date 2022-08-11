@@ -18,26 +18,26 @@
 
 package util
 
-import (
-	"regexp"
-	"strings"
-)
+import "testing"
 
-// snakeCaseFirstCap matches the first char and can be used to turn it into lowercase
-// and add an underscore between a leading special character and the rest of the string
-var snakeCaseFirstCap = regexp.MustCompile(`(.)([A-Z][a-z]+)`)
+func TestStringToSnakeCase(t *testing.T) {
+	tables := []struct {
+		in  string
+		out string
+	}{
+		{"A simple test", "a_simple_test"},
+		{"Another More Complex Test", "another_more_complex_test"},
+		{"sOmE wEiRd TeST", "some_weird_test"},
+		{"Also with_underscores", "also_with_underscores"},
+		{"5 test in a ROW", "5_test_in_a_row"},
+	}
 
-// snakeCaseAllCap matches the capitals coming after a capital character or digit.
-var snakeCaseAllCap = regexp.MustCompile(`([a-z\\d])([A-Z])`)
-
-// StringToSnakeCase turns the given string into snake-case.
-//
-// Examples:
-//   - ThisIsATest => this_is_a_test
-func StringToSnakeCase(str string) string {
-	snake := snakeCaseFirstCap.ReplaceAllString(str, "${1}_${2}")
-	snake = snakeCaseAllCap.ReplaceAllString(snake, "${1}_${2}")
-	snake = strings.ReplaceAll(str, " ", "_")
-
-	return strings.ToLower(snake)
+	for _, table := range tables {
+		if r := StringToSnakeCase(table.in); r != table.out {
+			t.Errorf("output of to snake case with \"%v\" was incorrect, got: %v, want: %v.",
+				table.in,
+				r,
+				table.out)
+		}
+	}
 }
