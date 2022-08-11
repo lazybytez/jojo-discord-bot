@@ -10,7 +10,7 @@ func handleDice(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	n := getIntOption(options, "number-dice", 1)
 	d := getIntOption(options, "die-sites-number", 6)
 
-	r := rollDice(n, d)
+	r := rollDice(d, n)
 	sendAnswerToUser(n, d, r, s, i)
 }
 
