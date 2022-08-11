@@ -44,15 +44,11 @@ type CompoMessageHandlerManager interface {
 	//
 	// The passed name for the Handler is concatenated with the name of the
 	// component that owns the Handler (separated by underscore).
-	//
-	// The Handler must have the same format as when a Handler is registered in
-	// plain DiscordGo. See the documentation about discordgo.AddHandler
-	// for additional information.
-	//
-	// In general, the common format for a Handler function is:
-	//
-	//	func (session *discordgo.Session, event <event to call, e.g. discordgo.MessageCreate)
-	RegisterSimpleMessageHandler(name string, handler interface{}, messages ...string) (string, bool)
+	RegisterSimpleMessageHandler(
+		name string,
+		handler func(session *discordgo.Session, create *discordgo.MessageCreate),
+		messages ...string,
+	) (string, bool)
 
 	// RegisterComplexMessageHandler can be used to register a new AssignedEventHandler to handle messages.
 	//
@@ -75,17 +71,13 @@ type CompoMessageHandlerManager interface {
 	// The passed name for the Handler is concatenated with the name of the
 	// component that owns the Handler (separated by underscore).
 	//
-	// The Handler must have the same format as when a Handler is registered in
-	// plain DiscordGo. See the documentation about discordgo.AddHandler
-	// for additional information.
-	//
-	// In general, the common format for a Handler function is:
-	//
-	//	func (session *discordgo.Session, event <event to call, e.g. discordgo.MessageCreate)
-	//
 	// The returned values contain the name of the (potentially registered) handler
 	// and a bool indicating whether the registration was successful or not.
-	RegisterComplexMessageHandler(name string, handler interface{}, messages ...string) (string, bool)
+	RegisterComplexMessageHandler(
+		name string,
+		handler func(session *discordgo.Session, create *discordgo.MessageCreate),
+		messages ...string,
+	) (string, bool)
 }
 
 // RegisterSimpleMessageHandler can be used to register a new AssignedEventHandler to handle messages.
@@ -106,19 +98,11 @@ type CompoMessageHandlerManager interface {
 // The passed name for the Handler is concatenated with the name of the
 // component that owns the Handler (separated by underscore).
 //
-// The Handler must have the same format as when a Handler is registered in
-// plain DiscordGo. See the documentation about discordgo.AddHandler
-// for additional information.
-//
-// In general, the common format for a Handler function is:
-//
-//	func (session *discordgo.Session, event <event to call, e.g. discordgo.MessageCreate)
-//
 // The returned values contain the name of the (potentially registered) handler
 // and a bool indicating whether the registration was successful or not.
 func (c *ComponentHandlerContainer) RegisterSimpleMessageHandler(
 	name string,
-	handler interface{},
+	handler func(session *discordgo.Session, create *discordgo.MessageCreate),
 	messages ...string,
 ) (string, bool) {
 	if nil == messages || len(messages) < 1 {
@@ -216,19 +200,11 @@ func decorateSimpleMessageHandler(
 // The passed name for the Handler is concatenated with the name of the
 // component that owns the Handler (separated by underscore).
 //
-// The Handler must have the same format as when a Handler is registered in
-// plain DiscordGo. See the documentation about discordgo.AddHandler
-// for additional information.
-//
-// In general, the common format for a Handler function is:
-//
-//	func (session *discordgo.Session, event <event to call, e.g. discordgo.MessageCreate)
-//
 // The returned values contain the name of the (potentially registered) handler
 // and a bool indicating whether the registration was successful or not.
 func (c *ComponentHandlerContainer) RegisterComplexMessageHandler(
 	name string,
-	handler interface{},
+	handler func(session *discordgo.Session, create *discordgo.MessageCreate),
 	patterns ...string,
 ) (string, bool) {
 	if nil == patterns || len(patterns) < 1 {
