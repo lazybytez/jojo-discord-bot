@@ -75,10 +75,11 @@ var handlerComponentMapping = componentHandlerMap{
 // The original Handler function is then replaced with a proxy function
 // that allows us to add special features.
 type AssignedEventHandler struct {
-	name       string
-	component  *Component
-	handler    interface{}
-	decorators *decoratorChain
+	name            string
+	component       *Component
+	handler         interface{}
+	decorators      *decoratorChain
+	handledMessages []string
 
 	unregister func()
 }
@@ -124,7 +125,9 @@ type ComponentHandlerContainer struct {
 //
 // Under the hood, DiscordGo event handlers are used.
 type ComponentHandlerManager interface {
-	// Register can be used to register a new discordgo.AssignedEventHandler.
+	CompoMessageHandlerManager
+
+	// Register can be used to register a new AssignedEventHandler.
 	//
 	// The passed Handler function will be:
 	//   1. registered in DiscordGo as a Handler
@@ -140,7 +143,7 @@ type ComponentHandlerManager interface {
 	//
 	// In general, the common format for a Handler function is:
 	//   func (session *discordgo.Session, event <event to call, e.g. discordgo.MessageCreate)
-	Register(name string, handler interface{}) (string, error)
+	Register(name string, handler interface{}) (string, bool)
 
 	// RegisterOnce registers an event Handler as a one-time event Handler.
 	// The registered Handler will be removed after being triggered once.
@@ -160,7 +163,7 @@ type ComponentHandlerManager interface {
 	//
 	// In general, the common format for a Handler function is:
 	//   func (session *discordgo.Session, event <event to call, e.g. discordgo.MessageCreate)
-	RegisterOnce(name string, handler interface{}) (string, error)
+	RegisterOnce(name string, handler interface{}) (string, bool)
 
 	// Unregister removes the Handler with the given name (if existing) from
 	// the registered handlers.
@@ -185,7 +188,7 @@ type ComponentHandlerManager interface {
 	// Unclear params:
 	//   - event must be the event that is handled by the original Handler
 	//   - originalHandler must be the type of the original handlers function
-	AddDecorator(name string, decorator interface{}) error
+	AddDecorator(name string, decorator interface{}) bool
 
 	addDiscordGoHandler(assignedEvent *AssignedEventHandler)
 	addComponentHandler(name string, handler *AssignedEventHandler)
@@ -215,9 +218,9 @@ func (c *Component) HandlerManager() ComponentHandlerManager {
 // Register can be used to register a new discordgo.AssignedEventHandler.
 //
 // The passed Handler function will be:
-//   1. registered in DiscordGo as a Handler
-//   2. prepared to allow decorations
-//   3. saved with a name that allows to retrieve it later on
+//  1. registered in DiscordGo as a Handler
+//  2. prepared to allow decorations
+//  3. saved with a name that allows to retrieve it later on
 //
 // The passed name for the Handler is concatenated with the name of the
 // component that owns the Handler (separated by underscore).
@@ -227,16 +230,20 @@ func (c *Component) HandlerManager() ComponentHandlerManager {
 // for additional information.
 //
 // In general, the common format for a Handler function is:
-//   func (session *discordgo.Session, event <event to call, e.g. discordgo.MessageCreate)
-func (c *ComponentHandlerContainer) Register(name string, handler interface{}) (string, error) {
+//
+//	func (session *discordgo.Session, event <event to call, e.g. discordgo.MessageCreate)
+func (c *ComponentHandlerContainer) Register(name string, handler interface{}) (string, bool) {
 	handlerName := GetHandlerName(c.owner, name)
 
 	if _, ok := GetHandler(handlerName); ok {
-		return handlerName, fmt.Errorf(
+		c.owner.Logger().Err(fmt.Errorf(
 			"an Handler for component \"%v\" with name \"%v\" is already registered (ID: \"%v\")",
 			c.owner.Name,
 			name,
-			handlerName)
+			handlerName),
+			"Failed to register handler using handler management!")
+
+		return handlerName, false
 	}
 
 	assignedEvent := &AssignedEventHandler{
@@ -253,7 +260,7 @@ func (c *ComponentHandlerContainer) Register(name string, handler interface{}) (
 		c.owner.Name,
 		handlerName)
 
-	return handlerName, nil
+	return handlerName, true
 }
 
 // createHandlerProxy creates a closure that acts as a proxy for the original Handler function.
@@ -330,11 +337,10 @@ func (c *ComponentHandlerContainer) addDiscordGoHandler(assignedEvent *AssignedE
 // RegisterOnce registers an event Handler as a one-time event Handler.
 // The registered Handler will be removed after being triggered once.
 //
-//
 // The passed Handler function will be:
-//   1. registered in DiscordGo as a Handler
-//   2. prepared to allow decorations
-//   3. saved with a name that allows to retrieve it later on
+//  1. registered in DiscordGo as a Handler
+//  2. prepared to allow decorations
+//  3. saved with a name that allows to retrieve it later on
 //
 // The passed name for the Handler is concatenated with the name of the
 // component that owns the Handler (separated by underscore).
@@ -344,19 +350,23 @@ func (c *ComponentHandlerContainer) addDiscordGoHandler(assignedEvent *AssignedE
 // for additional information.
 //
 // In general, the common format for a Handler function is:
-//   func (session *discordgo.Session, event <event to call, e.g. discordgo.MessageCreate)
+//
+//	func (session *discordgo.Session, event <event to call, e.g. discordgo.MessageCreate)
 func (c *ComponentHandlerContainer) RegisterOnce(
 	name string,
 	handler interface{},
-) (string, error) {
+) (string, bool) {
 	handlerName := GetHandlerName(c.owner, name)
 
 	if _, ok := GetHandler(handlerName); ok {
-		return handlerName, fmt.Errorf(
+		c.owner.Logger().Err(fmt.Errorf(
 			"an Handler for component \"%v\" with name \"%v\" is already registered (ID: \"%v\")",
 			c.owner.Name,
 			name,
-			handlerName)
+			handlerName),
+			"Failed to register one-time handler!")
+
+		return handlerName, false
 	}
 
 	assignedEvent := &AssignedEventHandler{
@@ -365,11 +375,14 @@ func (c *ComponentHandlerContainer) RegisterOnce(
 		handler:   handler,
 	}
 	c.addComponentHandler(handlerName, assignedEvent)
-	err := c.AddDecorator(name, decorateOneTimeHandler)
-	if nil != err {
-		return handlerName, fmt.Errorf(
+	ok := c.AddDecorator(name, decorateOneTimeHandler)
+	if !ok {
+		c.owner.Logger().Err(fmt.Errorf(
 			"failed to register cleanup decorator for one-time Handler with name \"%v\"",
-			handlerName)
+			handlerName),
+			"Failed to register one-time handler!")
+
+		return handlerName, false
 	}
 
 	c.addDiscordGoOnceTimeHandler(assignedEvent)
@@ -380,7 +393,7 @@ func (c *ComponentHandlerContainer) RegisterOnce(
 		c.owner.Name,
 		handlerName)
 
-	return handlerName, nil
+	return handlerName, true
 }
 
 // addDiscordGoOnceTimeHandler generates a Handler proxy and registers it for DiscordGo.

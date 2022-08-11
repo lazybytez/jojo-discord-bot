@@ -57,7 +57,8 @@ func init() {
 // LoadComponent loads the Ping-Pong Component
 func LoadComponent(discord *discordgo.Session) error {
 	// Register the messageCreate func as a callback for MessageCreate events.
-	_, _ = C.HandlerManager().Register("pingpong", onMessageCreate)
+	_, _ = C.HandlerManager().RegisterSimpleMessageHandler("ping", onPingMessageCreate, "ping")
+	_, _ = C.HandlerManager().RegisterSimpleMessageHandler("pong", onPongMessageCreate, "pong")
 
 	_ = C.SlashCommandManager().Register(pingCommand)
 	_ = C.SlashCommandManager().Register(pongCommand)
@@ -65,30 +66,36 @@ func LoadComponent(discord *discordgo.Session) error {
 	return nil
 }
 
-// onMessageCreate listens for new messages and replies with
-// "Ping!" or "Pong!" depending on the received message.
-func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if m.Author.ID == s.State.User.ID || m.Author.Bot {
+// onPingMessageCreate listens for new messages and replies with
+// "Pong!".
+func onPingMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
+	_, err := s.ChannelMessageSend(m.ChannelID, "Pong!")
+	if nil != err {
+		C.Logger().Warn("Failed to deliver \"Pong!\" message: %v", err.Error())
+
 		return
 	}
+	C.Logger().Info("Send \"Pong!\" into channel with ID \"%v\"", m.ChannelID)
+	//
+	//if m.Content == "pong" {
+	//	_, err := s.ChannelMessageSend(m.ChannelID, "Ping!")
+	//	if nil != err {
+	//		C.Logger().Warn("Failed to deliver \"Ping!\" message: %v", err.Error())
+	//
+	//		return
+	//	}
+	//	C.Logger().Info("Send \"Ping!\" into channel with ID \"%v\"", m.ChannelID)
+	//}
+}
 
-	if m.Content == "ping" {
-		_, err := s.ChannelMessageSend(m.ChannelID, "Pong!")
-		if nil != err {
-			C.Logger().Warn("Failed to deliver \"Pong!\" message: %v", err.Error())
+// onPingMessageCreate listens for new messages and replies with
+// "Ping!".
+func onPongMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
+	_, err := s.ChannelMessageSend(m.ChannelID, "Ping!")
+	if nil != err {
+		C.Logger().Warn("Failed to deliver \"Ping!\" message: %v", err.Error())
 
-			return
-		}
-		C.Logger().Info("Send \"Pong!\" into channel with ID \"%v\"", m.ChannelID)
+		return
 	}
-
-	if m.Content == "pong" {
-		_, err := s.ChannelMessageSend(m.ChannelID, "Ping!")
-		if nil != err {
-			C.Logger().Warn("Failed to deliver \"Ping!\" message: %v", err.Error())
-
-			return
-		}
-		C.Logger().Info("Send \"Ping!\" into channel with ID \"%v\"", m.ChannelID)
-	}
+	C.Logger().Info("Send \"Ping!\" into channel with ID \"%v\"", m.ChannelID)
 }
