@@ -28,19 +28,9 @@ func checkIfParameterOfArraysAreTheSame(t *testing.T, expect []string, g []strin
 	}
 }
 
-func TestImplode(t *testing.T) {
-	a := [10]string {"What", "is", "'Courage'?", "Courage", "is", "owning", "your", "feat!", "-" ,"Zeppeli" }
-	s := " "
-	e := "What is 'Courage'? Courage is owning your feat! - Zeppeli"
-
-	g := implode(s, a[:])
-
-	checkIfTwoStringsAreTheSame(t, e, g)
-}
-
 func TestCreateAnswerResultContent(t *testing.T) {
-	a := [4]string {"It", "was", "me", "Dio!"}
-	e := "It, was, me, Dio!"
+	a := [10]string {"What", "is", "'Courage'?", "Courage", "is", "owning", "your", "feat!", "-" ,"Zeppeli" }
+	e := "What, is, 'Courage'?, Courage, is, owning, your, feat!, -, Zeppeli"
 
 	r := createAnswerResultContent(a[:])
 

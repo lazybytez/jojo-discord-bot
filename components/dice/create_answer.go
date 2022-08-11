@@ -3,6 +3,7 @@ package dice
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 func createAnswerText(n int, d int, r []int) string {
@@ -36,24 +37,7 @@ func createAnswerResultTitle(n int) string {
 
 // Create the answer result content
 func createAnswerResultContent(s []string) string {
-	return implode(", ", s)
-}
-
-// Create one string with the array of string seperated with seperator (s)
-func implode(s string, array []string) string {
-	first := true
-	r := ""
-
-	for _, a := range array {
-		if (first) {
-			first = false
-			r += a
-		} else {
-			r += s + a
-		}
-	}
-
-	return r
+	return strings.Join(s, ", ")
 }
 
 // Convert an array of int to an array of string
