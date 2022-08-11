@@ -40,10 +40,8 @@ var C *api.Component
 func init() {
 	C = &api.Component{
 		// Metadata
-		Name:         "Ping Pong Component",
-		Description:  "This Component plays pingpong with you and returns Latency (maybe)",
-		DmPermission: true,
-
+		Name:        "Ping Pong Component",
+		Description: "This Component plays pingpong with you and returns Latency (maybe)",
 		State: api.State{
 			Enabled: true,
 		},

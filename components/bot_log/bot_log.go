@@ -31,7 +31,6 @@ func init() {
 		Name: "Bot Log",
 		Description: "This component prints out some basic information in the " +
 			"log when bot is ready or added to guilds.",
-		DmPermission: true,
 
 		State: api.State{
 			Enabled: true,
@@ -54,7 +53,7 @@ func LoadComponent(discord *discordgo.Session) error {
 
 // onBotReady acts as a Discord ready event handler.
 //
-//It prints out the name and discriminator of the bot and
+// It prints out the name and discriminator of the bot and
 // count of guilds the bot is on.
 func onBotReady(s *discordgo.Session, r *discordgo.Ready) {
 	C.Logger().Info("Logged in as: \"%v#%v\"!", s.State.User.Username, s.State.User.Discriminator)
