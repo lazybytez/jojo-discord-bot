@@ -11,7 +11,8 @@ func handleDice(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	d := getIntOption(options, "die-sites-number", 6)
 
 	r := rollDice(d, n)
-	sendAnswerToUser(n, d, r, s, i)
+	a := createAnswerText(n, d, r)
+	sendAnswer(s, i, a)
 }
 
 // create a map and insert the command options
@@ -33,4 +34,14 @@ func getIntOption(options map[string]*discordgo.ApplicationCommandInteractionDat
 	}
 
 	return o
+}
+
+// Send the Answer
+func sendAnswer(s *discordgo.Session, i *discordgo.InteractionCreate, answerText string) {
+	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: answerText,
+		},
+	})
 }
