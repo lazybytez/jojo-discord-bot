@@ -25,6 +25,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 const ModeSQLite = "SQLite"
@@ -50,7 +51,9 @@ func initGorm() {
 
 	log.Info().Msg("Open GORM instance...")
 	var err error
-	database, err = gorm.Open(*dial, &gorm.Config{})
+	database, err = gorm.Open(*dial, &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 	if nil != err {
 		ExitFatal(fmt.Sprintf("Failed to initialize database subsystem! Error: \"%v\"", err.Error()))
 	}
