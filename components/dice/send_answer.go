@@ -50,7 +50,7 @@ func implode(s string, array []string) string {
 
 // Convert an array of int to an array of string
 func arrayIntToArrayString(ints []int) []string {
-	strings := []string {}
+	strings := make([]string, len(ints))
 
 	for k, i := range ints {
 		strings[k] = strconv.Itoa(i)
