@@ -40,7 +40,6 @@ func init() {
 		// Metadata
 		Name:	"Dice Component",
 		Description: "This Component throws one or multiple dice",
-		DmPermission: true,
 
 		State: api.State{
 			Enabled: true,
