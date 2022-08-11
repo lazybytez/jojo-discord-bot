@@ -18,9 +18,7 @@
 
 package api
 
-import (
-	"fmt"
-)
+import "fmt"
 
 // Management tools that allow registering, unregistering
 // and decorating DiscordGo event handlers.
@@ -103,12 +101,13 @@ func (dC *decoratorChain) IsEmpty() bool {
 // a following one (this causes the event handling to be cancelled).
 //
 // Decorator functions should have the following format:
-//   func (
-//      assignedEvent AssignedEventHandler,
-//      originalHandler interface{},
-//      session *discordgo.Session,
-//      event interface{}
-//   )
+//
+//	func (
+//	   assignedEvent AssignedEventHandler,
+//	   originalHandler interface{},
+//	   session *discordgo.Session,
+//	   event interface{}
+//	)
 //
 // Unclear params:
 //   - event must be the event that is handled by the original Handler
@@ -116,19 +115,22 @@ func (dC *decoratorChain) IsEmpty() bool {
 //
 // Note that the name parameter is not the name for the decorator.
 // It is the name of the Handler that should be decorated
-func (c *ComponentHandlerContainer) AddDecorator(name string, decorator interface{}) error {
+func (c *ComponentHandlerContainer) AddDecorator(name string, decorator interface{}) bool {
 	handlerName := GetHandlerName(c.owner, name)
 	handler, ok := GetHandler(handlerName)
 
 	if !ok {
-		return fmt.Errorf(
+		c.owner.Logger().Err(fmt.Errorf(
 			"tried to decorate non-existent Handler with name \"%v\"",
-			handlerName)
+			handlerName),
+			"Failed to add decorator to a handler!")
+
+		return false
 	}
 
 	c.appendDecorator(handler, decorator)
 
-	return nil
+	return true
 }
 
 // appendDecorator takes a Handler and a decorator and appends it to

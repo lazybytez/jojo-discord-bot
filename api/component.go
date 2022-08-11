@@ -46,9 +46,8 @@ type State struct {
 // It holds basic metadata about the component
 type Component struct {
 	// Metadata
-	Name         string
-	Description  string
-	DmPermission bool
+	Name        string
+	Description string
 
 	// State
 	State State

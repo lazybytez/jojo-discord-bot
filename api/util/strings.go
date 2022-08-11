@@ -34,11 +34,11 @@ var snakeCaseAllCap = regexp.MustCompile(`([a-z\\d])([A-Z])`)
 //
 // Examples:
 //   - ThisIsATest => this_is_a_test
-//   - $ThisIsATest => $_this_is_a_test
 func StringToSnakeCase(str string) string {
-	snake := strings.ReplaceAll(str, " ", "")
+	snake := strings.ReplaceAll(str, " ", "_")
 	snake = snakeCaseFirstCap.ReplaceAllString(snake, "${1}_${2}")
 	snake = snakeCaseAllCap.ReplaceAllString(snake, "${1}_${2}")
+	snake = strings.ReplaceAll(snake, "__", "_")
 
 	return strings.ToLower(snake)
 }
