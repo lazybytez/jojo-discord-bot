@@ -20,6 +20,7 @@ package internal
 
 import (
 	"fmt"
+	dbAPI "github.com/lazybytez/jojo-discord-bot/api/database"
 	"github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -52,6 +53,11 @@ func initGorm() {
 	database, err = gorm.Open(*dial, &gorm.Config{})
 	if nil != err {
 		ExitFatal(fmt.Sprintf("Failed to initialize database subsystem! Error: \"%v\"", err.Error()))
+	}
+
+	err = dbAPI.Init(database)
+	if nil != err {
+		ExitGracefully(err.Error())
 	}
 
 	log.Info().Msg("Database subsystem has been initialized successfully!")
