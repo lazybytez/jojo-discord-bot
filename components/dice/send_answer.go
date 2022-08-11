@@ -6,14 +6,14 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func sendAnswerToUser(n int, d int, r []int) {
-	s := arrayIntToArrayString(r)
-	a := createAnswer(n, d, s)
-	sendAnswer(a)
+func sendAnswerToUser(n int, d int, r []int, s *discordgo.Session, i *discordgo.InteractionCreate) {
+	sArray := arrayIntToArrayString(r)
+	a := createAnswer(n, d, sArray)
+	sendAnswer(s, i, a)
 }
 
 // Create the answer to send
-func createAnswer(n int, d int, rolledDice []int) string {
+func createAnswer(n int, d int, rolledDice []string) string {
 	answer := fmt.Sprintf("You rolled %d d%d, The Results are:\n", n, d)
 	
 	answer += implode(", ", rolledDice)
@@ -22,12 +22,12 @@ func createAnswer(n int, d int, rolledDice []int) string {
 }
 
 // Send the Answer
-func sendAnswer(answerText string) {
+func sendAnswer(s *discordgo.Session, i *discordgo.InteractionCreate, answerText string) {
 	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: answerText,
-		}
+		},
 	})
 }
 
@@ -53,7 +53,7 @@ func arrayIntToArrayString(ints []int) []string {
 	strings := []string {}
 
 	for k, i := range ints {
-		strings[k] = strconf.Itoa(i)
+		strings[k] = strconv.Itoa(i)
 	}
 
 	return strings

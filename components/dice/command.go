@@ -7,11 +7,11 @@ import (
 
 func handleDice(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	options := getOptionsAsMap(i)
-	n := getIntOption(i, "number-dice", 1)
-	d := getIntOption(i, "die-sites-number", 6)
+	n := getIntOption(options, "number-dice", 1)
+	d := getIntOption(options, "die-sites-number", 6)
 
 	r := rollDice(n, d)
-	sendAnswerToUser(n, d, r)
+	sendAnswerToUser(n, d, r, s, i)
 }
 
 // create a map and insert the command options
@@ -29,8 +29,8 @@ func getOptionsAsMap(i *discordgo.InteractionCreate) map[string]*discordgo.Appli
 func getIntOption(options map[string]*discordgo.ApplicationCommandInteractionDataOption, name string, defaultValue int) int {
 	o := defaultValue
 	if opt, ok := options[name]; ok {
-		o = opt.IntValue()
+		o = int(opt.IntValue())
 	}
 
-	return 0
+	return o
 }

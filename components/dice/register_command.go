@@ -9,6 +9,7 @@ import (
 // Can be used to register the component or get information about it.
 var C *api.Component
 
+var minValue = float64(2)
 var diceCommand = &api.Command{
 	Cmd: &discordgo.ApplicationCommand{
 		Name: "dice",
@@ -18,15 +19,15 @@ var diceCommand = &api.Command{
 				Name: "die-sites-number",
 				Description: "The number of how many sites the die has, default is 6",
 				Type: discordgo.ApplicationCommandOptionInteger,
-				MinValue: 2,
+				MinValue: &minValue,
 				Required: false,
 			},
 			{
 				Name: "number-dice",
 				Description: "How many dice you want to throw, default is 1",
 				Type: discordgo.ApplicationCommandOptionInteger,
-				MinValue: 2,
-				Required: false
+				MinValue: &minValue,
+				Required: false,
 			},
 		},
 	},
@@ -55,4 +56,6 @@ func init() {
 func LoadComponent(discord *discordgo.Session) error {
 	// Register the messageCreate func as a callback for MessageCreate events.
 	_ = C.SlashCommandManager().Register(diceCommand)
+
+	return nil
 }
