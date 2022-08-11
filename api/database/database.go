@@ -96,10 +96,44 @@ func GetFirstEntity[C any](c *api.Component, entityContainer *C, conditions ...i
 	db := database.First(entityContainer, conditions...)
 
 	if nil != db.Error {
-		log.Err(c.Name, db.Error, "Something went wrong when retrieving an entity!")
+		log.Err(c.Name, db.Error, "Something went wrong when retrieving first entity!")
 	}
 
 	return db.RowsAffected > 0
+}
+
+// GetLastEntity fills the passed entity container with the last
+// found entity matching the passed conditions.
+//
+// Returns false if no entries could be found.
+func GetLastEntity[C any](c *api.Component, entityContainer *C, conditions ...interface{}) bool {
+	db := database.Last(entityContainer, conditions...)
+
+	if nil != db.Error {
+		log.Err(c.Name, db.Error, "Something went wrong when retrieving last entity!")
+	}
+
+	return db.RowsAffected > 0
+}
+
+// GetEntities fills the passed entity container slice with the entities
+// that have been found for the specified condition.
+func GetEntities[C any](c *api.Component, entityContainer []*C, conditions ...interface{}) bool {
+	db := database.Find(entityContainer, conditions...)
+
+	if nil != db.Error {
+		log.Err(c.Name, db.Error, "Something went wrong when retrieving entities!")
+	}
+
+	return db.RowsAffected > 0
+}
+
+// GetEntitiesComplex returns a gorm.DB pointer that allows to do a custom search.
+//
+// The returned gorm.DB instance is created by using gorm.DB.Model and is therefore
+// already prepared to get started with applying filters.
+func GetEntitiesComplex[C any](entityContainer []*C) *gorm.DB {
+	return database.Model(entityContainer)
 }
 
 // UpdateEntity can be used to update the passed entity in the database
