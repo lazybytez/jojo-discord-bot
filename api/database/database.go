@@ -111,3 +111,14 @@ func UpdateEntity[C any](c *api.Component, entityContainer *C, column string, va
 
 	return nil != db.Error && db.RowsAffected > 0
 }
+
+// DeleteEntity deletes the passed entity from the database.
+func DeleteEntity[C any](c *api.Component, entityContainer *C) bool {
+	db := database.Delete(entityContainer)
+
+	if nil != db.Error {
+		log.Err(c.Name, db.Error, "Something went wrong when deleting an entity!")
+	}
+
+	return nil != db.Error && db.RowsAffected > 0
+}
