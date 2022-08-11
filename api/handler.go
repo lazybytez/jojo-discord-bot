@@ -23,6 +23,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api/util"
 	"reflect"
+	"regexp"
 	"sync"
 )
 
@@ -80,6 +81,7 @@ type AssignedEventHandler struct {
 	handler         interface{}
 	decorators      *decoratorChain
 	handledMessages []string
+	handledPatterns []*regexp.Regexp
 
 	unregister func()
 }

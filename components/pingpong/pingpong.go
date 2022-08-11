@@ -75,17 +75,6 @@ func onPingMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		return
 	}
-	C.Logger().Info("Send \"Pong!\" into channel with ID \"%v\"", m.ChannelID)
-	//
-	//if m.Content == "pong" {
-	//	_, err := s.ChannelMessageSend(m.ChannelID, "Ping!")
-	//	if nil != err {
-	//		C.Logger().Warn("Failed to deliver \"Ping!\" message: %v", err.Error())
-	//
-	//		return
-	//	}
-	//	C.Logger().Info("Send \"Ping!\" into channel with ID \"%v\"", m.ChannelID)
-	//}
 }
 
 // onPingMessageCreate listens for new messages and replies with
@@ -97,5 +86,4 @@ func onPongMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		return
 	}
-	C.Logger().Info("Send \"Ping!\" into channel with ID \"%v\"", m.ChannelID)
 }
