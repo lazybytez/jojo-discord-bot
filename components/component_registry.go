@@ -21,8 +21,9 @@ package components
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/api/components/bot_core"
+	"github.com/lazybytez/jojo-discord-bot/api/components/bot_log"
 	"github.com/lazybytez/jojo-discord-bot/api/log"
-	"github.com/lazybytez/jojo-discord-bot/components/bot_log"
 	"github.com/lazybytez/jojo-discord-bot/components/pingpong"
 )
 
@@ -34,6 +35,7 @@ const LogComponentRegistry = "Component Manager"
 //
 // Enabled components should be registered here.
 var Components = []*api.Component{
+	bot_core.C,
 	bot_log.C,
 	pingpong.C,
 }
