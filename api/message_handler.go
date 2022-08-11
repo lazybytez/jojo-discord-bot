@@ -175,8 +175,6 @@ func decorateSimpleMessageHandler(
 			return
 		}
 	}
-
-	return
 }
 
 // RegisterComplexMessageHandler can be used to register a new AssignedEventHandler to handle messages.
@@ -282,6 +280,4 @@ func decorateComplexMessageHandler(
 			return
 		}
 	}
-
-	return
 }

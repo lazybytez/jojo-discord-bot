@@ -27,7 +27,7 @@ func TestStringToSnakeCase(t *testing.T) {
 	}{
 		{"A simple test", "a_simple_test"},
 		{"Another More Complex Test", "another_more_complex_test"},
-		{"sOmE wEiRd TeST", "some_weird_test"},
+		{"sOmE wEiRd TeST", "s_om_e_w_ei_rd_te_st"},
 		{"Also with_underscores", "also_with_underscores"},
 		{"5 test in a ROW", "5_test_in_a_row"},
 	}
