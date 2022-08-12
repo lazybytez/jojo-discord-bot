@@ -29,6 +29,8 @@ import (
 const envFile = ".env"
 
 const token = "TOKEN"
+const sqlMode = "DB_MODE"
+const sqlDsn = "DB_DSN"
 
 // JojoBotConfig represents the entire environment variable based configuration
 // of the application. Globally available values are public,
@@ -38,7 +40,9 @@ const token = "TOKEN"
 // When new configuration options get added to the application, they should be appended
 // to the structure.
 type JojoBotConfig struct {
-	token string
+	token   string
+	sqlMode string
+	sqlDsn  string
 }
 
 // Config holds the currently loaded configuration
@@ -69,7 +73,9 @@ func init() {
 	log.Info().Msgf("Sucessfully loaded env file from \"%v\"!", envFilePath)
 
 	Config = JojoBotConfig{
-		token: os.Getenv(token),
+		token:   os.Getenv(token),
+		sqlMode: os.Getenv(sqlMode),
+		sqlDsn:  os.Getenv(sqlDsn),
 	}
 
 	cleanUpSensitiveValues()

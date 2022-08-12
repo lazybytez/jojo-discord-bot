@@ -23,6 +23,9 @@ import (
 	"github.com/lazybytez/jojo-discord-bot/api"
 )
 
+// Core component that handles logging of essential
+// events that happen during the bots lifecycle.
+
 var C *api.Component
 
 func init() {
