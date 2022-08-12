@@ -4,6 +4,9 @@ FROM golang:1.19-alpine
 RUN mkdir /app
 WORKDIR /app
 
+# Install necessary dependencies
+RUN apk update && apk upgrade && apk add g++
+
 # Pre-download to enable dependency caching
 COPY go.mod go.sum ./
 RUN go mod download && go mod verify
