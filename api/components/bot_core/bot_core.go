@@ -30,6 +30,7 @@ var C *api.Component
 func init() {
 	C = &api.Component{
 		// Metadata
+		Code:        "bot_core",
 		Name:        "Bot Core",
 		Description: "This component handles core routines and database management.",
 
@@ -48,6 +49,7 @@ func init() {
 // and registration of important core event handlers.
 func LoadComponent(discord *discordgo.Session) error {
 	prepareDatabase()
+	registerAvailableComponents()
 
 	_, _ = C.HandlerManager().Register("guild_join", onGuildJoin)
 	_, _ = C.HandlerManager().Register("guild_update", onGuildUpdate)

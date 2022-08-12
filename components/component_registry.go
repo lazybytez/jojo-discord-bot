@@ -40,6 +40,12 @@ var Components = []*api.Component{
 	pingpong.C,
 }
 
+// Ensure the API knows about the registered
+// components
+func init() {
+	api.Components = Components
+}
+
 // RegisterComponents handles the initialization of
 // all components listed in the Components array.
 //

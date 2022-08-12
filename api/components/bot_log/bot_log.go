@@ -31,6 +31,7 @@ var C *api.Component
 func init() {
 	C = &api.Component{
 		// Metadata
+		Code: "bot_log",
 		Name: "Bot Log",
 		Description: "This component prints out some basic information in the " +
 			"log when bot is ready or added to guilds.",

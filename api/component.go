@@ -22,6 +22,11 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// Components holds all registered components.
+// The field is automatically populated before component loading
+// starts by the init function of the components package.
+var Components []*Component
+
 // LifecycleHooks allow to specify functions that should be called
 // when components get loaded and unloaded.
 //
@@ -46,6 +51,7 @@ type State struct {
 // It holds basic metadata about the component
 type Component struct {
 	// Metadata
+	Code        string
 	Name        string
 	Description string
 
