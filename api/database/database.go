@@ -55,14 +55,7 @@ func Init(db *gorm.DB) error {
 
 	database = db
 
-	return autoMigrateDefaultEntities()
-}
-
-// autoMigrateDefaultEntities runs the automated migrations
-// for all core entities which are not managed through the
-// components of the application but rather through the core
-func autoMigrateDefaultEntities() error {
-	return RegisterEntity(nil, &Guild{})
+	return nil
 }
 
 // RegisterEntity registers a new entity (struct) and runs its automated

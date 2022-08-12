@@ -43,11 +43,28 @@ func init() {
 	}
 }
 
+// LoadComponent loads the bot core component
+// and handles migration of core entities
+// and registration of important core event handlers.
 func LoadComponent(discord *discordgo.Session) error {
+	prepareDatabase()
+
 	_, _ = C.HandlerManager().Register("guild_join", onGuildJoin)
 	_, _ = C.HandlerManager().Register("guild_update", onGuildUpdate)
 
 	return nil
+}
+
+// prepareDatabase updates the schema with the core entities which lay
+// in the database package.
+func prepareDatabase() {
+	// Guild related entities
+	_ = database.RegisterEntity(C, &database.Guild{})
+
+	// Component related entities
+	_ = database.RegisterEntity(C, &database.RegisteredComponent{})
+	_ = database.RegisterEntity(C, &database.ComponentStatus{})
+	_ = database.RegisterEntity(C, &database.GlobalComponentStatus{})
 }
 
 // onGuildJoin is triggered when the bot joins a guild.
