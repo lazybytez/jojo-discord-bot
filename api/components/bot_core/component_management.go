@@ -30,12 +30,35 @@ import (
 // about orphaned components.
 func registerAvailableComponents() {
 	for _, component := range api.Components { // safe to assume that Components is populated
-		registeredComponent, ok := database.GetRegisteredComponent(C, component.Name)
+		registeredComponent, ok := database.GetRegisteredComponent(C, component.Code)
 
 		if !ok {
 			registeredComponent.Code = component.Code
 
 			database.Create(registeredComponent)
+		}
+	}
+}
+
+// ensureGlobalComponentStatusExists ensures that for every component
+// a database entry in the global status table exists.
+//
+// By default, this is created with an enabled status, as the global status
+// is only meant for maintenance purposes.
+func ensureGlobalComponentStatusExists() {
+	for _, component := range api.Components { // safe to assume that Components is populated
+		registeredComponent, ok := database.GetRegisteredComponent(C, component.Code)
+
+		if !ok {
+			continue
+		}
+
+		globalComponentStatus, ok := database.GetGlobalComponentStatus(C, registeredComponent.ID)
+		if !ok {
+			globalComponentStatus.Component = *registeredComponent
+			globalComponentStatus.Enabled = true
+
+			database.Create(globalComponentStatus)
 		}
 	}
 }

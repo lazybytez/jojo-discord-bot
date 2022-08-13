@@ -43,8 +43,9 @@ func init() {
 		Code:        "ping_pong",
 		Name:        "Ping Pong Component",
 		Description: "This Component plays pingpong with you and returns Latency (maybe)",
-		State: api.State{
-			Enabled: true,
+
+		State: &api.State{
+			DefaultEnabled: true,
 		},
 
 		Lifecycle: api.LifecycleHooks{

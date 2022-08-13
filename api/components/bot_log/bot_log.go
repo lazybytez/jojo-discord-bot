@@ -36,8 +36,8 @@ func init() {
 		Description: "This component prints out some basic information in the " +
 			"log when bot is ready or added to guilds.",
 
-		State: api.State{
-			Enabled: true,
+		State: &api.State{
+			DefaultEnabled: true,
 		},
 
 		Lifecycle: api.LifecycleHooks{

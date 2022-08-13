@@ -20,32 +20,15 @@ package database
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/api/cache"
 	"gorm.io/gorm"
-	"sync"
 )
 
 const ColumnName = "code"
 
-// registeredComponentCache is a simple struct that
-// is used to create cache instances that allow to cache
-// RegisteredComponent
-type registeredComponentCacheContainer struct {
-	// registeredComponentCache is a map that holds component
-	// codes and their reference.
-	//
-	// It acts as a cache to prevent exhaustive database calls
-	// for something that is required during the entire application
-	// lifetime and does not change.
-	cache map[string]*RegisteredComponent
-	lock  sync.RWMutex
-}
-
 // registeredComponentCache is the used instance of the registeredComponentCacheContainer
 // that allows caching of RegisteredComponent
-var registeredComponentCache = &registeredComponentCacheContainer{
-	map[string]*RegisteredComponent{},
-	sync.RWMutex{},
-}
+var registeredComponentCache = cache.New[string, RegisteredComponent](0)
 
 // RegisteredComponent represents a single component that is or was known
 // to the system.
@@ -63,9 +46,7 @@ type RegisteredComponent struct {
 // If no RegisteredComponent can be found, the function returns a new empty
 // RegisteredComponent.
 func GetRegisteredComponent(c *api.Component, code string) (*RegisteredComponent, bool) {
-	registeredComponentCache.lock.RLock()
-	comp, ok := registeredComponentCache.cache[code]
-	registeredComponentCache.lock.RUnlock()
+	comp, ok := cache.Get(registeredComponentCache, code)
 
 	if ok {
 		return comp, true
@@ -73,21 +54,13 @@ func GetRegisteredComponent(c *api.Component, code string) (*RegisteredComponent
 
 	regComp := &RegisteredComponent{}
 	ok = GetFirstEntity(c, regComp, "code = ?", code)
-	if !ok {
-		UpdateCache(code, regComp)
 
-		return regComp, false
-	}
+	UpdateRegisteredComponent(code, regComp)
 
-	UpdateCache(code, regComp)
-
-	return regComp, true
+	return regComp, ok
 }
 
-// UpdateCache adds or updates a cached item in the RegisteredComponent cache.
-func UpdateCache(code string, component *RegisteredComponent) {
-	registeredComponentCache.lock.Lock()
-	defer registeredComponentCache.lock.Unlock()
-
-	registeredComponentCache.cache[code] = component
+// UpdateRegisteredComponent adds or updates a cached item in the RegisteredComponent cache.
+func UpdateRegisteredComponent(code string, component *RegisteredComponent) {
+	cache.Update(registeredComponentCache, code, component)
 }

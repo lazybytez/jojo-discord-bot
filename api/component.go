@@ -41,8 +41,13 @@ type LifecycleHooks struct {
 //   - is the component enabled?
 //   - is the component currently loaded?
 type State struct {
-	Loaded  bool
-	Enabled bool
+	// Loaded is used to determine if the component
+	// has been loaded properly or not.
+	Loaded bool
+
+	// DefaultEnabled is the default status to set for the component
+	//in the database when the bot joins a new guild.
+	DefaultEnabled bool
 }
 
 // Component is the base structure that must be initialized
@@ -56,7 +61,7 @@ type Component struct {
 	Description string
 
 	// State
-	State State
+	State *State
 
 	// Lifecycle hooks
 	Lifecycle LifecycleHooks

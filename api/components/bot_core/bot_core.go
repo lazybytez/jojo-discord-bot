@@ -34,8 +34,8 @@ func init() {
 		Name:        "Bot Core",
 		Description: "This component handles core routines and database management.",
 
-		State: api.State{
-			Enabled: true,
+		State: &api.State{
+			DefaultEnabled: true,
 		},
 
 		Lifecycle: api.LifecycleHooks{
@@ -49,7 +49,7 @@ func init() {
 // and registration of important core event handlers.
 func LoadComponent(discord *discordgo.Session) error {
 	prepareDatabase()
-	registerAvailableComponents()
+	initializeComponentManagement()
 
 	_, _ = C.HandlerManager().Register("guild_join", onGuildJoin)
 	_, _ = C.HandlerManager().Register("guild_update", onGuildUpdate)
@@ -67,6 +67,13 @@ func prepareDatabase() {
 	_ = database.RegisterEntity(C, &database.RegisteredComponent{})
 	_ = database.RegisterEntity(C, &database.ComponentStatus{})
 	_ = database.RegisterEntity(C, &database.GlobalComponentStatus{})
+}
+
+// initializeComponentManagement initializes the component management
+// by populating the database with necessary data and pre-warming the cache.
+func initializeComponentManagement() {
+	registerAvailableComponents()
+	ensureGlobalComponentStatusExists()
 }
 
 // onGuildJoin is triggered when the bot joins a guild.
