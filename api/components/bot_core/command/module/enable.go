@@ -19,6 +19,7 @@
 package module
 
 import (
+	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/database"
@@ -30,24 +31,9 @@ func handleModuleEnable(
 	i *discordgo.InteractionCreate,
 	option *discordgo.ApplicationCommandInteractionDataOption,
 ) {
-	resp := &discordgo.InteractionResponseData{
-		Embeds: []*discordgo.MessageEmbed{
-			{
-				Title:  "Enable Module",
-				Color:  api.DefaultEmbedColor,
-				Fields: []*discordgo.MessageEmbedField{},
-			},
-		},
-	}
+	resp := generateInteractionResponseDataTemplate("Enable Module", "")
 
-	var comp *api.Component
-	for _, c := range api.Components {
-		if c.Code == option.Options[0].Value {
-			comp = c
-			break
-		}
-	}
-
+	comp := findComponent(option)
 	if nil == comp || api.IsCoreComponent(comp) {
 		respondWithMissingComponent(s, i, resp, option.Options[0].Value)
 
@@ -68,6 +54,27 @@ func handleModuleEnable(
 		return
 	}
 
+	if !enableComponentForGuild(s, i, guild, regComp, resp, comp) {
+		respondWithAlreadyEnabled(s, i, resp, comp.Name)
+	}
+
+	generateModuleEnableSuccessfulEmbedField(resp, comp)
+	respond(s, i, resp)
+}
+
+// enableComponentForGuild enables the specified component
+// for the specified guild, if not already enabled.
+//
+// Returns true if the component has been enabled and was not
+// enabled before.
+func enableComponentForGuild(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	guild *database.Guild,
+	regComp *database.RegisteredComponent,
+	resp *discordgo.InteractionResponseData,
+	comp *api.Component,
+) bool {
 	guildSpecificStatus, ok := database.GetComponentStatus(C, guild.ID, regComp.ID)
 	if !ok {
 		guildSpecificStatus.Component = *regComp
@@ -76,36 +83,25 @@ func handleModuleEnable(
 
 		database.Create(guildSpecificStatus)
 
-		resp.Embeds[0].Fields = []*discordgo.MessageEmbedField{
-			{
-				Name:   "Module",
-				Value:  comp.Name,
-				Inline: false,
-			},
-			{
-				Name:   "Status",
-				Value:  ":white_check_mark: - The module has been enabled!",
-				Inline: false,
-			},
-		}
+		generateModuleEnableSuccessfulEmbedField(resp, comp)
+		respond(s, i, resp)
 
-		_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: resp,
-		})
-
-		return
+		return true
 	}
 
 	if guildSpecificStatus.Enabled {
-		respondWithAlreadyEnabled(s, i, resp, comp.Name)
-
-		return
+		return false
 	}
 
 	guildSpecificStatus.Enabled = true
 	database.Save(guildSpecificStatus)
 
+	return true
+}
+
+// generateModuleEnableSuccessfulEmbedField creates the necessary embed fields
+// used to response to a successful module enable command.
+func generateModuleEnableSuccessfulEmbedField(resp *discordgo.InteractionResponseData, comp *api.Component) {
 	resp.Embeds[0].Fields = []*discordgo.MessageEmbedField{
 		{
 			Name:   "Module",
@@ -118,9 +114,24 @@ func handleModuleEnable(
 			Inline: false,
 		},
 	}
+}
 
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: resp,
-	})
+// respondWithAlreadyEnabled fills the passed discordgo.InteractionResponseData
+// with an embed field that indicates that the specified component is already enabled.
+func respondWithAlreadyEnabled(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	resp *discordgo.InteractionResponseData,
+	componentName interface{},
+) {
+	embeds := []*discordgo.MessageEmbedField{
+		{
+			Name:  ":x: Error",
+			Value: fmt.Sprintf("Module with name \"%v\" is already enabled!", componentName),
+		},
+	}
+
+	resp.Embeds[0].Fields = embeds
+
+	respond(s, i, resp)
 }
