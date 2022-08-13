@@ -78,7 +78,7 @@ func InitCommandHandling(session *discordgo.Session) error {
 		return errors.New("cannot initialize command handling system twice")
 	}
 
-	session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	unregisterCommandHandler = session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if command, ok := componentCommandMap[i.ApplicationCommandData().Name]; ok {
 			command.Handler(s, i)
 		}

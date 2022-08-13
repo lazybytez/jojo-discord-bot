@@ -56,6 +56,8 @@ func LoadComponent(discord *discordgo.Session) error {
 		"populate_default_guild_component_status",
 		handleInitialComponentStatusOnGuildJoin)
 
+	_ = C.SlashCommandManager().Register(jojoCommand)
+
 	return nil
 }
 
