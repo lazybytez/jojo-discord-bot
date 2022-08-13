@@ -56,7 +56,13 @@ func LoadComponent(discord *discordgo.Session) error {
 		"populate_default_guild_component_status",
 		handleInitialComponentStatusOnGuildJoin)
 
-	_ = C.SlashCommandManager().Register(jojoCommand)
+	// We need to handle the JOJO command special as it needs access to the component list.
+	// This is only possible after the API has been properly initialized and the components.Components
+	// list has been accessed once.
+	//
+	// Therefore, we configure and register the command when this core component is
+	// loaded, as at this point the API should know the components too.
+	initAndRegisterJojoCommand()
 
 	return nil
 }

@@ -24,27 +24,69 @@ import (
 	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
-var jojoCommand = &api.Command{
-	Cmd: &discordgo.ApplicationCommand{
-		Name:        "jojo",
-		Description: "Manage modules and core settings of the bot!",
-		Options: []*discordgo.ApplicationCommandOption{
+// jojoCommand holds the command configuration for the jojo command.
+var jojoCommand *api.Command
 
-			{
-				Name:        "module",
-				Description: "Manage which modules should be enabled / disabled on your server!",
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Name:        "list",
-						Description: "List all modules and their status",
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
+// getModuleCommandChoices builds a slice containing all available modules
+// as command option choices
+func getModuleCommandChoices() []*discordgo.ApplicationCommandOptionChoice {
+	availableModuleChoices := make([]*discordgo.ApplicationCommandOptionChoice, 0)
+
+	for _, comp := range api.Components {
+		if api.IsCoreComponent(comp) {
+			continue
+		}
+
+		availableModuleChoices = append(availableModuleChoices, &discordgo.ApplicationCommandOptionChoice{
+			Name:  comp.Name,
+			Value: comp.Code,
+		})
+	}
+
+	return availableModuleChoices
+}
+
+// initAndRegisterJojoCommand initializes the jojo command variable and registers the command
+// in the command API
+func initAndRegisterJojoCommand() {
+	jojoCommand = &api.Command{
+		Cmd: &discordgo.ApplicationCommand{
+			Name:        "jojo",
+			Description: "Manage modules and core settings of the bot!",
+			Options: []*discordgo.ApplicationCommandOption{
+
+				{
+					Name:        "module",
+					Description: "Manage which modules should be enabled / disabled on your server!",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Name:        "list",
+							Description: "List all modules and their status",
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+						},
+						{
+							Name:        "show",
+							Description: "Show information about a specific module",
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+							Options: []*discordgo.ApplicationCommandOption{
+								{
+									Name:        "module",
+									Description: "The name of the module to show information about",
+									Required:    true,
+									Type:        discordgo.ApplicationCommandOptionString,
+									Choices:     getModuleCommandChoices(),
+								},
+							},
+						},
 					},
+					Type: discordgo.ApplicationCommandOptionSubCommandGroup,
 				},
-				Type: discordgo.ApplicationCommandOptionSubCommandGroup,
 			},
 		},
-	},
-	Handler: handleJojoCommand,
+		Handler: handleJojoCommand,
+	}
+
+	_ = C.SlashCommandManager().Register(jojoCommand)
 }
 
 // handleJojoCommand handles the parent JOJO command and delegates sub-command
