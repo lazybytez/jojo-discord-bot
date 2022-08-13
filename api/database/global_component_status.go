@@ -77,6 +77,6 @@ func GetGlobalComponentStatus(c *api.Component, registeredComponentId uint) (*Gl
 }
 
 // UpdateGlobalComponentStatus adds or updates a cached item in the GlobalComponentStatus cache.
-func UpdateGlobalComponentStatus(c *api.Component, registeredComponentId uint, component *GlobalComponentStatus) {
+func UpdateGlobalComponentStatus(_ *api.Component, registeredComponentId uint, component *GlobalComponentStatus) {
 	cache.Update(globalComponentStatusCache, registeredComponentId, component)
 }

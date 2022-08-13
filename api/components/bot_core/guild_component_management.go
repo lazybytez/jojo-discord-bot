@@ -26,7 +26,7 @@ import (
 
 // handleInitialComponentStatusOnGuildJoin ensures that components that are enabled by default
 // are written to the database and - if newly written enabled by default.
-func handleInitialComponentStatusOnGuildJoin(session *discordgo.Session, create *discordgo.GuildCreate) {
+func handleInitialComponentStatusOnGuildJoin(_ *discordgo.Session, create *discordgo.GuildCreate) {
 	guild, ok := database.GetGuild(C, create.ID)
 
 	if !ok {

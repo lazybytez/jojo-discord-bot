@@ -80,7 +80,7 @@ func GetGuildComponentStatusDisplay(c *api.Component, guildId uint, componentId 
 }
 
 // UpdateComponentStatus adds or updates a cached item in the ComponentStatus cache.
-func UpdateComponentStatus(c *api.Component, guildId uint, componentId uint, component *ComponentStatus) {
+func UpdateComponentStatus(_ *api.Component, guildId uint, componentId uint, component *ComponentStatus) {
 	cache.Update(componentStatusCache, getComponentStatusCacheKey(guildId, componentId), component)
 }
 

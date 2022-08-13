@@ -59,6 +59,6 @@ func GetRegisteredComponent(c *api.Component, code string) (*RegisteredComponent
 }
 
 // UpdateRegisteredComponent adds or updates a cached item in the RegisteredComponent cache.
-func UpdateRegisteredComponent(c *api.Component, code string, component *RegisteredComponent) {
+func UpdateRegisteredComponent(_ *api.Component, code string, component *RegisteredComponent) {
 	cache.Update(registeredComponentCache, code, component)
 }

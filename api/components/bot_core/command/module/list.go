@@ -105,7 +105,7 @@ func generateComponentStatusTable(i *discordgo.InteractionCreate) (string, strin
 			continue
 		}
 
-		guildSpecificStatus, ok := database.GetGuildComponentStatusDisplay(C, guild.ID, regComp.ID)
+		guildSpecificStatus, _ := database.GetGuildComponentStatusDisplay(C, guild.ID, regComp.ID)
 		compStatus += guildSpecificStatus
 	}
 

@@ -46,7 +46,7 @@ func init() {
 	}
 }
 
-func LoadComponent(discord *discordgo.Session) error {
+func LoadComponent(_ *discordgo.Session) error {
 	_, _ = C.HandlerManager().RegisterOnce("botready", onBotReady)
 
 	_, _ = C.HandlerManager().Register("guild_join", onGuildJoin)
@@ -59,7 +59,7 @@ func LoadComponent(discord *discordgo.Session) error {
 //
 // It prints out the name and discriminator of the bot and
 // count of guilds the bot is on.
-func onBotReady(s *discordgo.Session, r *discordgo.Ready) {
+func onBotReady(s *discordgo.Session, _ *discordgo.Ready) {
 	C.Logger().Info("Logged in as: \"%v#%v\"!", s.State.User.Username, s.State.User.Discriminator)
 	C.Logger().Info("The bot is registered on \"%v\" guilds!", len(s.State.Guilds))
 }
@@ -67,13 +67,13 @@ func onBotReady(s *discordgo.Session, r *discordgo.Ready) {
 // onGuildJoin is triggered when the bot joins a guild.
 //
 // It provides information about the guild that has been joined.
-func onGuildJoin(s *discordgo.Session, g *discordgo.GuildCreate) {
+func onGuildJoin(_ *discordgo.Session, g *discordgo.GuildCreate) {
 	C.Logger().Info("The bot joined the guild \"%v\" with ID \"%v\"", g.Name, g.ID)
 }
 
 // onGuildJoin is triggered when the bot leaves a guild.
 //
 // It provides information about the guild that has been left.
-func onGuildLeave(s *discordgo.Session, g *discordgo.GuildDelete) {
+func onGuildLeave(_ *discordgo.Session, g *discordgo.GuildDelete) {
 	C.Logger().Info("The bot left the guild \"%v\" with ID \"%v\"", g.Name, g.ID)
 }

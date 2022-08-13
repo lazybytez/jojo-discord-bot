@@ -55,7 +55,7 @@ func init() {
 }
 
 // LoadComponent loads the Ping-Pong Component
-func LoadComponent(discord *discordgo.Session) error {
+func LoadComponent(_ *discordgo.Session) error {
 	// Register the messageCreate func as a callback for MessageCreate events.
 	_, _ = C.HandlerManager().RegisterSimpleMessageHandler("ping", onPingMessageCreate, "ping")
 	_, _ = C.HandlerManager().RegisterSimpleMessageHandler("pong", onPongMessageCreate, "pong")

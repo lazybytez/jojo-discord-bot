@@ -46,7 +46,7 @@ func init() {
 // LoadComponent loads the bot core component
 // and handles migration of core entities
 // and registration of important core event handlers.
-func LoadComponent(discord *discordgo.Session) error {
+func LoadComponent(_ *discordgo.Session) error {
 	prepareDatabase()
 	initializeComponentManagement()
 

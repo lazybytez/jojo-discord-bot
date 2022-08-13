@@ -28,7 +28,7 @@ import (
 //
 // It ensures that every guild that isn't already known is registered
 // in the database. It also keeps the name of the guild updated.
-func handleGuildRegisterOnJoin(s *discordgo.Session, g *discordgo.GuildCreate) {
+func handleGuildRegisterOnJoin(_ *discordgo.Session, g *discordgo.GuildCreate) {
 	guildId, err := strconv.Atoi(g.ID)
 	if nil != err {
 		C.Logger().Warn("Joined guild with ID \"%v\" but could not convert ID to int!", g.ID)
@@ -55,7 +55,7 @@ func handleGuildRegisterOnJoin(s *discordgo.Session, g *discordgo.GuildCreate) {
 
 // handleGuildUpdateOnUpdate cares about updating the stored guild name
 // in the database.
-func handleGuildUpdateOnUpdate(session *discordgo.Session, g *discordgo.GuildUpdate) {
+func handleGuildUpdateOnUpdate(_ *discordgo.Session, g *discordgo.GuildUpdate) {
 	guildId, err := strconv.Atoi(g.ID)
 	if nil != err {
 		C.Logger().Warn("Joined guild with ID \"%v\" named \"%v\" but could not convert ID to int!",
