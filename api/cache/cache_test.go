@@ -68,10 +68,12 @@ func TestGet(t *testing.T) {
 			map[string]*Item[*string]{},
 			sync.RWMutex{},
 			duration.Milliseconds(),
+			nil,
 		}
 
 		testCache.cache[table.key] = &Item[*string]{
 			table.value,
+			time.Now(),
 			time.Now(),
 		}
 
@@ -99,6 +101,7 @@ func TestUpdate(t *testing.T) {
 		map[string]*Item[*string]{},
 		sync.RWMutex{},
 		0,
+		nil,
 	}
 
 	if r, ok := cache.cache[testKey]; ok {

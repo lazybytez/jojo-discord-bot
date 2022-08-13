@@ -115,6 +115,7 @@ func Update[I comparable, C any](cache *Cache[I, C], key I, value *C) {
 
 	item.value = value
 	item.since = time.Now()
+	item.lastAccessed = time.Now()
 }
 
 // EnableAutoCleanup enables the automated cleanup of
