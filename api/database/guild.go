@@ -40,11 +40,12 @@ type Guild struct {
 // guildCache caches the guilds the current instance is on.
 // A Guild is cached for 10 minutes before the application needs to pull it
 // again.
-//
-// We just leave orphaned guilds that the bot left in cache, as a garbage collector
-// task will clean up every few minutes
-// TODO: Implement automated cache cleanup
 var guildCache = cache.New[int, Guild](10 * time.Minute)
+
+// init ensure cache cleanup task is running
+func init() {
+	guildCache.EnableAutoCleanup(10 * time.Minute)
+}
 
 // GetGuild tries to get a Guild from the
 // cache. If no cache entry is present, a request to the database will be made.

@@ -43,6 +43,11 @@ type ComponentStatus struct {
 // amount of database calls for the global component status.
 var componentStatusCache = cache.New[string, ComponentStatus](10 * time.Minute)
 
+// init ensure cache cleanup task is running
+func init() {
+	componentStatusCache.EnableAutoCleanup(10 * time.Minute)
+}
+
 // GetComponentStatus tries to get a ComponentStatus from the
 // cache. If no cache entry is present, a request to the database will be made.
 // If no ComponentStatus can be found, the function returns a new empty

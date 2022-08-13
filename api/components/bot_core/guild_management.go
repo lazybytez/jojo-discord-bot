@@ -36,9 +36,7 @@ func handleGuildRegisterOnJoin(_ *discordgo.Session, g *discordgo.GuildCreate) {
 		return
 	}
 
-	guild := database.Guild{}
-
-	ok := database.GetFirstEntity(C, &guild, database.ColumnGuildId+" = ?", guildId)
+	guild, ok := database.GetGuild(C, g.ID)
 	if !ok {
 		guild.GuildID = guildId
 		guild.Name = g.Name
@@ -56,18 +54,7 @@ func handleGuildRegisterOnJoin(_ *discordgo.Session, g *discordgo.GuildCreate) {
 // handleGuildUpdateOnUpdate cares about updating the stored guild name
 // in the database.
 func handleGuildUpdateOnUpdate(_ *discordgo.Session, g *discordgo.GuildUpdate) {
-	guildId, err := strconv.Atoi(g.ID)
-	if nil != err {
-		C.Logger().Warn("Joined guild with ID \"%v\" named \"%v\" but could not convert ID to int!",
-			g.ID,
-			g.Name)
-
-		return
-	}
-
-	guild := database.Guild{}
-
-	ok := database.GetFirstEntity(C, &guild, database.ColumnGuildId+" = ?", guildId)
+	guild, ok := database.GetGuild(C, g.ID)
 	if !ok {
 		C.Logger().Warn("Could not update guild with ID \"%v\" named \"%v\" as it is missing in database!",
 			g.ID,
