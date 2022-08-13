@@ -67,7 +67,7 @@ func Get[I comparable, C any](cache *Cache[I, C], key I) (*C, bool) {
 		return nil, false
 	}
 
-	timeDiff := time.Now().Sub(item.since).Milliseconds()
+	timeDiff := time.Since(item.since).Milliseconds()
 	if cache.lifetime != 0 && timeDiff > cache.lifetime {
 		return nil, false
 	}
