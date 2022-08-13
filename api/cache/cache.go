@@ -50,7 +50,7 @@ type Cache[I comparable, C any] struct {
 	cache       map[I]*Item[*C]
 	lock        sync.RWMutex
 	lifetime    int64
-	stopCleanup chan bool
+	autoCleanup bool
 }
 
 // Item is a single cache item that holds
@@ -77,7 +77,7 @@ func New[I comparable, C any](lifetime time.Duration) *Cache[I, C] {
 		map[I]*Item[*C]{},
 		sync.RWMutex{},
 		lifetime.Milliseconds(),
-		nil,
+		false,
 	}
 }
 
@@ -115,7 +115,6 @@ func Update[I comparable, C any](cache *Cache[I, C], key I, value *C) {
 
 	item.value = value
 	item.since = time.Now()
-	item.lastAccessed = time.Now()
 }
 
 // EnableAutoCleanup enables the automated cleanup of
@@ -136,44 +135,42 @@ func (c *Cache[I, C]) EnableAutoCleanup(interval time.Duration) {
 		return
 	}
 
-	if nil == c.stopCleanup {
-		c.stopCleanup = make(chan bool)
+	if c.autoCleanup {
+		log.Warn(LogPrefix, "Something tried to register two cleanup tasks for the same cache!")
+
+		return
 	}
 
+	c.autoCleanup = true
 	go autoCleanupRoutine(c, interval)
 }
 
 // autoCleanupRoutine is the function used to start go routines
 // that enable automated cleanup of a cache.
 func autoCleanupRoutine[I comparable, C any](c *Cache[I, C], interval time.Duration) {
-	for {
-		select {
-		case <-c.stopCleanup:
-			close(c.stopCleanup)
-			break
-		default:
-			c.lock.Lock()
-			var markedForDelete []I
+	for c.autoCleanup {
 
-			// Stage 1: Collect old items
-			for key, entry := range c.cache {
-				timeDiff := time.Since(entry.since).Milliseconds()
+		c.lock.Lock()
+		var markedForDelete []I
 
-				if timeDiff > c.lifetime {
-					markedForDelete = append(markedForDelete, key)
-				}
+		// Stage 1: Collect old items
+		for key, entry := range c.cache {
+			timeDiff := time.Since(entry.since).Milliseconds()
+
+			if timeDiff > c.lifetime {
+				markedForDelete = append(markedForDelete, key)
 			}
+		}
 
-			// Stage 2: Delete old items
-			for _, marked := range markedForDelete {
-				delete(c.cache, marked)
-			}
+		// Stage 2: Delete old items
+		for _, marked := range markedForDelete {
+			delete(c.cache, marked)
+		}
 
-			c.lock.Unlock()
+		c.lock.Unlock()
 
-			if len(markedForDelete) > 0 {
-				log.Info(LogPrefix, "Cleaned up %v items from cache", len(markedForDelete))
-			}
+		if len(markedForDelete) > 0 {
+			log.Info(LogPrefix, "Cleaned up %v items from cache", len(markedForDelete))
 		}
 
 		time.Sleep(interval)
@@ -183,5 +180,5 @@ func autoCleanupRoutine[I comparable, C any](c *Cache[I, C], interval time.Durat
 // DisableAutoCleanup disables the automated cleanup by notifying the
 // cleanup routine that it should stop cleaning up things.
 func (c *Cache[I, C]) DisableAutoCleanup() {
-	c.stopCleanup <- true
+	c.autoCleanup = false
 }

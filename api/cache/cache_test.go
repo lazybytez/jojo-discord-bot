@@ -68,7 +68,7 @@ func TestGet(t *testing.T) {
 			map[string]*Item[*string]{},
 			sync.RWMutex{},
 			duration.Milliseconds(),
-			nil,
+			false,
 		}
 
 		testCache.cache[table.key] = &Item[*string]{
@@ -115,7 +115,7 @@ func TestCache_EnableAutoCleanup(t *testing.T) {
 			map[string]*Item[*string]{},
 			sync.RWMutex{},
 			duration.Milliseconds(),
-			nil,
+			false,
 		}
 		testCache.EnableAutoCleanup(500 * time.Millisecond)
 
@@ -124,6 +124,53 @@ func TestCache_EnableAutoCleanup(t *testing.T) {
 			time.Now(),
 			time.Now(),
 		}
+
+		time.Sleep(table.delaySeconds * time.Second)
+
+		if _, ok := testCache.cache[table.key]; ok != table.expectedOK {
+			t.Errorf("output of cache get with key \"%v\" and "+
+				"value \"%v\" was incorrect, got: %v, want: %v.",
+				table.key,
+				table.value,
+				ok,
+				table.expectedOK)
+		}
+	}
+}
+
+func TestCache_DisableAutoCleanup(t *testing.T) {
+	str := "some value"
+
+	tables := []struct {
+		key          string
+		value        *string
+		lifetime     time.Duration
+		delaySeconds time.Duration
+		expectedOK   bool
+	}{
+		{"test1", &str, 0, 0, true},
+		{"test2", &str, 0, 2, true},
+		{"test3", &str, 3, 1, true},
+		{"test4", &str, 1, 2, true},
+	}
+
+	for _, table := range tables {
+		duration := table.lifetime * time.Second
+
+		testCache := &Cache[string, string]{
+			map[string]*Item[*string]{},
+			sync.RWMutex{},
+			duration.Milliseconds(),
+			false,
+		}
+		testCache.EnableAutoCleanup(500 * time.Millisecond)
+
+		testCache.cache[table.key] = &Item[*string]{
+			table.value,
+			time.Now(),
+			time.Now(),
+		}
+		testCache.DisableAutoCleanup()
 
 		time.Sleep(table.delaySeconds * time.Second)
 
@@ -147,7 +194,7 @@ func TestUpdate(t *testing.T) {
 		map[string]*Item[*string]{},
 		sync.RWMutex{},
 		0,
-		nil,
+		false,
 	}
 
 	if r, ok := cache.cache[testKey]; ok {
