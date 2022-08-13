@@ -33,42 +33,34 @@ func handleModuleList(
 	compNames, compStatus := generateComponentStatusTable(i)
 	resp := createComponentStatusListResponse(compNames, compStatus)
 
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: resp,
-	})
+	respond(s, i, resp)
 }
 
 // createComponentStatusListResponse creates an interaction response containing
 // an embed that list all components and their status.
 // Additionally, a legend is added, that describes the meaning of the different states.
 func createComponentStatusListResponse(compNames string, compStatus string) *discordgo.InteractionResponseData {
-	resp := &discordgo.InteractionResponseData{
-		Embeds: []*discordgo.MessageEmbed{
-			{
-				Title:       "Module Status",
-				Description: "Overview of all modules and whether they are enabled or not",
-				Color:       api.DefaultEmbedColor,
-				Fields: []*discordgo.MessageEmbedField{
-					{
-						Name:   "Module",
-						Value:  compNames,
-						Inline: true,
-					},
-					{
-						Name:   "Status",
-						Value:  compStatus,
-						Inline: true,
-					},
-					{
-						Name: "Legend",
-						Value: database.GlobalComponentStatusEnabledDisplay + " - Enabled\n" +
-							database.GuildComponentStatusDisabledDisplay + " - Disabled\n" +
-							database.GlobalComponentStatusDisabledDisplay + " - Globally disabled (Maintenance)",
-						Inline: false,
-					},
-				},
-			},
+	resp := generateInteractionResponseDataTemplate(
+		"Module Status",
+		"Overview of all modules and whether they are enabled or not")
+
+	resp.Embeds[0].Fields = []*discordgo.MessageEmbedField{
+		{
+			Name:   "Module",
+			Value:  compNames,
+			Inline: true,
+		},
+		{
+			Name:   "Status",
+			Value:  compStatus,
+			Inline: true,
+		},
+		{
+			Name: "Legend",
+			Value: database.GlobalComponentStatusEnabledDisplay + " - Enabled\n" +
+				database.GuildComponentStatusDisabledDisplay + " - Disabled\n" +
+				database.GlobalComponentStatusDisabledDisplay + " - Globally disabled (Maintenance)",
+			Inline: false,
 		},
 	}
 

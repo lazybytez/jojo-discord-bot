@@ -19,75 +19,17 @@
 package module
 
 import (
-	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"github.com/lazybytez/jojo-discord-bot/api"
 )
 
-// respondWithMissingComponent fills the passed discordgo.InteractionResponseData
-// with an embed field that indicates that the specified component could not be found.
-func respondWithMissingComponent(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-	resp *discordgo.InteractionResponseData,
-	componentName interface{},
-) {
-	embeds := []*discordgo.MessageEmbedField{
-		{
-			Name:  ":x: Error",
-			Value: fmt.Sprintf("No module with name \"%v\" could be found!", componentName),
-		},
+// findComponent tries to find a specific component by its code.
+func findComponent(option *discordgo.ApplicationCommandInteractionDataOption) *api.Component {
+	for _, c := range api.Components {
+		if c.Code == option.Options[0].Value {
+			return c
+		}
 	}
 
-	resp.Embeds[0].Fields = embeds
-
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: resp,
-	})
-}
-
-// respondWithAlreadyEnabled fills the passed discordgo.InteractionResponseData
-// with an embed field that indicates that the specified component is already enabled.
-func respondWithAlreadyEnabled(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-	resp *discordgo.InteractionResponseData,
-	componentName interface{},
-) {
-	embeds := []*discordgo.MessageEmbedField{
-		{
-			Name:  ":x: Error",
-			Value: fmt.Sprintf("Module with name \"%v\" is already enabled!", componentName),
-		},
-	}
-
-	resp.Embeds[0].Fields = embeds
-
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: resp,
-	})
-}
-
-// respondWithAlreadyDisabled fills the passed discordgo.InteractionResponseData
-// with an embed field that indicates that the specified component is already disabled.
-func respondWithAlreadyDisabled(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-	resp *discordgo.InteractionResponseData,
-	componentName interface{},
-) {
-	embeds := []*discordgo.MessageEmbedField{
-		{
-			Name:  ":x: Error",
-			Value: fmt.Sprintf("Module with name \"%v\" is already disabled!", componentName),
-		},
-	}
-
-	resp.Embeds[0].Fields = embeds
-
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: resp,
-	})
+	return nil
 }

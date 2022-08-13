@@ -30,24 +30,9 @@ func handleModuleShow(
 	i *discordgo.InteractionCreate,
 	option *discordgo.ApplicationCommandInteractionDataOption,
 ) {
-	resp := &discordgo.InteractionResponseData{
-		Embeds: []*discordgo.MessageEmbed{
-			{
-				Title:  "Module Information",
-				Color:  api.DefaultEmbedColor,
-				Fields: []*discordgo.MessageEmbedField{},
-			},
-		},
-	}
+	resp := generateInteractionResponseDataTemplate("Module Information", "")
 
-	var comp *api.Component
-	for _, c := range api.Components {
-		if c.Code == option.Options[0].Value {
-			comp = c
-			break
-		}
-	}
-
+	comp := findComponent(option)
 	if nil == comp || api.IsCoreComponent(comp) {
 		respondWithMissingComponent(s, i, resp, option.Options[0].Value)
 
@@ -61,16 +46,6 @@ func handleModuleShow(
 		return
 	}
 
-	globalStatus, ok := database.GetGlobalComponentStatus(C, regComp.ID)
-	globalStatusOutput := ":white_check_mark:"
-	if !ok {
-		globalStatusOutput = ":no_entry:"
-	}
-
-	if !globalStatus.Enabled {
-		globalStatusOutput += ":no_entry:"
-	}
-
 	guild, ok := database.GetGuild(C, i.GuildID)
 	if !ok {
 		respondWithMissingComponent(s, i, resp, comp.Name)
@@ -78,12 +53,22 @@ func handleModuleShow(
 		return
 	}
 
-	guildSpecificStatus, ok := database.GetComponentStatus(C, guild.ID, regComp.ID)
-	guildSpecificStatusOutput := ":white_check_mark:"
-	if !ok || !guildSpecificStatus.Enabled {
-		guildSpecificStatusOutput += ":x:"
-	}
+	globalStatusOutput, _ := database.GetGlobalStatusDisplayString(C, regComp.ID)
+	guildSpecificStatusOutput, _ := database.GetGuildComponentStatusDisplay(C, guild.ID, regComp.ID)
 
+	populateComponentStatusEmbedFields(resp, comp, guildSpecificStatusOutput, globalStatusOutput)
+
+	respond(s, i, resp)
+}
+
+// populateComponentStatusEmbedFields cares about filling up the interaction
+// response templates embed with the status of the requested component.
+func populateComponentStatusEmbedFields(
+	resp *discordgo.InteractionResponseData,
+	comp *api.Component,
+	guildSpecificStatusOutput string,
+	globalStatusOutput string,
+) {
 	resp.Embeds[0].Fields = []*discordgo.MessageEmbedField{
 		{
 			Name:   "Name",
@@ -106,9 +91,4 @@ func handleModuleShow(
 			Inline: true,
 		},
 	}
-
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: resp,
-	})
 }
