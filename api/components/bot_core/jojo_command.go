@@ -79,6 +79,34 @@ func initAndRegisterJojoCommand() {
 								},
 							},
 						},
+						{
+							Name:        "enable",
+							Description: "Enable a module for the guild",
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+							Options: []*discordgo.ApplicationCommandOption{
+								{
+									Name:        "module",
+									Description: "The name of the module to enable",
+									Required:    true,
+									Type:        discordgo.ApplicationCommandOptionString,
+									Choices:     getModuleCommandChoices(),
+								},
+							},
+						},
+						{
+							Name:        "disable",
+							Description: "Disable a module for the guild",
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+							Options: []*discordgo.ApplicationCommandOption{
+								{
+									Name:        "module",
+									Description: "The name of the module to disable",
+									Required:    true,
+									Type:        discordgo.ApplicationCommandOptionString,
+									Choices:     getModuleCommandChoices(),
+								},
+							},
+						},
 					},
 					Type: discordgo.ApplicationCommandOptionSubCommandGroup,
 				},
@@ -101,11 +129,20 @@ func handleJojoCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		"module": handleModuleSubCommand,
 	}
 
-	api.ProcessSubCommands(
+	success := api.ProcessSubCommands(
 		s,
 		i,
 		nil,
 		subCommands)
+
+	if !success {
+		_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "The executed (sub)command is invalid or does not exist!",
+			},
+		})
+	}
 }
 
 // handleModuleSubCommand delegates the sub-commands of the module sub-command
@@ -120,15 +157,28 @@ func handleModuleSubCommand(
 		i *discordgo.InteractionCreate,
 		option *discordgo.ApplicationCommandInteractionDataOption,
 	){
-		"list": handleModuleList,
-		"show": handleModuleShow,
+		"list":    handleModuleList,
+		"show":    handleModuleShow,
+		"enable":  handleModuleEnable,
+		"disable": handleModuleDisable,
 	}
 
-	api.ProcessSubCommands(
+	success := api.ProcessSubCommands(
 		s,
 		i,
 		option,
 		subCommands)
+
+	if !success {
+		if !success {
+			_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "The executed (sub)command is invalid or does not exist!",
+				},
+			})
+		}
+	}
 }
 
 // handleModuleList prints out a list of all commands and their status.
@@ -309,8 +359,210 @@ func handleModuleShow(
 	})
 }
 
-// respondWithMissingComponent fields the passed discordgo.InteractionResponseData
-// with an embed field that indicates that the specified embed could not be found.
+// handleModuleEnable enables the targeted module.
+func handleModuleEnable(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	option *discordgo.ApplicationCommandInteractionDataOption,
+) {
+	resp := &discordgo.InteractionResponseData{
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title:  "Enable Module",
+				Color:  api.DefaultEmbedColor,
+				Fields: []*discordgo.MessageEmbedField{},
+			},
+		},
+	}
+
+	var comp *api.Component
+	for _, c := range api.Components {
+		if c.Code == option.Options[0].Value {
+			comp = c
+			break
+		}
+	}
+
+	if nil == comp || api.IsCoreComponent(comp) {
+		respondWithMissingComponent(s, i, resp, option.Options[0].Value)
+
+		return
+	}
+
+	regComp, ok := database.GetRegisteredComponent(C, comp.Code)
+	if !ok {
+		respondWithMissingComponent(s, i, resp, comp.Name)
+
+		return
+	}
+
+	guild, ok := database.GetGuild(C, i.GuildID)
+	if !ok {
+		respondWithMissingComponent(s, i, resp, comp.Name)
+
+		return
+	}
+
+	guildSpecificStatus, ok := database.GetComponentStatus(C, guild.ID, regComp.ID)
+	if !ok {
+		guildSpecificStatus.Component = *regComp
+		guildSpecificStatus.Guild = *guild
+		guildSpecificStatus.Enabled = true
+
+		database.Create(guildSpecificStatus)
+
+		resp.Embeds[0].Fields = []*discordgo.MessageEmbedField{
+			{
+				Name:   "Module",
+				Value:  comp.Name,
+				Inline: false,
+			},
+			{
+				Name:   "Status",
+				Value:  ":white_check_mark: - The module has been enabled!",
+				Inline: false,
+			},
+		}
+
+		_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: resp,
+		})
+
+		return
+	}
+
+	if guildSpecificStatus.Enabled {
+		respondWithAlreadyEnabled(s, i, resp, comp.Name)
+
+		return
+	}
+
+	guildSpecificStatus.Enabled = true
+	database.Save(guildSpecificStatus)
+
+	resp.Embeds[0].Fields = []*discordgo.MessageEmbedField{
+		{
+			Name:   "Module",
+			Value:  comp.Name,
+			Inline: false,
+		},
+		{
+			Name:   "Status",
+			Value:  ":white_check_mark: - The module has been enabled!",
+			Inline: false,
+		},
+	}
+
+	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: resp,
+	})
+}
+
+// handleModuleDisable enables the targeted module.
+func handleModuleDisable(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	option *discordgo.ApplicationCommandInteractionDataOption,
+) {
+	resp := &discordgo.InteractionResponseData{
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title:  "Disable Module",
+				Color:  api.DefaultEmbedColor,
+				Fields: []*discordgo.MessageEmbedField{},
+			},
+		},
+	}
+
+	var comp *api.Component
+	for _, c := range api.Components {
+		if c.Code == option.Options[0].Value {
+			comp = c
+			break
+		}
+	}
+
+	if nil == comp || api.IsCoreComponent(comp) {
+		respondWithMissingComponent(s, i, resp, option.Options[0].Value)
+
+		return
+	}
+
+	regComp, ok := database.GetRegisteredComponent(C, comp.Code)
+	if !ok {
+		respondWithMissingComponent(s, i, resp, comp.Name)
+
+		return
+	}
+
+	guild, ok := database.GetGuild(C, i.GuildID)
+	if !ok {
+		respondWithMissingComponent(s, i, resp, comp.Name)
+
+		return
+	}
+
+	guildSpecificStatus, ok := database.GetComponentStatus(C, guild.ID, regComp.ID)
+	if !ok {
+		guildSpecificStatus.Component = *regComp
+		guildSpecificStatus.Guild = *guild
+		guildSpecificStatus.Enabled = false
+
+		database.Create(guildSpecificStatus)
+
+		resp.Embeds[0].Fields = []*discordgo.MessageEmbedField{
+			{
+				Name:   "Module",
+				Value:  comp.Name,
+				Inline: false,
+			},
+			{
+				Name:   "Status",
+				Value:  ":x: - The module has been disabled!",
+				Inline: false,
+			},
+		}
+
+		_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: resp,
+		})
+
+		return
+	}
+
+	if !guildSpecificStatus.Enabled {
+		respondWithAlreadyDisabled(s, i, resp, comp.Name)
+
+		return
+	}
+
+	guildSpecificStatus.Enabled = false
+	database.Save(guildSpecificStatus)
+
+	resp.Embeds[0].Fields = []*discordgo.MessageEmbedField{
+		{
+			Name:   "Module",
+			Value:  comp.Name,
+			Inline: false,
+		},
+		{
+			Name:   "Status",
+			Value:  ":x: - The module has been disabled!",
+			Inline: false,
+		},
+	}
+
+	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: resp,
+	})
+}
+
+// respondWithMissingComponent fills the passed discordgo.InteractionResponseData
+// with an embed field that indicates that the specified component could not be found.
 func respondWithMissingComponent(
 	s *discordgo.Session,
 	i *discordgo.InteractionCreate,
@@ -319,8 +571,54 @@ func respondWithMissingComponent(
 ) {
 	embeds := []*discordgo.MessageEmbedField{
 		{
-			Name:  "Not found",
+			Name:  ":x: Error",
 			Value: fmt.Sprintf("No module with name \"%v\" could be found!", componentName),
+		},
+	}
+
+	resp.Embeds[0].Fields = embeds
+
+	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: resp,
+	})
+}
+
+// respondWithAlreadyEnabled fills the passed discordgo.InteractionResponseData
+// with an embed field that indicates that the specified component is already enabled.
+func respondWithAlreadyEnabled(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	resp *discordgo.InteractionResponseData,
+	componentName interface{},
+) {
+	embeds := []*discordgo.MessageEmbedField{
+		{
+			Name:  ":x: Error",
+			Value: fmt.Sprintf("Module with name \"%v\" is already enabled!", componentName),
+		},
+	}
+
+	resp.Embeds[0].Fields = embeds
+
+	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: resp,
+	})
+}
+
+// respondWithAlreadyDisabled fills the passed discordgo.InteractionResponseData
+// with an embed field that indicates that the specified component is already disabled.
+func respondWithAlreadyDisabled(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	resp *discordgo.InteractionResponseData,
+	componentName interface{},
+) {
+	embeds := []*discordgo.MessageEmbedField{
+		{
+			Name:  ":x: Error",
+			Value: fmt.Sprintf("Module with name \"%v\" is already disabled!", componentName),
 		},
 	}
 

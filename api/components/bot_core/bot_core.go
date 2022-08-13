@@ -50,11 +50,8 @@ func LoadComponent(discord *discordgo.Session) error {
 	prepareDatabase()
 	initializeComponentManagement()
 
-	_, _ = C.HandlerManager().Register("register_guilds", handleGuildRegisterOnJoin)
+	_, _ = C.HandlerManager().Register("´guild_join", onGuildJoin)
 	_, _ = C.HandlerManager().Register("update_registered_guilds", handleGuildUpdateOnUpdate)
-	_, _ = C.HandlerManager().Register(
-		"populate_default_guild_component_status",
-		handleInitialComponentStatusOnGuildJoin)
 
 	// We need to handle the JOJO command special as it needs access to the component list.
 	// This is only possible after the API has been properly initialized and the components.Components
@@ -84,4 +81,12 @@ func prepareDatabase() {
 func initializeComponentManagement() {
 	registerAvailableComponents()
 	ensureGlobalComponentStatusExists()
+}
+
+// onGuildJoin is an event handler called when to bot joins a guild.
+// It ensures the guild registration and global status registrations
+// are happening in the right order.
+func onGuildJoin(s *discordgo.Session, g *discordgo.GuildCreate) {
+	handleGuildRegisterOnJoin(s, g)
+	handleInitialComponentStatusOnGuildJoin(s, g)
 }
