@@ -265,6 +265,13 @@ func runHandler(
 	handler, ok := handlers[name]
 
 	if !ok {
+		_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "The executed (sub)command is invalid or does not exist!",
+			},
+		})
+
 		return false
 	}
 
