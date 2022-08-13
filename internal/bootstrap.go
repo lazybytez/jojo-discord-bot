@@ -20,7 +20,6 @@ package internal
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/components"
 	"github.com/rs/zerolog/log"
 	"os"
 	"os/signal"
@@ -34,7 +33,7 @@ func Bootstrap() {
 	initGorm()
 	createSession(Config.token)
 
-	components.RegisterComponents(discord)
+	RegisterComponents(discord)
 
 	startBot()
 	if err := api.InitCommandHandling(discord); nil != err {
