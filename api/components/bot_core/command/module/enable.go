@@ -122,7 +122,7 @@ func respondWithAlreadyEnabled(
 	s *discordgo.Session,
 	i *discordgo.InteractionCreate,
 	resp *discordgo.InteractionResponseData,
-	componentName interface{},
+	componentName string,
 ) {
 	embeds := []*discordgo.MessageEmbedField{
 		{

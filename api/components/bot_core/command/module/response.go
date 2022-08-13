@@ -78,26 +78,3 @@ func respondWithMissingComponent(
 		Data: resp,
 	})
 }
-
-// respondWithAlreadyDisabled fills the passed discordgo.InteractionResponseData
-// with an embed field that indicates that the specified component is already disabled.
-func respondWithAlreadyDisabled(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-	resp *discordgo.InteractionResponseData,
-	componentName interface{},
-) {
-	embeds := []*discordgo.MessageEmbedField{
-		{
-			Name:  ":x: Error",
-			Value: fmt.Sprintf("Module with name \"%v\" is already disabled!", componentName),
-		},
-	}
-
-	resp.Embeds[0].Fields = embeds
-
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: resp,
-	})
-}
