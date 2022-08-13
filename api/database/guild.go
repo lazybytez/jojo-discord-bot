@@ -18,7 +18,13 @@
 
 package database
 
-import "gorm.io/gorm"
+import (
+	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"gorm.io/gorm"
+	"strconv"
+	"time"
+)
 
 const ColumnGuildId = "guild_id"
 const ColumnGuildName = "name"
@@ -32,4 +38,57 @@ type Guild struct {
 	gorm.Model
 	GuildID int `gorm:"index"`
 	Name    string
+}
+
+// guildCache caches the guilds the current instance is on.
+// A Guild is cached for 10 minutes before the application needs to pull it
+// again.
+//
+// We just leave orphaned guilds that the bot left in cache, as a garbage collector
+// task will clean up every few minutes
+// TODO: Implement automated cache cleanup
+var guildCache = cache.New[int, Guild](10 * time.Minute)
+
+// GetGuild tries to get a Guild from the
+// cache. If no cache entry is present, a request to the database will be made.
+// If no Guild can be found, the function returns a new empty
+// Guild.
+func GetGuild(c *api.Component, guildId string) (*Guild, bool) {
+	guildIdInt, err := strconv.Atoi(guildId)
+	if nil != err {
+		c.Logger().Err(
+			err,
+			"Failed to get guild from database for id string \"%v\" due to integer conversion issues!",
+			guildId)
+
+		return &Guild{}, false
+	}
+
+	comp, ok := cache.Get(guildCache, guildIdInt)
+
+	if ok {
+		return comp, true
+	}
+
+	regComp := &Guild{}
+	ok = GetFirstEntity(c, regComp, ColumnGuildId+" = ?", guildIdInt)
+
+	UpdateGuild(c, guildId, regComp)
+
+	return regComp, ok
+}
+
+// UpdateGuild adds or updates a cached item in the Guild cache.
+func UpdateGuild(c *api.Component, guildId string, component *Guild) {
+	guildIdInt, err := strconv.Atoi(guildId)
+	if nil != err {
+		c.Logger().Err(
+			err,
+			"Failed to get guild from database for id string \"%v\" due to integer conversion issues!",
+			guildId)
+
+		return
+	}
+
+	cache.Update(guildCache, guildIdInt, component)
 }

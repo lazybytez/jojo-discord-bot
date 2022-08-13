@@ -22,7 +22,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/database"
-	"strconv"
 )
 
 var C *api.Component
@@ -51,8 +50,11 @@ func LoadComponent(discord *discordgo.Session) error {
 	prepareDatabase()
 	initializeComponentManagement()
 
-	_, _ = C.HandlerManager().Register("guild_join", onGuildJoin)
-	_, _ = C.HandlerManager().Register("guild_update", onGuildUpdate)
+	_, _ = C.HandlerManager().Register("register_guilds", handleGuildRegisterOnJoin)
+	_, _ = C.HandlerManager().Register("update_registered_guilds", handleGuildUpdateOnUpdate)
+	_, _ = C.HandlerManager().Register(
+		"populate_default_guild_component_status",
+		handleInitialComponentStatusOnGuildJoin)
 
 	return nil
 }
@@ -74,60 +76,4 @@ func prepareDatabase() {
 func initializeComponentManagement() {
 	registerAvailableComponents()
 	ensureGlobalComponentStatusExists()
-}
-
-// onGuildJoin is triggered when the bot joins a guild.
-//
-// It ensures that every guild that isn't already known is registered
-// in the database. It also keeps the name of the guild updated.
-func onGuildJoin(s *discordgo.Session, g *discordgo.GuildCreate) {
-	guildId, err := strconv.Atoi(g.ID)
-	if nil != err {
-		C.Logger().Warn("Joined guild with ID \"%v\" but could not convert ID to int!", g.ID)
-
-		return
-	}
-
-	guild := database.Guild{}
-
-	ok := database.GetFirstEntity(C, &guild, database.ColumnGuildId+" = ?", guildId)
-	if !ok {
-		guild.GuildID = guildId
-		guild.Name = g.Name
-
-		database.Create(&guild)
-
-		return
-	}
-
-	if guild.Name != g.Name {
-		database.UpdateEntity(C, &guild, database.ColumnGuildName, g.Name)
-	}
-}
-
-// onGuildUpdate cares about updating the stored guild name
-// in the database.
-func onGuildUpdate(session *discordgo.Session, g *discordgo.GuildUpdate) {
-	guildId, err := strconv.Atoi(g.ID)
-	if nil != err {
-		C.Logger().Warn("Joined guild with ID \"%v\" named \"%v\" but could not convert ID to int!",
-			g.ID,
-			g.Name)
-
-		return
-	}
-
-	guild := database.Guild{}
-
-	ok := database.GetFirstEntity(C, &guild, database.ColumnGuildId+" = ?", guildId)
-	if !ok {
-		C.Logger().Warn("Could not update guild with ID \"%v\" named \"%v\" as it is missing in database!",
-			g.ID,
-			g.Name)
-		return
-	}
-
-	if guild.Name != g.Name {
-		database.UpdateEntity(C, &guild, database.ColumnGuildName, g.Name)
-	}
 }

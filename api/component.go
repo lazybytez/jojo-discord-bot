@@ -20,7 +20,12 @@ package api
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"strings"
 )
+
+// CoreComponentPrefix is the prefix put in front of components that
+// cannot be managed by server owners, as they are important core components
+const CoreComponentPrefix = "bot_"
 
 // Components holds all registered components.
 // The field is automatically populated before component loading
@@ -117,4 +122,12 @@ func (c *Component) UnregisterComponent(discord *discordgo.Session) error {
 	c.State.Loaded = false
 
 	return nil
+}
+
+// IsCoreComponent checks whether the passed component is a core
+// component or not.
+//
+// Core components are components which are prefixed with the CoreComponentPrefix.
+func IsCoreComponent(c *Component) bool {
+	return strings.HasPrefix(c.Code, CoreComponentPrefix)
 }

@@ -55,12 +55,12 @@ func GetRegisteredComponent(c *api.Component, code string) (*RegisteredComponent
 	regComp := &RegisteredComponent{}
 	ok = GetFirstEntity(c, regComp, "code = ?", code)
 
-	UpdateRegisteredComponent(code, regComp)
+	UpdateRegisteredComponent(c, code, regComp)
 
 	return regComp, ok
 }
 
 // UpdateRegisteredComponent adds or updates a cached item in the RegisteredComponent cache.
-func UpdateRegisteredComponent(code string, component *RegisteredComponent) {
+func UpdateRegisteredComponent(c *api.Component, code string, component *RegisteredComponent) {
 	cache.Update(registeredComponentCache, code, component)
 }

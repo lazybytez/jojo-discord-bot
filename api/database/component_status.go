@@ -19,6 +19,7 @@
 package database
 
 import (
+	"fmt"
 	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/cache"
 	"gorm.io/gorm"
@@ -33,9 +34,9 @@ const ColumnEnabled = "enabled"
 type ComponentStatus struct {
 	gorm.Model
 	GuildID     uint
-	Guild       Guild `gorm:"foreignKey:GuildID;references:ID;index:idx_guild_component"`
+	Guild       Guild `gorm:"index:idx_guild_component;constraint:OnDelete:CASCADE;"`
 	ComponentID uint
-	Component   RegisteredComponent `gorm:"foreignKey:ComponentID;references:ID;index:idx_guild_component;index:idx_component"`
+	Component   RegisteredComponent `gorm:"index:idx_guild_component;index:idx_component;constraint:OnDelete:CASCADE;"`
 	Enabled     bool
 }
 
@@ -44,13 +45,13 @@ type ComponentStatus struct {
 type GlobalComponentStatus struct {
 	gorm.Model
 	ComponentID uint
-	Component   RegisteredComponent `gorm:"foreignKey:ComponentID;references:ID;index:idx_guild_component;index:idx_component"`
+	Component   RegisteredComponent `gorm:"index:idx_guild_component;index:idx_component;constraint:OnDelete:CASCADE;"`
 	Enabled     bool
 }
 
 // globalComponentStatusCache is the cache used to reduce
 // amount of database calls for the global component status.
-var globalComponentStatusCache = cache.New[uint, GlobalComponentStatus](5 * time.Minute)
+var globalComponentStatusCache = cache.New[uint, GlobalComponentStatus](10 * time.Minute)
 
 // GetGlobalComponentStatus tries to get a GlobalComponentStatus from the
 // cache. If no cache entry is present, a request to the database will be made.
@@ -66,12 +67,48 @@ func GetGlobalComponentStatus(c *api.Component, registeredComponentId uint) (*Gl
 	regComp := &GlobalComponentStatus{}
 	ok = GetFirstEntity(c, regComp, ColumnComponent+" = ?", registeredComponentId)
 
-	UpdateGlobalComponentStatus(registeredComponentId, regComp)
+	UpdateGlobalComponentStatus(c, registeredComponentId, regComp)
 
 	return regComp, ok
 }
 
 // UpdateGlobalComponentStatus adds or updates a cached item in the GlobalComponentStatus cache.
-func UpdateGlobalComponentStatus(registeredComponentId uint, component *GlobalComponentStatus) {
+func UpdateGlobalComponentStatus(c *api.Component, registeredComponentId uint, component *GlobalComponentStatus) {
 	cache.Update(globalComponentStatusCache, registeredComponentId, component)
+}
+
+// componentStatusCache is the cache used to reduce
+// amount of database calls for the global component status.
+var componentStatusCache = cache.New[string, ComponentStatus](10 * time.Minute)
+
+// GetComponentStatus tries to get a ComponentStatus from the
+// cache. If no cache entry is present, a request to the database will be made.
+// If no ComponentStatus can be found, the function returns a new empty
+// ComponentStatus.
+func GetComponentStatus(c *api.Component, guildId uint, componentId uint) (*ComponentStatus, bool) {
+	cacheKey := getComponentStatusCacheKey(guildId, componentId)
+	comp, ok := cache.Get(componentStatusCache, cacheKey)
+
+	if ok {
+		return comp, true
+	}
+
+	regComp := &ComponentStatus{}
+	queryStr := ColumnGuild + " = ? AND " + ColumnComponent + " = ?"
+	ok = GetFirstEntity(c, regComp, queryStr, guildId, componentId)
+
+	UpdateComponentStatus(c, guildId, componentId, regComp)
+
+	return regComp, ok
+}
+
+// UpdateComponentStatus adds or updates a cached item in the ComponentStatus cache.
+func UpdateComponentStatus(c *api.Component, guildId uint, componentId uint, component *ComponentStatus) {
+	cache.Update(componentStatusCache, getComponentStatusCacheKey(guildId, componentId), component)
+}
+
+// getComponentStatusCacheKey concatenates the passed guild and component ids to create
+// a new unique cache key for the component status
+func getComponentStatusCacheKey(guildId uint, componentId uint) string {
+	return fmt.Sprintf("%v_%v", guildId, componentId)
 }

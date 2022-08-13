@@ -121,11 +121,11 @@ func GetEntities[C any](c *api.Component, entityContainer []*C, conditions ...in
 	return db.RowsAffected > 0
 }
 
-// GetEntitiesComplex returns a gorm.DB pointer that allows to do a custom search.
+// WorkOn returns a gorm.DB pointer that allows to do a custom search or actions on an entity.
 //
 // The returned gorm.DB instance is created by using gorm.DB.Model and is therefore
 // already prepared to get started with applying filters.
-func GetEntitiesComplex[C any](entityContainer []*C) *gorm.DB {
+func WorkOn[C any](entityContainer *C) *gorm.DB {
 	return database.Model(entityContainer)
 }
 
