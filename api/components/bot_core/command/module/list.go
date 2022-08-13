@@ -19,6 +19,8 @@
 package module
 
 import (
+	"bytes"
+	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/database"
@@ -30,8 +32,8 @@ func handleModuleList(
 	i *discordgo.InteractionCreate,
 	_ *discordgo.ApplicationCommandInteractionDataOption,
 ) {
-	compNames, compStatus := generateComponentStatusTable(i)
-	resp := createComponentStatusListResponse(compNames, compStatus)
+	compNamesAndStatus := generateComponentStatusTable(i)
+	resp := createComponentStatusListResponse(compNamesAndStatus)
 
 	respond(s, i, resp)
 }
@@ -39,20 +41,15 @@ func handleModuleList(
 // createComponentStatusListResponse creates an interaction response containing
 // an embed that list all components and their status.
 // Additionally, a legend is added, that describes the meaning of the different states.
-func createComponentStatusListResponse(compNames string, compStatus string) *discordgo.InteractionResponseData {
+func createComponentStatusListResponse(compNamesAndStatus string) *discordgo.InteractionResponseData {
 	resp := generateInteractionResponseDataTemplate(
 		"Module Status",
 		"Overview of all modules and whether they are enabled or not")
 
 	resp.Embeds[0].Fields = []*discordgo.MessageEmbedField{
 		{
-			Name:   "Module",
-			Value:  compNames,
-			Inline: true,
-		},
-		{
-			Name:   "Status",
-			Value:  compStatus,
+			Name:   "Status - Module",
+			Value:  compNamesAndStatus,
 			Inline: true,
 		},
 		{
@@ -69,33 +66,31 @@ func createComponentStatusListResponse(compNames string, compStatus string) *dis
 
 // generateComponentStatusTable generates a string with all component names
 // and a string with matching component status divided by line-breaks.
-func generateComponentStatusTable(i *discordgo.InteractionCreate) (string, string) {
-	compNames := ""
-	compStatus := ""
+func generateComponentStatusTable(i *discordgo.InteractionCreate) string {
+	compNameAndStatus := &bytes.Buffer{}
 
 	for _, comp := range api.Components {
 		if api.IsCoreComponent(comp) {
 			continue
 		}
 
-		if "" != compNames {
-			compNames += "\n"
+		if compNameAndStatus.Len() < 1 {
+			// Ignore and continue on error
+			_, err := fmt.Fprint(compNameAndStatus, "\n")
+			if nil != err {
+				C.Logger().Warn("Failed to write linebreak while building component list entry for \"%v\"",
+					comp.Name)
+			}
 		}
-
-		compNames += comp.Name
 
 		regComp, ok := database.GetRegisteredComponent(C, comp.Code)
 		if !ok {
 			continue
 		}
 
-		if "" != compStatus {
-			compStatus += "\n"
-		}
-
 		globalStatus, ok := database.GetGlobalStatusDisplayString(C, regComp.ID)
 		if !ok {
-			compStatus += globalStatus
+			getComponentStatusListRow(compNameAndStatus, comp.Name, globalStatus)
 
 			continue
 		}
@@ -106,8 +101,21 @@ func generateComponentStatusTable(i *discordgo.InteractionCreate) (string, strin
 		}
 
 		guildSpecificStatus, _ := database.GetGuildComponentStatusDisplay(C, guild.ID, regComp.ID)
-		compStatus += guildSpecificStatus
+		getComponentStatusListRow(compNameAndStatus, comp.Name, guildSpecificStatus)
 	}
 
-	return compNames, compStatus
+	return compNameAndStatus.String()
+}
+
+// getComponentStatusListRow writes a single row for the module list commands
+// component status list.
+// If the writing fails, nothing will happen.
+func getComponentStatusListRow(buf *bytes.Buffer, name string, status string) {
+	_, err := fmt.Fprintf(buf, "%v - %v", status, name)
+	if nil != err {
+		if nil != err {
+			C.Logger().Warn("Failed to write row while building component list entry for \"%v\"",
+				name)
+		}
+	}
 }
