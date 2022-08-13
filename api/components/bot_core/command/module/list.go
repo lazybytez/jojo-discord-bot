@@ -28,56 +28,21 @@ import (
 func handleModuleList(
 	s *discordgo.Session,
 	i *discordgo.InteractionCreate,
-	option *discordgo.ApplicationCommandInteractionDataOption,
+	_ *discordgo.ApplicationCommandInteractionDataOption,
 ) {
-	compNames := ""
-	compStatus := ""
+	compNames, compStatus := generateComponentStatusTable(i)
+	resp := createComponentStatusListResponse(compNames, compStatus)
 
-	for _, comp := range api.Components {
-		if api.IsCoreComponent(comp) {
-			continue
-		}
+	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: resp,
+	})
+}
 
-		if "" != compNames {
-			compNames += "\n"
-		}
-		compNames += comp.Name
-
-		regComp, ok := database.GetRegisteredComponent(C, comp.Code)
-		if !ok {
-			continue
-		}
-
-		if "" != compStatus {
-			compStatus += "\n"
-		}
-
-		globalStatus, ok := database.GetGlobalComponentStatus(C, regComp.ID)
-		if !ok {
-			continue
-		}
-
-		if !globalStatus.Enabled {
-			compStatus += ":no_entry:"
-
-			continue
-		}
-
-		guild, ok := database.GetGuild(C, i.GuildID)
-		if !ok {
-			continue
-		}
-
-		guildSpecificStatus, ok := database.GetComponentStatus(C, guild.ID, regComp.ID)
-		if !ok || !guildSpecificStatus.Enabled {
-			compStatus += ":x:"
-
-			continue
-		}
-
-		compStatus += ":white_check_mark:"
-	}
-
+// createComponentStatusListResponse creates an interaction response containing
+// an embed that list all components and their status.
+// Additionally, a legend is added, that describes the meaning of the different states.
+func createComponentStatusListResponse(compNames string, compStatus string) *discordgo.InteractionResponseData {
 	resp := &discordgo.InteractionResponseData{
 		Embeds: []*discordgo.MessageEmbed{
 			{
@@ -97,9 +62,9 @@ func handleModuleList(
 					},
 					{
 						Name: "Legend",
-						Value: ":white_check_mark: - Enabled\n" +
-							":x: - Disabled\n" +
-							":no_entry: - Globally disabled (Maintenance)",
+						Value: database.GlobalComponentStatusEnabledDisplay + " - Enabled\n" +
+							database.GuildComponentStatusDisabledDisplay + " - Disabled\n" +
+							database.GlobalComponentStatusDisabledDisplay + " - Globally disabled (Maintenance)",
 						Inline: false,
 					},
 				},
@@ -107,8 +72,50 @@ func handleModuleList(
 		},
 	}
 
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: resp,
-	})
+	return resp
+}
+
+// generateComponentStatusTable generates a string with all component names
+// and a string with matching component status divided by line-breaks.
+func generateComponentStatusTable(i *discordgo.InteractionCreate) (string, string) {
+	compNames := ""
+	compStatus := ""
+
+	for _, comp := range api.Components {
+		if api.IsCoreComponent(comp) {
+			continue
+		}
+
+		if "" != compNames {
+			compNames += "\n"
+		}
+
+		compNames += comp.Name
+
+		regComp, ok := database.GetRegisteredComponent(C, comp.Code)
+		if !ok {
+			continue
+		}
+
+		if "" != compStatus {
+			compStatus += "\n"
+		}
+
+		globalStatus, ok := database.GetGlobalStatusDisplayString(C, regComp.ID)
+		if !ok {
+			compStatus += globalStatus
+
+			continue
+		}
+
+		guild, ok := database.GetGuild(C, i.GuildID)
+		if !ok {
+			continue
+		}
+
+		guildSpecificStatus, ok := database.GetGuildComponentStatusDisplay(C, guild.ID, regComp.ID)
+		compStatus += guildSpecificStatus
+	}
+
+	return compNames, compStatus
 }

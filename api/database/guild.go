@@ -26,9 +26,6 @@ import (
 	"time"
 )
 
-const ColumnGuildId = "guild_id"
-const ColumnGuildName = "name"
-
 // Guild represents a single Discord guild
 // that the bot is currently on.
 //

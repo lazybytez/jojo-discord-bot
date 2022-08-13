@@ -24,8 +24,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const ColumnName = "code"
-
 // registeredComponentCache is the used instance of the registeredComponentCacheContainer
 // that allows caching of RegisteredComponent
 var registeredComponentCache = cache.New[string, RegisteredComponent](0)
