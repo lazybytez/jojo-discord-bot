@@ -19,6 +19,7 @@
 package bot_core
 
 import (
+	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/database"
@@ -92,11 +93,50 @@ func initAndRegisterJojoCommand() {
 // handleJojoCommand handles the parent JOJO command and delegates sub-command
 // handling to the appropriate handlers
 func handleJojoCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	handleModuleList(s, i)
+	subCommands := map[string]func(
+		s *discordgo.Session,
+		i *discordgo.InteractionCreate,
+		option *discordgo.ApplicationCommandInteractionDataOption,
+	){
+		"module": handleModuleSubCommand,
+	}
+
+	api.ProcessSubCommands(
+		s,
+		i,
+		nil,
+		subCommands)
+}
+
+// handleModuleSubCommand delegates the sub-commands of the module sub-command
+// to their dedicated handlers.
+func handleModuleSubCommand(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	option *discordgo.ApplicationCommandInteractionDataOption,
+) {
+	subCommands := map[string]func(
+		s *discordgo.Session,
+		i *discordgo.InteractionCreate,
+		option *discordgo.ApplicationCommandInteractionDataOption,
+	){
+		"list": handleModuleList,
+		"show": handleModuleShow,
+	}
+
+	api.ProcessSubCommands(
+		s,
+		i,
+		option,
+		subCommands)
 }
 
 // handleModuleList prints out a list of all commands and their status.
-func handleModuleList(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func handleModuleList(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	option *discordgo.ApplicationCommandInteractionDataOption,
+) {
 	compNames := ""
 	compStatus := ""
 
@@ -154,7 +194,7 @@ func handleModuleList(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				Fields: []*discordgo.MessageEmbedField{
 					{
 						Name:   "Module",
-						Value:  compNames + "\n\n",
+						Value:  compNames,
 						Inline: true,
 					},
 					{
@@ -173,6 +213,118 @@ func handleModuleList(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			},
 		},
 	}
+
+	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: resp,
+	})
+}
+
+// handleModuleShow prints out a list of all commands and their status.
+func handleModuleShow(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	option *discordgo.ApplicationCommandInteractionDataOption,
+) {
+	resp := &discordgo.InteractionResponseData{
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title:  "Module Information",
+				Color:  api.DefaultEmbedColor,
+				Fields: []*discordgo.MessageEmbedField{},
+			},
+		},
+	}
+
+	var comp *api.Component
+	for _, c := range api.Components {
+		if c.Code == option.Options[0].Value {
+			comp = c
+			break
+		}
+	}
+
+	if nil == comp || api.IsCoreComponent(comp) {
+		respondWithMissingComponent(s, i, resp, option.Options[0].Value)
+
+		return
+	}
+
+	regComp, ok := database.GetRegisteredComponent(C, comp.Code)
+	if !ok {
+		respondWithMissingComponent(s, i, resp, comp.Name)
+
+		return
+	}
+
+	globalStatus, ok := database.GetGlobalComponentStatus(C, regComp.ID)
+	globalStatusOutput := ":white_check_mark:"
+	if !ok {
+		globalStatusOutput = ":no_entry:"
+	}
+
+	if !globalStatus.Enabled {
+		globalStatusOutput += ":no_entry:"
+	}
+
+	guild, ok := database.GetGuild(C, i.GuildID)
+	if !ok {
+		respondWithMissingComponent(s, i, resp, comp.Name)
+
+		return
+	}
+
+	guildSpecificStatus, ok := database.GetComponentStatus(C, guild.ID, regComp.ID)
+	guildSpecificStatusOutput := ":white_check_mark:"
+	if !ok || !guildSpecificStatus.Enabled {
+		guildSpecificStatusOutput += ":x:"
+	}
+
+	resp.Embeds[0].Fields = []*discordgo.MessageEmbedField{
+		{
+			Name:   "Name",
+			Value:  comp.Name,
+			Inline: false,
+		},
+		{
+			Name:   "Description",
+			Value:  comp.Description,
+			Inline: false,
+		},
+		{
+			Name:   "Guild Status",
+			Value:  guildSpecificStatusOutput,
+			Inline: true,
+		},
+		{
+			Name:   "Global Status",
+			Value:  globalStatusOutput,
+			Inline: true,
+		},
+	}
+
+	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: resp,
+	})
+}
+
+// respondWithMissingComponent fields the passed discordgo.InteractionResponseData
+// with an embed field that indicates that the specified embed could not be found.
+func respondWithMissingComponent(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	resp *discordgo.InteractionResponseData,
+	componentName interface{},
+) {
+	embeds := []*discordgo.MessageEmbedField{
+		{
+			Name:  "Not found",
+			Value: fmt.Sprintf("No module with name \"%v\" could be found!", componentName),
+		},
+	}
+
+	resp.Embeds[0].Fields = embeds
 
 	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,

@@ -42,7 +42,7 @@ func init() {
 		// Metadata
 		Code:        "ping_pong",
 		Name:        "Ping Pong",
-		Description: "This Component plays pingpong with you and returns Latency (maybe)",
+		Description: "This module plays ping pong with you and returns Latency (maybe)",
 
 		State: &api.State{
 			DefaultEnabled: true,
