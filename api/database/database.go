@@ -81,6 +81,11 @@ func Create[C any](entity *C) {
 	database.Create(entity)
 }
 
+// Save upserts the passed entity in the database
+func Save[C any](entity *C) {
+	database.Save(entity)
+}
+
 // GetFirstEntity fills the passed entity container with the first
 // found entity matching the passed conditions.
 //
