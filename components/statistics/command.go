@@ -1,74 +1,91 @@
-/*
- * JOJO Discord Bot - An advanced multi-purpose discord bot
- * Copyright (C) 2022 Lazy Bytez (Elias Knodel, Pascal Zarrad)
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package statistics
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"github.com/dustin/go-humanize"
 	"github.com/lazybytez/jojo-discord-bot/api"
 	"runtime"
+	"text/tabwriter"
+	"time"
 )
 
 var statsCommand = &api.Command{
 	Cmd: &discordgo.ApplicationCommand{
 		Name:        "stats",
-		Description: "Show statistics of the bot and its runtime.",
+		Description: "Show information of the bot and runtime statistics.",
+	},
+	Handler: handleStats,
+}
+
+var infoCommand = &api.Command{
+	Cmd: &discordgo.ApplicationCommand{
+		Name:        "info",
+		Description: "Show information of the bot and runtime statistics.",
 	},
 	Handler: handleStats,
 }
 
 var m runtime.MemStats
 
+var statsStartTime = time.Now()
+
+// handleStats gets called when executing the /stats or /info command
 func handleStats(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	runtime.ReadMemStats(&m)
 	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Embeds: []*discordgo.MessageEmbed{
-				{
-					Title:       "Discord Bot Statistics",
-					Description: "Overview of runtime statistics",
-					Color:       0x5D397C,
-					Fields: []*discordgo.MessageEmbedField{
-						{
-							Name:   "Memory",
-							Value:  fmt.Sprintf("%v MB / %v MB", bToMb(m.Alloc), bToMb(m.TotalAlloc)),
-							Inline: true,
-						},
-						{
-							Name:   "Maximum Memory",
-							Value:  fmt.Sprintf("System has %v MB", bToMb(m.Sys)),
-							Inline: true,
-						},
-						{
-							Name:   "Garbage Collector Cycles",
-							Value:  fmt.Sprintf("Run %v Times", m.NumGC),
-							Inline: true,
-						},
-					},
-				},
-			},
+			Embeds: buildInfoEmbed(s),
 		},
 	})
 }
 
-// bToMb calculates Bytes to Megabytes (not Mebibyte, that would be 1024 / 1024)
-func bToMb(b uint64) uint64 {
-	return b / 1024 / 1000
+// buildInfoEmbed the embed is build in a different function to secure readability
+func buildInfoEmbed(s *discordgo.Session) []*discordgo.MessageEmbed {
+	return []*discordgo.MessageEmbed{
+		{
+			Title: "Information",
+			Color: 0x5D397C,
+			Thumbnail: &discordgo.MessageEmbedThumbnail{
+				URL: s.State.User.AvatarURL(""),
+			},
+			Fields: []*discordgo.MessageEmbedField{
+				{
+					Name:  "Stats",
+					Value: buildStatOutput(),
+				},
+				{
+					Name:  "Links",
+					Value: "[GitHub](https://github.com/lazybytez/jojo-discord-bot)",
+				},
+			},
+		},
+	}
+}
+
+// buildStatOutput generates a big string with all runtime statistics
+func buildStatOutput() string {
+	w := &tabwriter.Writer{}
+	buf := &bytes.Buffer{}
+
+	w.Init(buf, 0, 4, 0, ' ', 0)
+	fmt.Fprintf(w, "Uptime: **%v**\n", getDurationString(time.Now().Sub(statsStartTime)))
+	fmt.Fprintf(w, "Memory used: **%s / %s**\n", humanize.Bytes(m.Alloc), humanize.Bytes(m.Sys))
+	fmt.Fprintf(w, "Garbage collected: **%s**\n", humanize.Bytes(m.TotalAlloc))
+	fmt.Fprintf(w, "Threads: **%s**\n", humanize.Comma(int64(runtime.NumGoroutine())))
+
+	w.Flush()
+	return buf.String()
+}
+
+// getDurationString transforms duration into a readable string
+func getDurationString(duration time.Duration) string {
+	return fmt.Sprintf(
+		"%0.2d:%02d:%02d",
+		int(duration.Hours()),
+		int(duration.Minutes())%60,
+		int(duration.Seconds())%60,
+	)
 }
