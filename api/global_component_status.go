@@ -16,10 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package database
+package api
 
 import (
-	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/cache"
 	"gorm.io/gorm"
 	"time"
@@ -44,7 +43,7 @@ var globalComponentStatusCache = cache.New[uint, GlobalComponentStatus](10 * tim
 // GetGlobalStatusDisplayString returns the string that indicates whether a component is
 // enabled or disabled globally. The string can directly being used to print
 // out messages in Discord.
-func GetGlobalStatusDisplayString(c *api.Component, registeredComponentId uint) (string, bool) {
+func GetGlobalStatusDisplayString(c *Component, registeredComponentId uint) (string, bool) {
 	compState, ok := GetGlobalComponentStatus(c, registeredComponentId)
 	if !ok {
 		return GlobalComponentStatusDisabledDisplay, false
@@ -61,7 +60,7 @@ func GetGlobalStatusDisplayString(c *api.Component, registeredComponentId uint) 
 // cache. If no cache entry is present, a request to the database will be made.
 // If no GlobalComponentStatus can be found, the function returns a new empty
 // GlobalComponentStatus.
-func GetGlobalComponentStatus(c *api.Component, registeredComponentId uint) (*GlobalComponentStatus, bool) {
+func GetGlobalComponentStatus(c *Component, registeredComponentId uint) (*GlobalComponentStatus, bool) {
 	comp, ok := cache.Get(globalComponentStatusCache, registeredComponentId)
 
 	if ok {
@@ -77,6 +76,6 @@ func GetGlobalComponentStatus(c *api.Component, registeredComponentId uint) (*Gl
 }
 
 // UpdateGlobalComponentStatus adds or updates a cached item in the GlobalComponentStatus cache.
-func UpdateGlobalComponentStatus(_ *api.Component, registeredComponentId uint, component *GlobalComponentStatus) {
+func UpdateGlobalComponentStatus(_ *Component, registeredComponentId uint, component *GlobalComponentStatus) {
 	cache.Update(globalComponentStatusCache, registeredComponentId, component)
 }

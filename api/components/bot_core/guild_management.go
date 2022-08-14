@@ -20,7 +20,7 @@ package bot_core
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api/database"
+	"github.com/lazybytez/jojo-discord-bot/api"
 	"strconv"
 )
 
@@ -36,25 +36,25 @@ func handleGuildRegisterOnJoin(_ *discordgo.Session, g *discordgo.GuildCreate) {
 		return
 	}
 
-	guild, ok := database.GetGuild(C, g.ID)
+	guild, ok := api.GetGuild(C, g.ID)
 	if !ok {
 		guild.GuildID = guildId
 		guild.Name = g.Name
 
-		database.Create(&guild)
+		api.Create(&guild)
 
 		return
 	}
 
 	if guild.Name != g.Name {
-		database.UpdateEntity(C, &guild, database.ColumnGuildName, g.Name)
+		api.UpdateEntity(C, &guild, api.ColumnGuildName, g.Name)
 	}
 }
 
 // handleGuildUpdateOnUpdate cares about updating the stored guild name
 // in the database.
 func handleGuildUpdateOnUpdate(_ *discordgo.Session, g *discordgo.GuildUpdate) {
-	guild, ok := database.GetGuild(C, g.ID)
+	guild, ok := api.GetGuild(C, g.ID)
 	if !ok {
 		C.Logger().Warn("Could not update guild with ID \"%v\" named \"%v\" as it is missing in database!",
 			g.ID,
@@ -63,6 +63,6 @@ func handleGuildUpdateOnUpdate(_ *discordgo.Session, g *discordgo.GuildUpdate) {
 	}
 
 	if guild.Name != g.Name {
-		database.UpdateEntity(C, &guild, database.ColumnGuildName, g.Name)
+		api.UpdateEntity(C, &guild, api.ColumnGuildName, g.Name)
 	}
 }

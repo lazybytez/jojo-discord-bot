@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
 // handleModuleDisable enables the targeted module.
@@ -40,14 +39,14 @@ func handleModuleDisable(
 		return
 	}
 
-	regComp, ok := database.GetRegisteredComponent(C, comp.Code)
+	regComp, ok := api.GetRegisteredComponent(C, comp.Code)
 	if !ok {
 		respondWithMissingComponent(s, i, resp, comp.Name)
 
 		return
 	}
 
-	guild, ok := database.GetGuild(C, i.GuildID)
+	guild, ok := api.GetGuild(C, i.GuildID)
 	if !ok {
 		respondWithMissingComponent(s, i, resp, comp.Name)
 
@@ -65,10 +64,10 @@ func handleModuleDisable(
 }
 
 func disableComponentForGuild(
-	guild *database.Guild,
-	regComp *database.RegisteredComponent,
+	guild *api.Guild,
+	regComp *api.RegisteredComponent,
 ) bool {
-	guildSpecificStatus, ok := database.GetComponentStatus(C, guild.ID, regComp.ID)
+	guildSpecificStatus, ok := api.GetGuildComponentStatus(C, guild.ID, regComp.ID)
 	if !ok {
 		// No database entry = disabled
 		return false
@@ -79,7 +78,7 @@ func disableComponentForGuild(
 	}
 
 	guildSpecificStatus.Enabled = false
-	database.Save(guildSpecificStatus)
+	api.Save(guildSpecificStatus)
 
 	return true
 }

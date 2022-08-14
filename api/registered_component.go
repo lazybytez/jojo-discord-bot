@@ -16,10 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package database
+package api
 
 import (
-	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/cache"
 	"gorm.io/gorm"
 )
@@ -43,7 +42,7 @@ type RegisteredComponent struct {
 // cache. If no cache entry is present, a request to the database will be made.
 // If no RegisteredComponent can be found, the function returns a new empty
 // RegisteredComponent.
-func GetRegisteredComponent(c *api.Component, code string) (*RegisteredComponent, bool) {
+func GetRegisteredComponent(c *Component, code string) (*RegisteredComponent, bool) {
 	comp, ok := cache.Get(registeredComponentCache, code)
 
 	if ok {
@@ -59,6 +58,6 @@ func GetRegisteredComponent(c *api.Component, code string) (*RegisteredComponent
 }
 
 // UpdateRegisteredComponent adds or updates a cached item in the RegisteredComponent cache.
-func UpdateRegisteredComponent(_ *api.Component, code string, component *RegisteredComponent) {
+func UpdateRegisteredComponent(_ *Component, code string, component *RegisteredComponent) {
 	cache.Update(registeredComponentCache, code, component)
 }

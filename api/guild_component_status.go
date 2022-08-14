@@ -16,11 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package database
+package api
 
 import (
 	"fmt"
-	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/cache"
 	"gorm.io/gorm"
 	"time"
@@ -48,11 +47,11 @@ func init() {
 	componentStatusCache.EnableAutoCleanup(10 * time.Minute)
 }
 
-// GetComponentStatus tries to get a ComponentStatus from the
+// GetGuildComponentStatus tries to get a ComponentStatus from the
 // cache. If no cache entry is present, a request to the database will be made.
 // If no ComponentStatus can be found, the function returns a new empty
 // ComponentStatus.
-func GetComponentStatus(c *api.Component, guildId uint, componentId uint) (*ComponentStatus, bool) {
+func GetGuildComponentStatus(c *Component, guildId uint, componentId uint) (*ComponentStatus, bool) {
 	cacheKey := getComponentStatusCacheKey(guildId, componentId)
 	comp, ok := cache.Get(componentStatusCache, cacheKey)
 
@@ -71,8 +70,8 @@ func GetComponentStatus(c *api.Component, guildId uint, componentId uint) (*Comp
 
 // GetGuildComponentStatusDisplay returns the status of a component in a form
 // that can be directly displayed in Discord.
-func GetGuildComponentStatusDisplay(c *api.Component, guildId uint, componentId uint) (string, bool) {
-	compState, ok := GetComponentStatus(c, guildId, componentId)
+func GetGuildComponentStatusDisplay(c *Component, guildId uint, componentId uint) (string, bool) {
+	compState, ok := GetGuildComponentStatus(c, guildId, componentId)
 	if !ok {
 		return GuildComponentStatusDisabledDisplay, false
 	}
@@ -85,7 +84,7 @@ func GetGuildComponentStatusDisplay(c *api.Component, guildId uint, componentId 
 }
 
 // UpdateComponentStatus adds or updates a cached item in the ComponentStatus cache.
-func UpdateComponentStatus(_ *api.Component, guildId uint, componentId uint, component *ComponentStatus) {
+func UpdateComponentStatus(_ *Component, guildId uint, componentId uint, component *ComponentStatus) {
 	cache.Update(componentStatusCache, getComponentStatusCacheKey(guildId, componentId), component)
 }
 

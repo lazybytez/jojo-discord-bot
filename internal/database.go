@@ -20,7 +20,7 @@ package internal
 
 import (
 	"fmt"
-	dbAPI "github.com/lazybytez/jojo-discord-bot/api/database"
+	dbAPI "github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"

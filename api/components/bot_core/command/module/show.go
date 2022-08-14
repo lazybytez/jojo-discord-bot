@@ -21,7 +21,6 @@ package module
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
 // handleModuleShow prints out a list of all commands and their status.
@@ -39,22 +38,22 @@ func handleModuleShow(
 		return
 	}
 
-	regComp, ok := database.GetRegisteredComponent(C, comp.Code)
+	regComp, ok := api.GetRegisteredComponent(C, comp.Code)
 	if !ok {
 		respondWithMissingComponent(s, i, resp, comp.Name)
 
 		return
 	}
 
-	guild, ok := database.GetGuild(C, i.GuildID)
+	guild, ok := api.GetGuild(C, i.GuildID)
 	if !ok {
 		respondWithMissingComponent(s, i, resp, comp.Name)
 
 		return
 	}
 
-	globalStatusOutput, _ := database.GetGlobalStatusDisplayString(C, regComp.ID)
-	guildSpecificStatusOutput, _ := database.GetGuildComponentStatusDisplay(C, guild.ID, regComp.ID)
+	globalStatusOutput, _ := api.GetGlobalStatusDisplayString(C, regComp.ID)
+	guildSpecificStatusOutput, _ := api.GetGuildComponentStatusDisplay(C, guild.ID, regComp.ID)
 
 	populateComponentStatusEmbedFields(resp, comp, guildSpecificStatusOutput, globalStatusOutput)
 

@@ -21,13 +21,12 @@ package bot_core
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
 // handleInitialComponentStatusOnGuildJoin ensures that components that are enabled by default
 // are written to the database and - if newly written enabled by default.
 func handleInitialComponentStatusOnGuildJoin(_ *discordgo.Session, create *discordgo.GuildCreate) {
-	guild, ok := database.GetGuild(C, create.ID)
+	guild, ok := api.GetGuild(C, create.ID)
 
 	if !ok {
 		C.Logger().Warn("Tried to initialize guild component status but could not get guild \"%v\" from DB!",
@@ -41,7 +40,7 @@ func handleInitialComponentStatusOnGuildJoin(_ *discordgo.Session, create *disco
 			continue
 		}
 
-		regComp, ok := database.GetRegisteredComponent(C, comp.Code)
+		regComp, ok := api.GetRegisteredComponent(C, comp.Code)
 
 		if !ok {
 			C.Logger().Warn("Tried to get registered component \"%v\" from DB but failed!",
@@ -50,7 +49,7 @@ func handleInitialComponentStatusOnGuildJoin(_ *discordgo.Session, create *disco
 			return
 		}
 
-		componentStatus, ok := database.GetComponentStatus(C, guild.ID, regComp.ID)
+		componentStatus, ok := api.GetGuildComponentStatus(C, guild.ID, regComp.ID)
 		if ok {
 			continue
 		}
@@ -59,6 +58,6 @@ func handleInitialComponentStatusOnGuildJoin(_ *discordgo.Session, create *disco
 		componentStatus.Guild = *guild
 		componentStatus.Enabled = true
 
-		database.Create(componentStatus)
+		api.Create(componentStatus)
 	}
 }

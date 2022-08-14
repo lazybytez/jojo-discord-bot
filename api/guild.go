@@ -16,10 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package database
+package api
 
 import (
-	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/cache"
 	"gorm.io/gorm"
 	"strconv"
@@ -51,7 +50,7 @@ func init() {
 // cache. If no cache entry is present, a request to the database will be made.
 // If no Guild can be found, the function returns a new empty
 // Guild.
-func GetGuild(c *api.Component, guildId string) (*Guild, bool) {
+func GetGuild(c *Component, guildId string) (*Guild, bool) {
 	guildIdInt, err := strconv.Atoi(guildId)
 	if nil != err {
 		c.Logger().Err(
@@ -77,7 +76,7 @@ func GetGuild(c *api.Component, guildId string) (*Guild, bool) {
 }
 
 // UpdateGuild adds or updates a cached item in the Guild cache.
-func UpdateGuild(c *api.Component, guildId string, component *Guild) {
+func UpdateGuild(c *Component, guildId string, component *Guild) {
 	guildIdInt, err := strconv.Atoi(guildId)
 	if nil != err {
 		c.Logger().Err(

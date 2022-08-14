@@ -16,11 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package database
+package api
 
 import (
 	"fmt"
-	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/log"
 	"github.com/lazybytez/jojo-discord-bot/api/util"
 	"gorm.io/gorm"
@@ -60,7 +59,7 @@ func Init(db *gorm.DB) error {
 
 // RegisterEntity registers a new entity (struct) and runs its automated
 // migration to ensure the database schema is up-to-date.
-func RegisterEntity[C any](c *api.Component, entityType *C) error {
+func RegisterEntity[C any](c *Component, entityType *C) error {
 	componentName := LoggerPrefix
 	if nil != c {
 		componentName = c.Name
@@ -90,7 +89,7 @@ func Save[C any](entity *C) {
 // found entity matching the passed conditions.
 //
 // Returns false if no entries could be found.
-func GetFirstEntity[C any](c *api.Component, entityContainer *C, conditions ...interface{}) bool {
+func GetFirstEntity[C any](c *Component, entityContainer *C, conditions ...interface{}) bool {
 	db := database.First(entityContainer, conditions...)
 
 	if nil != db.Error {
@@ -104,7 +103,7 @@ func GetFirstEntity[C any](c *api.Component, entityContainer *C, conditions ...i
 // found entity matching the passed conditions.
 //
 // Returns false if no entries could be found.
-func GetLastEntity[C any](c *api.Component, entityContainer *C, conditions ...interface{}) bool {
+func GetLastEntity[C any](c *Component, entityContainer *C, conditions ...interface{}) bool {
 	db := database.Last(entityContainer, conditions...)
 
 	if nil != db.Error {
@@ -116,7 +115,7 @@ func GetLastEntity[C any](c *api.Component, entityContainer *C, conditions ...in
 
 // GetEntities fills the passed entity container slice with the entities
 // that have been found for the specified condition.
-func GetEntities[C any](c *api.Component, entityContainer []*C, conditions ...interface{}) bool {
+func GetEntities[C any](c *Component, entityContainer []*C, conditions ...interface{}) bool {
 	db := database.Find(entityContainer, conditions...)
 
 	if nil != db.Error {
@@ -135,7 +134,7 @@ func WorkOn[C any](entityContainer *C) *gorm.DB {
 }
 
 // UpdateEntity can be used to update the passed entity in the database
-func UpdateEntity[C any](c *api.Component, entityContainer *C, column string, value interface{}) bool {
+func UpdateEntity[C any](c *Component, entityContainer *C, column string, value interface{}) bool {
 	db := database.Model(entityContainer).Update(column, value)
 	if nil != db.Error {
 		log.Err(c.Name, db.Error, "Something went wrong when retrieving an entity!")
@@ -145,7 +144,7 @@ func UpdateEntity[C any](c *api.Component, entityContainer *C, column string, va
 }
 
 // DeleteEntity deletes the passed entity from the database.
-func DeleteEntity[C any](c *api.Component, entityContainer *C) bool {
+func DeleteEntity[C any](c *Component, entityContainer *C) bool {
 	db := database.Delete(entityContainer)
 
 	if nil != db.Error {

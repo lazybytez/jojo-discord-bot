@@ -21,7 +21,6 @@ package bot_core
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
 var C *api.Component
@@ -68,12 +67,12 @@ func LoadComponent(_ *discordgo.Session) error {
 // in the database package.
 func prepareDatabase() {
 	// Guild related entities
-	_ = database.RegisterEntity(C, &database.Guild{})
+	_ = api.RegisterEntity(C, &api.Guild{})
 
 	// Component related entities
-	_ = database.RegisterEntity(C, &database.RegisteredComponent{})
-	_ = database.RegisterEntity(C, &database.ComponentStatus{})
-	_ = database.RegisterEntity(C, &database.GlobalComponentStatus{})
+	_ = api.RegisterEntity(C, &api.RegisteredComponent{})
+	_ = api.RegisterEntity(C, &api.ComponentStatus{})
+	_ = api.RegisterEntity(C, &api.GlobalComponentStatus{})
 }
 
 // initializeComponentManagement initializes the component management

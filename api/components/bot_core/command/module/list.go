@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
 // handleModuleList prints out a list of all commands and their status.
@@ -54,9 +53,9 @@ func createComponentStatusListResponse(compNamesAndStatus string) *discordgo.Int
 		},
 		{
 			Name: "Legend",
-			Value: database.GlobalComponentStatusEnabledDisplay + " - Enabled\n" +
-				database.GuildComponentStatusDisabledDisplay + " - Disabled\n" +
-				database.GlobalComponentStatusDisabledDisplay + " - Globally disabled (Maintenance)",
+			Value: api.GlobalComponentStatusEnabledDisplay + " - Enabled\n" +
+				api.GuildComponentStatusDisabledDisplay + " - Disabled\n" +
+				api.GlobalComponentStatusDisabledDisplay + " - Globally disabled (Maintenance)",
 			Inline: false,
 		},
 	}
@@ -83,24 +82,24 @@ func generateComponentStatusTable(i *discordgo.InteractionCreate) string {
 			}
 		}
 
-		regComp, ok := database.GetRegisteredComponent(C, comp.Code)
+		regComp, ok := api.GetRegisteredComponent(C, comp.Code)
 		if !ok {
 			continue
 		}
 
-		globalStatus, ok := database.GetGlobalStatusDisplayString(C, regComp.ID)
+		globalStatus, ok := api.GetGlobalStatusDisplayString(C, regComp.ID)
 		if !ok {
 			getComponentStatusListRow(compNameAndStatus, comp.Name, globalStatus)
 
 			continue
 		}
 
-		guild, ok := database.GetGuild(C, i.GuildID)
+		guild, ok := api.GetGuild(C, i.GuildID)
 		if !ok {
 			continue
 		}
 
-		guildSpecificStatus, _ := database.GetGuildComponentStatusDisplay(C, guild.ID, regComp.ID)
+		guildSpecificStatus, _ := api.GetGuildComponentStatusDisplay(C, guild.ID, regComp.ID)
 		getComponentStatusListRow(compNameAndStatus, comp.Name, guildSpecificStatus)
 	}
 
