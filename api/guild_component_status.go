@@ -21,6 +21,7 @@ package api
 import (
 	"fmt"
 	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"github.com/lazybytez/jojo-discord-bot/api/database"
 	"gorm.io/gorm"
 	"time"
 )
@@ -61,7 +62,7 @@ func GetGuildComponentStatus(c *Component, guildId uint, componentId uint) (*Com
 
 	regComp := &ComponentStatus{}
 	queryStr := ColumnGuild + " = ? AND " + ColumnComponent + " = ?"
-	ok = GetFirstEntity(c, regComp, queryStr, guildId, componentId)
+	ok = database.GetFirstEntity(regComp, queryStr, guildId, componentId)
 
 	UpdateComponentStatus(c, guildId, componentId, regComp)
 

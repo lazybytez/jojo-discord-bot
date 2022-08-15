@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
 // handleModuleDisable enables the targeted module.
@@ -78,7 +79,7 @@ func disableComponentForGuild(
 	}
 
 	guildSpecificStatus.Enabled = false
-	api.Save(guildSpecificStatus)
+	database.Save(guildSpecificStatus)
 
 	return true
 }

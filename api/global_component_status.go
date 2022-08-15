@@ -20,6 +20,7 @@ package api
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"github.com/lazybytez/jojo-discord-bot/api/database"
 	"gorm.io/gorm"
 	"time"
 )
@@ -68,7 +69,7 @@ func GetGlobalComponentStatus(c *Component, registeredComponentId uint) (*Global
 	}
 
 	regComp := &GlobalComponentStatus{}
-	ok = GetFirstEntity(c, regComp, ColumnComponent+" = ?", registeredComponentId)
+	ok = database.GetFirstEntity(regComp, ColumnComponent+" = ?", registeredComponentId)
 
 	UpdateGlobalComponentStatus(c, registeredComponentId, regComp)
 

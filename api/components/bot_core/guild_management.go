@@ -21,6 +21,7 @@ package bot_core
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/api/database"
 	"strconv"
 )
 
@@ -29,7 +30,7 @@ import (
 // It ensures that every guild that isn't already known is registered
 // in the database. It also keeps the name of the guild updated.
 func handleGuildRegisterOnJoin(_ *discordgo.Session, g *discordgo.GuildCreate) {
-	guildId, err := strconv.Atoi(g.ID)
+	guildId, err := strconv.ParseUint(g.ID, 10, 64)
 	if nil != err {
 		C.Logger().Warn("Joined guild with ID \"%v\" but could not convert ID to int!", g.ID)
 
@@ -41,13 +42,13 @@ func handleGuildRegisterOnJoin(_ *discordgo.Session, g *discordgo.GuildCreate) {
 		guild.GuildID = guildId
 		guild.Name = g.Name
 
-		api.Create(&guild)
+		database.Create(&guild)
 
 		return
 	}
 
 	if guild.Name != g.Name {
-		api.UpdateEntity(C, &guild, api.ColumnGuildName, g.Name)
+		database.UpdateEntity(C, &guild, api.ColumnName, g.Name)
 	}
 }
 
@@ -63,6 +64,6 @@ func handleGuildUpdateOnUpdate(_ *discordgo.Session, g *discordgo.GuildUpdate) {
 	}
 
 	if guild.Name != g.Name {
-		api.UpdateEntity(C, &guild, api.ColumnGuildName, g.Name)
+		database.UpdateEntity(C, &guild, api.ColumnName, g.Name)
 	}
 }

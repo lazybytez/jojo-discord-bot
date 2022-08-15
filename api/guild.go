@@ -20,6 +20,7 @@ package api
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"github.com/lazybytez/jojo-discord-bot/api/database"
 	"gorm.io/gorm"
 	"strconv"
 	"time"
@@ -32,14 +33,14 @@ import (
 // manually searching the DB for a guild.
 type Guild struct {
 	gorm.Model
-	GuildID int `gorm:"index"`
+	GuildID uint64 `gorm:"uniqueIndex"`
 	Name    string
 }
 
 // guildCache caches the guilds the current instance is on.
 // A Guild is cached for 10 minutes before the application needs to pull it
 // again.
-var guildCache = cache.New[int, Guild](10 * time.Minute)
+var guildCache = cache.New[uint64, Guild](10 * time.Minute)
 
 // init ensure cache cleanup task is running
 func init() {
@@ -51,7 +52,7 @@ func init() {
 // If no Guild can be found, the function returns a new empty
 // Guild.
 func GetGuild(c *Component, guildId string) (*Guild, bool) {
-	guildIdInt, err := strconv.Atoi(guildId)
+	guildIdInt, err := strconv.ParseUint(guildId, 10, 64)
 	if nil != err {
 		c.Logger().Err(
 			err,
@@ -68,7 +69,7 @@ func GetGuild(c *Component, guildId string) (*Guild, bool) {
 	}
 
 	regComp := &Guild{}
-	ok = GetFirstEntity(c, regComp, ColumnGuildId+" = ?", guildIdInt)
+	ok = database.GetFirstEntity(regComp, ColumnGuildId+" = ?", guildIdInt)
 
 	UpdateGuild(c, guildId, regComp)
 
@@ -77,7 +78,7 @@ func GetGuild(c *Component, guildId string) (*Guild, bool) {
 
 // UpdateGuild adds or updates a cached item in the Guild cache.
 func UpdateGuild(c *Component, guildId string, component *Guild) {
-	guildIdInt, err := strconv.Atoi(guildId)
+	guildIdInt, err := strconv.ParseUint(guildId, 10, 64)
 	if nil != err {
 		c.Logger().Err(
 			err,

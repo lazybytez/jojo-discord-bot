@@ -20,6 +20,7 @@ package api
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"github.com/lazybytez/jojo-discord-bot/api/database"
 	"gorm.io/gorm"
 )
 
@@ -50,7 +51,7 @@ func GetRegisteredComponent(c *Component, code string) (*RegisteredComponent, bo
 	}
 
 	regComp := &RegisteredComponent{}
-	ok = GetFirstEntity(c, regComp, "code = ?", code)
+	ok = database.GetFirstEntity(regComp, "code = ?", code)
 
 	UpdateRegisteredComponent(c, code, regComp)
 

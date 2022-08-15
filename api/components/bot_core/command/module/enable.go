@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
 // handleModuleEnable enables the targeted module.
@@ -80,7 +81,7 @@ func enableComponentForGuild(
 		guildSpecificStatus.Guild = *guild
 		guildSpecificStatus.Enabled = true
 
-		api.Create(guildSpecificStatus)
+		database.Create(guildSpecificStatus)
 
 		generateModuleEnableSuccessfulEmbedField(resp, comp)
 		respond(s, i, resp)
@@ -93,7 +94,7 @@ func enableComponentForGuild(
 	}
 
 	guildSpecificStatus.Enabled = true
-	api.Save(guildSpecificStatus)
+	database.Save(guildSpecificStatus)
 
 	return true
 }

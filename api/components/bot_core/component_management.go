@@ -20,6 +20,7 @@ package bot_core
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
 // registerAvailableComponents ensures that all available components
@@ -34,7 +35,7 @@ func registerAvailableComponents() {
 		if !ok {
 			registeredComponent.Code = component.Code
 
-			api.Create(registeredComponent)
+			database.Create(registeredComponent)
 		}
 	}
 }
@@ -57,7 +58,7 @@ func ensureGlobalComponentStatusExists() {
 			globalComponentStatus.Component = *registeredComponent
 			globalComponentStatus.Enabled = true
 
-			api.Create(globalComponentStatus)
+			database.Create(globalComponentStatus)
 		}
 	}
 }

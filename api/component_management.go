@@ -24,6 +24,42 @@ import (
 	"reflect"
 )
 
+// IsComponentEnabled checks if a specific component is currently enabled
+// for a specific guild.
+func IsComponentEnabled(comp *Component, guildId string) bool {
+	if IsCoreComponent(comp) {
+		return true
+	}
+
+	regComp, ok := GetRegisteredComponent(comp, comp.Code)
+	if !ok {
+		comp.Logger().Warn("Missing component with name \"%v\" in database!", comp.Name)
+	}
+
+	globalStatus, _ := GetGlobalComponentStatus(comp, regComp.ID)
+	if !globalStatus.Enabled {
+		return false
+	}
+
+	if "" == guildId {
+		comp.Logger().Warn("Missing guild with ID \"%v\" in database!", guildId)
+
+		return false
+	}
+	guild, ok := GetGuild(comp, guildId)
+	if !ok {
+		comp.Logger().Warn("Missing guild with ID \"%v\" in database!", comp.Name)
+	}
+
+	guildStatus, _ := GetGuildComponentStatus(comp, guild.ID, regComp.ID)
+
+	if !guildStatus.Enabled {
+		return false
+	}
+
+	return true
+}
+
 // registerComponentStatusDecorator adds the decorator that handles
 // if event handlers should be called or not depending on the owning components
 // status
@@ -47,47 +83,14 @@ func decorateComponentStatus(
 	originalHandler interface{},
 ) {
 	comp := assignedEvent.GetComponent()
+	guildId := getGuildIdFromEventInterface(event)
 
-	if IsCoreComponent(comp) {
+	if IsComponentEnabled(comp, guildId) {
 		reflect.ValueOf(originalHandler).Call([]reflect.Value{
 			reflect.ValueOf(session),
 			reflect.ValueOf(event),
 		})
-
-		return
 	}
-
-	regComp, ok := GetRegisteredComponent(comp, comp.Code)
-	if !ok {
-		comp.Logger().Warn("Missing component with name \"%v\" in database!", comp.Name)
-	}
-
-	globalStatus, _ := GetGlobalComponentStatus(assignedEvent.GetComponent(), regComp.ID)
-	if !globalStatus.Enabled {
-		return
-	}
-
-	guildId := getGuildIdFromEventInterface(event)
-	if "" == guildId {
-		comp.Logger().Warn("Missing guild with ID \"%v\" in database!", guildId)
-
-		return
-	}
-	guild, ok := GetGuild(comp, guildId)
-	if !ok {
-		comp.Logger().Warn("Missing guild with ID \"%v\" in database!", comp.Name)
-	}
-
-	guildStatus, _ := GetGuildComponentStatus(comp, guild.ID, regComp.ID)
-
-	if !guildStatus.Enabled {
-		return
-	}
-
-	reflect.ValueOf(originalHandler).Call([]reflect.Value{
-		reflect.ValueOf(session),
-		reflect.ValueOf(event),
-	})
 }
 
 // getGuildIdFromEventInterface returns the guild id of an event.

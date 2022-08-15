@@ -18,9 +18,12 @@
 
 package api
 
-const ColumnComponent = "component_id"
-const ColumnEnabled = "enabled"
-const ColumnGuild = "guild_id"
-const ColumnGuildId = "guild_id"
-const ColumnName = "name"
-const ColumnCode = "code"
+import "github.com/lazybytez/jojo-discord-bot/api/database"
+
+// EntityManager returns the currently active database.EntityManager.
+// The currently active database.EntityManager is shared across components.
+//
+// The database.EntityManager allows to interact with the database of the application.
+func (c *Component) EntityManager() *database.EntityManager {
+	return database.GetEntityManager()
+}

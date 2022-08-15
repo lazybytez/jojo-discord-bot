@@ -18,9 +18,17 @@
 
 package api
 
-const ColumnComponent = "component_id"
-const ColumnEnabled = "enabled"
-const ColumnGuild = "guild_id"
-const ColumnGuildId = "guild_id"
-const ColumnName = "name"
-const ColumnCode = "code"
+import (
+	"gorm.io/gorm"
+)
+
+// ActiveSlashCommand keeps track of which command is enabled
+// on which guild
+type ActiveSlashCommand struct {
+	gorm.Model
+	SlashCommandID uint
+	SlashCommand   SlashCommand
+	GuildID        uint
+	Guild          Guild
+	CmdID          uint64 `gorm:"uniqueIndex"`
+}

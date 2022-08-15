@@ -21,6 +21,7 @@ package api
 import (
 	"errors"
 	"github.com/bwmarrin/discordgo"
+	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
 // TODO: Improve this system in a future revision.
@@ -160,6 +161,21 @@ func (c *ComponentSlashCommandManager) Register(cmd *Command) error {
 		return err
 	}
 
+	slashCommand, ok := GetSlashCommand(c.owner, cmd.Cmd.Name)
+	if !ok {
+		regComp, ok := GetRegisteredComponent(c.owner, c.owner.Code)
+		if !ok {
+			c.owner.Logger().Warn("Could not register slash-command \"%v\" in database!", cmd.Cmd.Name)
+
+			return nil
+		}
+
+		slashCommand.RegisteredComponent = *regComp
+		slashCommand.Name = cmd.Cmd.Name
+
+		database.Create(slashCommand)
+	}
+
 	componentCommandMap[cmd.Cmd.Name] = cmd
 
 	if isInitialized {
@@ -203,7 +219,7 @@ func (c *ComponentSlashCommandManager) validateCommand(cmd *Command) error {
 
 		c.owner.Logger().Err(
 			err,
-			"Failed to register the slash-Cmd \"%v\" for component \"%v\": %v!",
+			"Failed to register the slash-Cmd \"%v\" for component \"%v\" on guild \"%v\": %v!",
 			cmd.Cmd.Name,
 			c.owner.Name,
 			err.Error())
@@ -214,6 +230,56 @@ func (c *ComponentSlashCommandManager) validateCommand(cmd *Command) error {
 	return nil
 }
 
+// SyncApplicationComponentCommands ensures that the available discordgo.ApplicationCommand
+// are synced for the given component with the given guild.
+//
+// This means that disabled commands are enabled and enabled commands are disabled
+// depending on the component enable state.
+func SyncApplicationComponentCommands(session *discordgo.Session, c *Component, guildId string) {
+
+}
+
+//// EnableCommandsForComponent enables all commands of the passed component for the
+//// specified guild.
+//func EnableCommandsForComponent(session *discordgo.Session, c *Component, guildId string) {
+//	for _, componentCommand := range componentCommandMap {
+//		if componentCommand.c != c {
+//			continue
+//		}
+//
+//		_, err := session.ApplicationCommandCreate(session.State.User.ID, guildId, componentCommand.Cmd)
+//		if nil != err {
+//			c.Logger().Err(
+//				err,
+//				"Failed to register the slash-Cmd \"%v\" for component \"%v\" on guild \"%v\"!",
+//				componentCommand.Cmd.Name,
+//				c.Name,
+//				guildId)
+//		}
+//	}
+//}
+//
+//// DisableCommandsForComponent disables all commands of the passed component for the
+//// specified guild.
+//func DisableCommandsForComponent(session *discordgo.Session, c *Component, guildId string) {
+//	for _, componentCommand := range componentCommandMap {
+//		if componentCommand.c != c {
+//			continue
+//		}
+//
+//		var g discordgo.Guild
+//		//_, err := session.ApplicationCommandDelete(session.State.User.ID, guildId, componentCommand.Cmd)
+//		if nil != err {
+//			c.Logger().Err(
+//				err,
+//				"Failed to register the slash-Cmd \"%v\" for component \"%v\" on guild \"%v\"!",
+//				componentCommand.Cmd.Name,
+//				c.Name,
+//				guildId)
+//		}
+//	}
+//}
+
 // ProcessSubCommands is an easy way to handle sub-commands and sub-command-groups.
 // The function will return true if there was a valid sub-command to handle
 func ProcessSubCommands(
@@ -221,10 +287,10 @@ func ProcessSubCommands(
 	i *discordgo.InteractionCreate,
 	option *discordgo.ApplicationCommandInteractionDataOption,
 	handlers map[string]func(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-	option *discordgo.ApplicationCommandInteractionDataOption,
-),
+		s *discordgo.Session,
+		i *discordgo.InteractionCreate,
+		option *discordgo.ApplicationCommandInteractionDataOption,
+	),
 ) bool {
 	// First validate that there is at least one level of nesting
 	command := i.ApplicationCommandData()
@@ -257,10 +323,10 @@ func runHandler(
 	option *discordgo.ApplicationCommandInteractionDataOption,
 	name string,
 	handlers map[string]func(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-	option *discordgo.ApplicationCommandInteractionDataOption,
-),
+		s *discordgo.Session,
+		i *discordgo.InteractionCreate,
+		option *discordgo.ApplicationCommandInteractionDataOption,
+	),
 ) bool {
 	handler, ok := handlers[name]
 

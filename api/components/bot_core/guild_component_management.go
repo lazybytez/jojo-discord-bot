@@ -21,6 +21,7 @@ package bot_core
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
 // handleInitialComponentStatusOnGuildJoin ensures that components that are enabled by default
@@ -58,6 +59,6 @@ func handleInitialComponentStatusOnGuildJoin(_ *discordgo.Session, create *disco
 		componentStatus.Guild = *guild
 		componentStatus.Enabled = true
 
-		api.Create(componentStatus)
+		database.Create(componentStatus)
 	}
 }
