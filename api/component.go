@@ -117,11 +117,11 @@ type ComponentFeatureSet interface {
 	// On first call, this function initializes the private Component.slashCommandManager
 	// field. On consecutive calls, the already present SlashCommandManager will be used.
 	SlashCommandManager() SlashCommandManager
-	// EntityManager returns the currently active database.EntityManager.
-	// The currently active database.EntityManager is shared across components.
+	// EntityManager returns the currently active database.DBAccess.
+	// The currently active database.DBAccess is shared across components.
 	//
-	// The database.EntityManager allows to interact with the database of the application.
-	EntityManager() database.EntityManager
+	// The database.DBAccess allows to interact with the database of the application.
+	EntityManager() database.DBAccess
 }
 
 // RegisterComponent is used by the component registration system that

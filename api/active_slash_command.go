@@ -19,6 +19,7 @@
 package api
 
 import (
+	"github.com/lazybytez/jojo-discord-bot/api/database"
 	"gorm.io/gorm"
 )
 
@@ -29,6 +30,6 @@ type ActiveSlashCommand struct {
 	SlashCommandID uint
 	SlashCommand   SlashCommand
 	GuildID        uint
-	Guild          Guild
+	Guild          database.Guild
 	CmdID          uint64 `gorm:"uniqueIndex"`
 }

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package api
+package database
 
 const ColumnComponent = "component_id"
 const ColumnEnabled = "enabled"

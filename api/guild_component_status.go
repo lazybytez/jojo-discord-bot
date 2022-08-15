@@ -33,7 +33,7 @@ var GuildComponentStatusDisabledDisplay = ":x:"
 type ComponentStatus struct {
 	gorm.Model
 	GuildID     uint
-	Guild       Guild `gorm:"index:idx_guild_component;constraint:OnDelete:CASCADE;"`
+	Guild       database.Guild `gorm:"index:idx_guild_component;constraint:OnDelete:CASCADE;"`
 	ComponentID uint
 	Component   RegisteredComponent `gorm:"index:idx_guild_component;index:idx_component;constraint:OnDelete:CASCADE;"`
 	Enabled     bool
@@ -61,7 +61,7 @@ func GetGuildComponentStatus(c *Component, guildId uint, componentId uint) (*Com
 	}
 
 	regComp := &ComponentStatus{}
-	queryStr := ColumnGuild + " = ? AND " + ColumnComponent + " = ?"
+	queryStr := database.ColumnGuild + " = ? AND " + database.ColumnComponent + " = ?"
 	ok = database.GetFirstEntity(regComp, queryStr, guildId, componentId)
 
 	UpdateComponentStatus(c, guildId, componentId, regComp)

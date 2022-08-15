@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
 // handleModuleList prints out a list of all commands and their status.
@@ -94,7 +95,7 @@ func generateComponentStatusTable(i *discordgo.InteractionCreate) string {
 			continue
 		}
 
-		guild, ok := api.GetGuild(C, i.GuildID)
+		guild, ok := database.GetGuild(C, i.GuildID)
 		if !ok {
 			continue
 		}

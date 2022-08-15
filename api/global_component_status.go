@@ -69,7 +69,7 @@ func GetGlobalComponentStatus(c *Component, registeredComponentId uint) (*Global
 	}
 
 	regComp := &GlobalComponentStatus{}
-	ok = database.GetFirstEntity(regComp, ColumnComponent+" = ?", registeredComponentId)
+	ok = database.GetFirstEntity(regComp, database.ColumnComponent+" = ?", registeredComponentId)
 
 	UpdateGlobalComponentStatus(c, registeredComponentId, regComp)
 

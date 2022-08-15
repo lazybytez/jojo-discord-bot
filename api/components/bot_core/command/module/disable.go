@@ -47,7 +47,7 @@ func handleModuleDisable(
 		return
 	}
 
-	guild, ok := api.GetGuild(C, i.GuildID)
+	guild, ok := database.GetGuild(C, i.GuildID)
 	if !ok {
 		respondWithMissingComponent(s, i, resp, comp.Name)
 
@@ -65,7 +65,7 @@ func handleModuleDisable(
 }
 
 func disableComponentForGuild(
-	guild *api.Guild,
+	guild *database.Guild,
 	regComp *api.RegisteredComponent,
 ) bool {
 	guildSpecificStatus, ok := api.GetGuildComponentStatus(C, guild.ID, regComp.ID)

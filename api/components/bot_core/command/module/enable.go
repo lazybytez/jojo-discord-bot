@@ -47,7 +47,7 @@ func handleModuleEnable(
 		return
 	}
 
-	guild, ok := api.GetGuild(C, i.GuildID)
+	guild, ok := database.GetGuild(C, i.GuildID)
 	if !ok {
 		respondWithMissingComponent(s, i, resp, comp.Name)
 
@@ -70,7 +70,7 @@ func handleModuleEnable(
 func enableComponentForGuild(
 	s *discordgo.Session,
 	i *discordgo.InteractionCreate,
-	guild *api.Guild,
+	guild *database.Guild,
 	regComp *api.RegisteredComponent,
 	resp *discordgo.InteractionResponseData,
 	comp *api.Component,

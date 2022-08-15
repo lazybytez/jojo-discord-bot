@@ -48,7 +48,7 @@ func GetSlashCommand(c *Component, slashCommand string) (*SlashCommand, bool) {
 	}
 
 	regComp := &SlashCommand{}
-	ok = database.GetFirstEntity(regComp, ColumnName+" = ?", slashCommand)
+	ok = database.GetFirstEntity(regComp, database.ColumnName+" = ?", slashCommand)
 
 	UpdateSlashCommand(c, slashCommand, regComp)
 

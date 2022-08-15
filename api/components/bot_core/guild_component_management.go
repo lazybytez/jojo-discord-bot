@@ -27,7 +27,7 @@ import (
 // handleInitialComponentStatusOnGuildJoin ensures that components that are enabled by default
 // are written to the database and - if newly written enabled by default.
 func handleInitialComponentStatusOnGuildJoin(_ *discordgo.Session, create *discordgo.GuildCreate) {
-	guild, ok := api.GetGuild(C, create.ID)
+	guild, ok := database.GetGuild(C, create.ID)
 
 	if !ok {
 		C.Logger().Warn("Tried to initialize guild component status but could not get guild \"%v\" from DB!",

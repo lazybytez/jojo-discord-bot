@@ -21,6 +21,7 @@ package module
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
 // handleModuleShow prints out a list of all commands and their status.
@@ -45,7 +46,7 @@ func handleModuleShow(
 		return
 	}
 
-	guild, ok := api.GetGuild(C, i.GuildID)
+	guild, ok := database.GetGuild(C, i.GuildID)
 	if !ok {
 		respondWithMissingComponent(s, i, resp, comp.Name)
 

@@ -42,35 +42,37 @@ import (
 // when no component is associated with an action.
 const loggerPrefix = "database_api"
 
-// entityManager is the EntityManager used during application
+// entityManager is the DBAccess used during application
 // lifetime. It is initialized using the Init function.
 var entityManager *EntityManager
 
-// EntityManagerContainer is a container struct that holds the
+// EntityManager is a container struct that holds the
 // gorm.DB instance to use for database interaction.
 //
-// When calling EntityManager() on a api.Component,
+// When calling DBAccess() on a api.Component,
 // in reality this type is returned internally.
-type EntityManagerContainer struct {
+type EntityManager struct {
 	database *gorm.DB
+
+	entityManagers *entityManagers
 }
 
-// GetEntityManager returns the currently active EntityManager (EntityManagerContainer).
+// GetEntityManager returns the currently active DBAccess (EntityManager).
 //
 // When needing database access in a component, use the components
-// EntityManager() method instead! This function is meant for use by the
+// DBAccess() method instead! This function is meant for use by the
 // API.
 func GetEntityManager() *EntityManager {
 	return entityManager
 }
 
-// EntityManager is a wrapper around gorm.DB and forces the application
+// DBAccess is a wrapper around gorm.DB and forces the application
 // to redirect all calls through the API.
 //
 // Reason for this is to keep control on the API up to a specific degree.
 // Also, it allows to provide a unified way of accessing the database
 // that perfectly suites the applications structure.
-type EntityManager interface {
+type DBAccess interface {
 	// RegisterEntity registers a new entity (struct) and runs its automated
 	// migration to ensure the database schema is up-to-date.
 	RegisterEntity(entityType interface{}) error
@@ -102,6 +104,9 @@ type EntityManager interface {
 	// already prepared to get started with applying filters.
 	// This function is the only interface point to get direct access to gorm.DB
 	WorkOn(entityContainer interface{}) *gorm.DB
+
+	// entitySpecificManagerAccess provides methods to work with discrete entities
+	entitySpecificManagerAccess
 }
 
 // Init database instance for the database API
@@ -112,15 +117,17 @@ func Init(db *gorm.DB) error {
 		return fmt.Errorf("database API already initialized")
 	}
 
-	entityManagerContainer := EntityManager(&EntityManagerContainer{db})
-	entityManager = &entityManagerContainer
+	entityManager = &EntityManager{
+		db,
+		&entityManagers{},
+	}
 
 	return nil
 }
 
 // RegisterEntity registers a new entity (struct) and runs its automated
 // migration to ensure the database schema is up-to-date.
-func (em *EntityManagerContainer) RegisterEntity(entityType interface{}) error {
+func (em *EntityManager) RegisterEntity(entityType interface{}) error {
 	err := em.database.AutoMigrate(entityType)
 	if nil != err {
 		log.Err(loggerPrefix, err, "Failed to auto-migrated entity \"%v\"", util.ExtractTypeName(entityType))
@@ -137,7 +144,7 @@ func (em *EntityManagerContainer) RegisterEntity(entityType interface{}) error {
 // found entity matching the passed conditions.
 //
 // Returns an error if no record could be found.
-func (em *EntityManagerContainer) GetFirstEntity(entityContainer interface{}, conditions ...interface{}) error {
+func (em *EntityManager) GetFirstEntity(entityContainer interface{}, conditions ...interface{}) error {
 	return em.database.First(entityContainer, conditions...).Error
 }
 
@@ -145,33 +152,33 @@ func (em *EntityManagerContainer) GetFirstEntity(entityContainer interface{}, co
 // found entity matching the passed conditions.
 //
 // Returns false if no entries could be found.
-func (em *EntityManagerContainer) GetLastEntity(entityContainer interface{}, conditions ...interface{}) error {
+func (em *EntityManager) GetLastEntity(entityContainer interface{}, conditions ...interface{}) error {
 	return em.database.Last(entityContainer, conditions...).Error
 }
 
 // GetEntities fills the passed entities slice with the entities
 // that have been found for the specified condition.
-func (em *EntityManagerContainer) GetEntities(entities []interface{}, conditions ...interface{}) error {
+func (em *EntityManager) GetEntities(entities []interface{}, conditions ...interface{}) error {
 	return em.database.Find(entities, conditions...).Error
 }
 
 // Create creates the passed entity in the database
-func (em *EntityManagerContainer) Create(entity interface{}) error {
+func (em *EntityManager) Create(entity interface{}) error {
 	return em.database.Create(entity).Error
 }
 
 // Save upserts the passed entity in the database
-func (em *EntityManagerContainer) Save(entity interface{}) error {
+func (em *EntityManager) Save(entity interface{}) error {
 	return em.database.Save(entity).Error
 }
 
 // UpdateEntity can be used to update the passed entity in the database
-func (em *EntityManagerContainer) UpdateEntity(entityContainer interface{}, column string, value interface{}) error {
+func (em *EntityManager) UpdateEntity(entityContainer interface{}, column string, value interface{}) error {
 	return em.database.Model(entityContainer).Update(column, value).Error
 }
 
 // DeleteEntity deletes the passed entity from the database.
-func (em *EntityManagerContainer) DeleteEntity(entityContainer interface{}) error {
+func (em *EntityManager) DeleteEntity(entityContainer interface{}) error {
 	return em.database.Delete(entityContainer).Error
 }
 
@@ -180,6 +187,6 @@ func (em *EntityManagerContainer) DeleteEntity(entityContainer interface{}) erro
 // The returned gorm.DB instance is created by using gorm.DB.Model() and is therefore
 // already prepared to get started with applying filters.
 // This function is the only interface point to get direct access to gorm.DB
-func (em *EntityManagerContainer) WorkOn(entityContainer interface{}) *gorm.DB {
+func (em *EntityManager) WorkOn(entityContainer interface{}) *gorm.DB {
 	return em.database.Model(entityContainer)
 }

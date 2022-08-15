@@ -21,6 +21,7 @@ package api
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"github.com/lazybytez/jojo-discord-bot/api/database"
 	"reflect"
 )
 
@@ -46,7 +47,7 @@ func IsComponentEnabled(comp *Component, guildId string) bool {
 
 		return false
 	}
-	guild, ok := GetGuild(comp, guildId)
+	guild, ok := database.GetGuild(comp, guildId)
 	if !ok {
 		comp.Logger().Warn("Missing guild with ID \"%v\" in database!", comp.Name)
 	}
