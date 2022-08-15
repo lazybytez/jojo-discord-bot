@@ -39,8 +39,8 @@ type GuildDBAccess interface {
 	// If no Guild can be found, the function returns a new empty
 	// Guild.
 	Get(guildId string) (*Guild, error)
-	// UpdateGuild adds or updates a cached item in the Guild cache.
-	UpdateGuild(guildId string, guild *Guild) error
+	// Update adds or updates a cached item in the Guild cache.
+	Update(guildId string, guild *Guild) error
 }
 
 // Guilds returns the GuildEntityManager that is currently active,
@@ -75,19 +75,19 @@ func (gem *GuildEntityManager) Get(guildId string) (*Guild, error) {
 		return comp, nil
 	}
 
-	regComp := &Guild{}
-	err = gem.em.GetFirstEntity(regComp, ColumnGuildId+" = ?", guildIdInt)
+	guild := &Guild{}
+	err = gem.em.GetFirstEntity(guild, ColumnGuildId+" = ?", guildIdInt)
 	if nil != err {
 		return &Guild{}, err
 	}
 
-	err = gem.UpdateGuild(guildId, regComp)
+	err = gem.Update(guildId, guild)
 
-	return regComp, err
+	return guild, err
 }
 
-// UpdateGuild adds or updates a cached item in the Guild cache.
-func (gem *GuildEntityManager) UpdateGuild(guildId string, guild *Guild) error {
+// Update adds or updates a cached item in the Guild cache.
+func (gem *GuildEntityManager) Update(guildId string, guild *Guild) error {
 	guildIdInt, err := strconv.ParseUint(guildId, 10, 64)
 	if nil != err {
 		return err
