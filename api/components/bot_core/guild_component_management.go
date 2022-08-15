@@ -41,7 +41,7 @@ func handleInitialComponentStatusOnGuildJoin(_ *discordgo.Session, create *disco
 			continue
 		}
 
-		regComp, ok := api.GetRegisteredComponent(C, comp.Code)
+		regComp, ok := database.GetRegisteredComponent(C, comp.Code)
 
 		if !ok {
 			C.Logger().Warn("Tried to get registered component \"%v\" from DB but failed!",

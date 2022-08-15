@@ -54,9 +54,9 @@ func createComponentStatusListResponse(compNamesAndStatus string) *discordgo.Int
 		},
 		{
 			Name: "Legend",
-			Value: api.GlobalComponentStatusEnabledDisplay + " - Enabled\n" +
+			Value: database.GlobalComponentStatusEnabledDisplay + " - Enabled\n" +
 				api.GuildComponentStatusDisabledDisplay + " - Disabled\n" +
-				api.GlobalComponentStatusDisabledDisplay + " - Globally disabled (Maintenance)",
+				database.GlobalComponentStatusDisabledDisplay + " - Globally disabled (Maintenance)",
 			Inline: false,
 		},
 	}
@@ -83,12 +83,12 @@ func generateComponentStatusTable(i *discordgo.InteractionCreate) string {
 			}
 		}
 
-		regComp, ok := api.GetRegisteredComponent(C, comp.Code)
+		regComp, ok := database.GetRegisteredComponent(C, comp.Code)
 		if !ok {
 			continue
 		}
 
-		globalStatus, ok := api.GetGlobalStatusDisplayString(C, regComp.ID)
+		globalStatus, ok := database.GetGlobalStatusDisplayString(C, regComp.ID)
 		if !ok {
 			getComponentStatusListRow(compNameAndStatus, comp.Name, globalStatus)
 

@@ -39,7 +39,7 @@ func handleModuleShow(
 		return
 	}
 
-	regComp, ok := api.GetRegisteredComponent(C, comp.Code)
+	regComp, ok := database.GetRegisteredComponent(C, comp.Code)
 	if !ok {
 		respondWithMissingComponent(s, i, resp, comp.Name)
 
@@ -53,7 +53,7 @@ func handleModuleShow(
 		return
 	}
 
-	globalStatusOutput, _ := api.GetGlobalStatusDisplayString(C, regComp.ID)
+	globalStatusOutput, _ := database.GetGlobalStatusDisplayString(C, regComp.ID)
 	guildSpecificStatusOutput, _ := api.GetGuildComponentStatusDisplay(C, guild.ID, regComp.ID)
 
 	populateComponentStatusEmbedFields(resp, comp, guildSpecificStatusOutput, globalStatusOutput)

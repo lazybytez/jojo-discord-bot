@@ -20,7 +20,6 @@ package bot_core
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
 // registerAvailableComponents ensures that all available components
@@ -30,12 +29,17 @@ import (
 // about orphaned components.
 func registerAvailableComponents() {
 	for _, component := range api.Components { // safe to assume that Components is populated
-		registeredComponent, ok := api.GetRegisteredComponent(C, component.Code)
+		registeredComponent, err := C.EntityManager().RegisteredComponent().Get(component.Code)
 
-		if !ok {
+		if nil != err {
 			registeredComponent.Code = component.Code
 
-			database.Create(registeredComponent)
+			err := C.EntityManager().Create(registeredComponent)
+			if nil != err {
+				C.Logger().Warn(
+					"Failed to register component with code \"%v\" in database!",
+					registeredComponent.Code)
+			}
 		}
 	}
 }
@@ -47,18 +51,23 @@ func registerAvailableComponents() {
 // is only meant for maintenance purposes.
 func ensureGlobalComponentStatusExists() {
 	for _, component := range api.Components { // safe to assume that Components is populated
-		registeredComponent, ok := api.GetRegisteredComponent(C, component.Code)
+		registeredComponent, err := C.EntityManager().RegisteredComponent().Get(component.Code)
 
-		if !ok {
+		if nil != err {
 			continue
 		}
 
-		globalComponentStatus, ok := api.GetGlobalComponentStatus(C, registeredComponent.ID)
-		if !ok {
+		globalComponentStatus, err := C.EntityManager().GlobalComponentStatus().Get(registeredComponent.ID)
+		if err != nil {
 			globalComponentStatus.Component = *registeredComponent
 			globalComponentStatus.Enabled = true
 
-			database.Create(globalComponentStatus)
+			err := C.EntityManager().Create(globalComponentStatus)
+			if err != nil {
+				C.Logger().Warn(
+					"Failed to global component status for component \"%v\" in database!",
+					registeredComponent.Code)
+			}
 		}
 	}
 }

@@ -18,12 +18,16 @@
 
 package database
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 // entityManagers is a struct embedded by EntityManager
 // that holds the instances of the entity specific entity managers
 type entityManagers struct {
-	guild *GuildEntityManager
+	guild                              *GuildEntityManager
+	globalComponentStatusEntityManager *GlobalComponentStatusEntityManager
+	registeredComponentEntityManager   *RegisteredComponentEntityManager
 }
 
 // entitySpecificManagerAccess contains methods that allow to retrieve
@@ -33,6 +37,12 @@ type entitySpecificManagerAccess interface {
 	// Guilds returns the GuildEntityManager that is currently active,
 	// which can be used to do Guild specific database actions.
 	Guilds() *GuildEntityManager
+	// GlobalComponentStatus returns the GlobalComponentStatusEntityManager that is currently active,
+	// which can be used to do GlobalComponentStatus specific database actions.
+	GlobalComponentStatus() *GlobalComponentStatusEntityManager
+	// RegisteredComponent returns the RegisteredComponentEntityManager that is currently active,
+	// which can be used to do RegisteredComponent specific database actions.
+	RegisteredComponent() *RegisteredComponentEntityManager
 }
 
 // Guild represents a single Discord guild
@@ -44,4 +54,24 @@ type Guild struct {
 	gorm.Model
 	GuildID uint64 `gorm:"uniqueIndex"`
 	Name    string
+}
+
+// GlobalComponentStatus holds the status of a component in the global context.
+// This allows disabling a bugging component globally if necessary.
+type GlobalComponentStatus struct {
+	gorm.Model
+	ComponentID uint
+	Component   RegisteredComponent `gorm:"index:idx_guild_component;index:idx_component;constraint:OnDelete:CASCADE;"`
+	Enabled     bool
+}
+
+// RegisteredComponent represents a single component that is or was known
+// to the system.
+//
+// Single purpose of this struct is to provide a database
+// table with which relations can be build to ensure integrity
+// of the ComponentStatus and GlobalComponentStatus tables.
+type RegisteredComponent struct {
+	gorm.Model
+	Code string `gorm:"uniqueIndex"`
 }

@@ -163,7 +163,7 @@ func (c *ComponentSlashCommandManager) Register(cmd *Command) error {
 
 	slashCommand, ok := GetSlashCommand(c.owner, cmd.Cmd.Name)
 	if !ok {
-		regComp, ok := GetRegisteredComponent(c.owner, c.owner.Code)
+		regComp, ok := database.GetRegisteredComponent(c.owner, c.owner.Code)
 		if !ok {
 			c.owner.Logger().Warn("Could not register slash-command \"%v\" in database!", cmd.Cmd.Name)
 

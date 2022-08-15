@@ -16,49 +16,73 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package api
+package database
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api/cache"
-	"github.com/lazybytez/jojo-discord-bot/api/database"
-	"gorm.io/gorm"
+	"time"
 )
+
+// RegisteredComponentEntityManager is the RegisteredComponent specific entity manager
+// that allows easy access to global component status in the database.
+type RegisteredComponentEntityManager struct {
+	em    *EntityManager
+	cache *cache.Cache[uint, RegisteredComponent]
+}
+
+// RegisteredComponentDBAccess is the interface that defines the capabilities
+// of the RegisteredComponentEntityManager
+type RegisteredComponentDBAccess interface {
+	// Get tries to get a RegisteredComponent from the
+	// cache. If no cache entry is present, a request to the database will be made.
+	// If no RegisteredComponent can be found, the function returns a new empty
+	// RegisteredComponent.
+	Get(registeredComponentCode uint) (*RegisteredComponent, error)
+	// Update adds or updates a cached item in the RegisteredComponentEntityManager cache.
+	Update(registeredComponentId uint, registeredComponent *RegisteredComponent) error
+}
+
+// RegisteredComponent returns the RegisteredComponentEntityManager that is currently active,
+// which can be used to do RegisteredComponent specific database actions.
+func (em *EntityManager) RegisteredComponent() *RegisteredComponentEntityManager {
+	if nil != em.entityManagers.guild {
+		rgem := &RegisteredComponentEntityManager{
+			em,
+			cache.New[uint, RegisteredComponent](10 * time.Minute),
+		}
+		em.entityManagers.registeredComponentEntityManager = rgem
+	}
+
+	return em.entityManagers.registeredComponentEntityManager
+}
 
 // registeredComponentCache is the used instance of the registeredComponentCacheContainer
 // that allows caching of RegisteredComponent
 var registeredComponentCache = cache.New[string, RegisteredComponent](0)
 
-// RegisteredComponent represents a single component that is or was known
-// to the system.
-//
-// Single purpose of this struct is to provide a database
-// table with which relations can be build to ensure integrity
-// of the ComponentStatus and GlobalComponentStatus tables.
-type RegisteredComponent struct {
-	gorm.Model
-	Code string `gorm:"uniqueIndex"`
-}
-
-// GetRegisteredComponent tries to get a RegisteredComponent from the
+// Get tries to get a RegisteredComponent from the
 // cache. If no cache entry is present, a request to the database will be made.
 // If no RegisteredComponent can be found, the function returns a new empty
 // RegisteredComponent.
-func GetRegisteredComponent(c *Component, code string) (*RegisteredComponent, bool) {
-	comp, ok := cache.Get(registeredComponentCache, code)
+func (rgem *RegisteredComponentEntityManager) Get(registeredComponentCode string) (*RegisteredComponent, error) {
+	comp, ok := cache.Get(registeredComponentCache, registeredComponentCode)
 
 	if ok {
-		return comp, true
+		return comp, nil
 	}
 
 	regComp := &RegisteredComponent{}
-	ok = database.GetFirstEntity(regComp, "code = ?", code)
+	err := rgem.em.GetFirstEntity(regComp, "code = ?", registeredComponentCode)
+	if nil != err {
+		return regComp, err
+	}
 
-	UpdateRegisteredComponent(c, code, regComp)
+	UpdateRegisteredComponent(registeredComponentCode, regComp)
 
-	return regComp, ok
+	return regComp, err
 }
 
 // UpdateRegisteredComponent adds or updates a cached item in the RegisteredComponent cache.
-func UpdateRegisteredComponent(_ *Component, code string, component *RegisteredComponent) {
+func UpdateRegisteredComponent(code string, component *RegisteredComponent) {
 	cache.Update(registeredComponentCache, code, component)
 }

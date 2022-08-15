@@ -35,7 +35,7 @@ type ComponentStatus struct {
 	GuildID     uint
 	Guild       database.Guild `gorm:"index:idx_guild_component;constraint:OnDelete:CASCADE;"`
 	ComponentID uint
-	Component   RegisteredComponent `gorm:"index:idx_guild_component;index:idx_component;constraint:OnDelete:CASCADE;"`
+	Component   database.RegisteredComponent `gorm:"index:idx_guild_component;index:idx_component;constraint:OnDelete:CASCADE;"`
 	Enabled     bool
 }
 

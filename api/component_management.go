@@ -32,12 +32,12 @@ func IsComponentEnabled(comp *Component, guildId string) bool {
 		return true
 	}
 
-	regComp, ok := GetRegisteredComponent(comp, comp.Code)
+	regComp, ok := database.GetRegisteredComponent(comp, comp.Code)
 	if !ok {
 		comp.Logger().Warn("Missing component with name \"%v\" in database!", comp.Name)
 	}
 
-	globalStatus, _ := GetGlobalComponentStatus(comp, regComp.ID)
+	globalStatus, _ := database.GetGlobalComponentStatus(comp, regComp.ID)
 	if !globalStatus.Enabled {
 		return false
 	}

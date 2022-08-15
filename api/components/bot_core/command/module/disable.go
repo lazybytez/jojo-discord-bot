@@ -40,7 +40,7 @@ func handleModuleDisable(
 		return
 	}
 
-	regComp, ok := api.GetRegisteredComponent(C, comp.Code)
+	regComp, ok := database.GetRegisteredComponent(C, comp.Code)
 	if !ok {
 		respondWithMissingComponent(s, i, resp, comp.Name)
 
@@ -66,7 +66,7 @@ func handleModuleDisable(
 
 func disableComponentForGuild(
 	guild *database.Guild,
-	regComp *api.RegisteredComponent,
+	regComp *database.RegisteredComponent,
 ) bool {
 	guildSpecificStatus, ok := api.GetGuildComponentStatus(C, guild.ID, regComp.ID)
 	if !ok {

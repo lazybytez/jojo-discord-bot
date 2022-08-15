@@ -28,7 +28,7 @@ import (
 type SlashCommand struct {
 	gorm.Model
 	RegisteredComponentID uint
-	RegisteredComponent   RegisteredComponent
+	RegisteredComponent   database.RegisteredComponent
 	Name                  string `gorm:"uniqueIndex"`
 }
 
