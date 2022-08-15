@@ -20,12 +20,12 @@ package module
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
 // findComponent tries to find a specific component by its code.
-func findComponent(option *discordgo.ApplicationCommandInteractionDataOption) *api.Component {
-	for _, c := range api.Components {
+func findComponent(option *discordgo.ApplicationCommandInteractionDataOption) *database.RegisteredComponent {
+	for _, c := range C.EntityManager().RegisteredComponent().GetAvailable() {
 		if c.Code == option.Options[0].Value {
 			return c
 		}

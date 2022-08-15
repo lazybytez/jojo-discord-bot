@@ -46,7 +46,7 @@ type GuildDBAccess interface {
 // Guilds returns the GuildEntityManager that is currently active,
 // which can be used to do Guild specific database actions.
 func (em *EntityManager) Guilds() *GuildEntityManager {
-	if nil != em.entityManagers.guild {
+	if nil == em.entityManagers.guild {
 		gem := &GuildEntityManager{
 			em,
 			cache.New[uint64, Guild](10 * time.Minute),

@@ -32,8 +32,8 @@ var jojoCommand *api.Command
 func getModuleCommandChoices() []*discordgo.ApplicationCommandOptionChoice {
 	availableModuleChoices := make([]*discordgo.ApplicationCommandOptionChoice, 0)
 
-	for _, comp := range api.Components {
-		if api.IsCoreComponent(comp) {
+	for _, comp := range C.EntityManager().RegisteredComponent().GetAvailable() {
+		if comp.IsCoreComponent() {
 			continue
 		}
 

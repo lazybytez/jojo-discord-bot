@@ -36,7 +36,3 @@ var Components = []*api.Component{
 	bot_log.C,
 	pingpong.C,
 }
-
-func init() {
-	api.Components = Components
-}

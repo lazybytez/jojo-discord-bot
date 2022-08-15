@@ -72,7 +72,7 @@ func prepareDatabase() {
 
 	// Component related entities
 	_ = C.EntityManager().RegisterEntity(&database.RegisteredComponent{})
-	_ = C.EntityManager().RegisterEntity(&api.ComponentStatus{})
+	_ = C.EntityManager().RegisterEntity(&database.GuildComponentStatus{})
 	_ = C.EntityManager().RegisterEntity(&database.GlobalComponentStatus{})
 
 	// Slash-command related entities

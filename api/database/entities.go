@@ -28,6 +28,7 @@ type entityManagers struct {
 	guild                              *GuildEntityManager
 	globalComponentStatusEntityManager *GlobalComponentStatusEntityManager
 	registeredComponentEntityManager   *RegisteredComponentEntityManager
+	guildComponentStatusEntityManager  *GuildComponentStatusEntityManager
 }
 
 // entitySpecificManagerAccess contains methods that allow to retrieve
@@ -43,6 +44,23 @@ type entitySpecificManagerAccess interface {
 	// RegisteredComponent returns the RegisteredComponentEntityManager that is currently active,
 	// which can be used to do RegisteredComponent specific database actions.
 	RegisteredComponent() *RegisteredComponentEntityManager
+	// GuildComponentStatus returns the GuildComponentStatusEntityManager that is currently active,
+	// which can be used to do GuildComponentStatus specific database actions.
+	GuildComponentStatus() *GuildComponentStatusEntityManager
+}
+
+// RegisteredComponent represents a single component that is or was known
+// to the system.
+//
+// Single purpose of this struct is to provide a database
+// table with which relations can be build to ensure integrity
+// of the GuildComponentStatus and GlobalComponentStatus tables.
+type RegisteredComponent struct {
+	gorm.Model
+	Code           string `gorm:"uniqueIndex"`
+	Name           string
+	Description    string
+	DefaultEnabled bool
 }
 
 // Guild represents a single Discord guild
@@ -65,13 +83,12 @@ type GlobalComponentStatus struct {
 	Enabled     bool
 }
 
-// RegisteredComponent represents a single component that is or was known
-// to the system.
-//
-// Single purpose of this struct is to provide a database
-// table with which relations can be build to ensure integrity
-// of the ComponentStatus and GlobalComponentStatus tables.
-type RegisteredComponent struct {
+// GuildComponentStatus holds the status of a component on a specific server
+type GuildComponentStatus struct {
 	gorm.Model
-	Code string `gorm:"uniqueIndex"`
+	GuildID     uint
+	Guild       Guild `gorm:"index:idx_guild_component;constraint:OnDelete:CASCADE;"`
+	ComponentID uint
+	Component   RegisteredComponent `gorm:"index:idx_guild_component;index:idx_component;constraint:OnDelete:CASCADE;"`
+	Enabled     bool
 }

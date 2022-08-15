@@ -28,17 +28,6 @@ import (
 // cannot be managed by server owners, as they are important core components
 const CoreComponentPrefix = "bot_"
 
-// Components holds all registered components.
-// The field is automatically populated before component loading
-// starts by the init function of the components package.
-//
-// Note that this field can be only accessed in lifecycle hooks and handlers,
-// as the field is populated only after the component registry has been initialized.
-//
-// Conclusion: Do not use this variable in init functions or when directly initializing
-// package level variables.
-var Components []*Component
-
 // LifecycleHooks allow to specify functions that should be called
 // when components get loaded and unloaded.
 //

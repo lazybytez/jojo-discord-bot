@@ -33,7 +33,8 @@ func Bootstrap() {
 	initGorm()
 	createSession(Config.token)
 
-	RegisterComponents(discord)
+	RegisterComponents()
+	LoadComponents(discord)
 
 	startBot()
 	if err := api.InitCommandHandling(discord); nil != err {

@@ -52,7 +52,7 @@ type GlobalComponentStatusDBAccess interface {
 // GlobalComponentStatus returns the GlobalComponentStatusEntityManager that is currently active,
 // which can be used to do GlobalComponentStatus specific database actions.
 func (em *EntityManager) GlobalComponentStatus() *GlobalComponentStatusEntityManager {
-	if nil != em.entityManagers.guild {
+	if nil == em.entityManagers.globalComponentStatusEntityManager {
 		gem := &GlobalComponentStatusEntityManager{
 			em,
 			cache.New[uint, GlobalComponentStatus](10 * time.Minute),

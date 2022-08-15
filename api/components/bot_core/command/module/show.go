@@ -20,7 +20,6 @@ package module
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
@@ -32,31 +31,26 @@ func handleModuleShow(
 ) {
 	resp := generateInteractionResponseDataTemplate("Module Information", "")
 
-	comp := findComponent(option)
-	if nil == comp || api.IsCoreComponent(comp) {
+	regComp := findComponent(option)
+	if nil == regComp || regComp.IsCoreComponent() {
 		respondWithMissingComponent(s, i, resp, option.Options[0].Value)
 
 		return
 	}
 
-	regComp, ok := database.GetRegisteredComponent(C, comp.Code)
-	if !ok {
-		respondWithMissingComponent(s, i, resp, comp.Name)
+	em := C.EntityManager()
+
+	guild, err := em.Guilds().Get(i.GuildID)
+	if nil != err {
+		respondWithMissingComponent(s, i, resp, regComp.Name)
 
 		return
 	}
 
-	guild, ok := database.GetGuild(C, i.GuildID)
-	if !ok {
-		respondWithMissingComponent(s, i, resp, comp.Name)
+	globalStatusOutput, _ := em.GlobalComponentStatus().GetDisplayString(regComp.ID)
+	guildSpecificStatusOutput, _ := em.GuildComponentStatus().GetDisplay(guild.ID, regComp.ID)
 
-		return
-	}
-
-	globalStatusOutput, _ := database.GetGlobalStatusDisplayString(C, regComp.ID)
-	guildSpecificStatusOutput, _ := api.GetGuildComponentStatusDisplay(C, guild.ID, regComp.ID)
-
-	populateComponentStatusEmbedFields(resp, comp, guildSpecificStatusOutput, globalStatusOutput)
+	populateComponentStatusEmbedFields(resp, regComp, guildSpecificStatusOutput, globalStatusOutput)
 
 	respond(s, i, resp)
 }
@@ -65,7 +59,7 @@ func handleModuleShow(
 // response templates embed with the status of the requested component.
 func populateComponentStatusEmbedFields(
 	resp *discordgo.InteractionResponseData,
-	comp *api.Component,
+	comp *database.RegisteredComponent,
 	guildSpecificStatusOutput string,
 	globalStatusOutput string,
 ) {

@@ -21,7 +21,6 @@ package api
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api/database"
 	"reflect"
 )
 
@@ -32,12 +31,14 @@ func IsComponentEnabled(comp *Component, guildId string) bool {
 		return true
 	}
 
-	regComp, ok := database.GetRegisteredComponent(comp, comp.Code)
-	if !ok {
+	em := comp.EntityManager()
+
+	regComp, err := em.RegisteredComponent().Get(comp.Code)
+	if nil != err {
 		comp.Logger().Warn("Missing component with name \"%v\" in database!", comp.Name)
 	}
 
-	globalStatus, _ := database.GetGlobalComponentStatus(comp, regComp.ID)
+	globalStatus, _ := em.GlobalComponentStatus().Get(regComp.ID)
 	if !globalStatus.Enabled {
 		return false
 	}
@@ -47,12 +48,12 @@ func IsComponentEnabled(comp *Component, guildId string) bool {
 
 		return false
 	}
-	guild, ok := database.GetGuild(comp, guildId)
-	if !ok {
+	guild, err := em.Guilds().Get(guildId)
+	if nil != err {
 		comp.Logger().Warn("Missing guild with ID \"%v\" in database!", comp.Name)
 	}
 
-	guildStatus, _ := GetGuildComponentStatus(comp, guild.ID, regComp.ID)
+	guildStatus, _ := em.GuildComponentStatus().Get(guild.ID, regComp.ID)
 
 	if !guildStatus.Enabled {
 		return false

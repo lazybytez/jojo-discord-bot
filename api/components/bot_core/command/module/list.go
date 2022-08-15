@@ -22,7 +22,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
@@ -55,7 +54,7 @@ func createComponentStatusListResponse(compNamesAndStatus string) *discordgo.Int
 		{
 			Name: "Legend",
 			Value: database.GlobalComponentStatusEnabledDisplay + " - Enabled\n" +
-				api.GuildComponentStatusDisabledDisplay + " - Disabled\n" +
+				database.GuildComponentStatusDisabledDisplay + " - Disabled\n" +
 				database.GlobalComponentStatusDisabledDisplay + " - Globally disabled (Maintenance)",
 			Inline: false,
 		},
@@ -67,10 +66,12 @@ func createComponentStatusListResponse(compNamesAndStatus string) *discordgo.Int
 // generateComponentStatusTable generates a string with all component names
 // and a string with matching component status divided by line-breaks.
 func generateComponentStatusTable(i *discordgo.InteractionCreate) string {
+	em := C.EntityManager()
+
 	compNameAndStatus := &bytes.Buffer{}
 
-	for _, comp := range api.Components {
-		if api.IsCoreComponent(comp) {
+	for _, regComp := range em.RegisteredComponent().GetAvailable() {
+		if regComp.IsCoreComponent() {
 			continue
 		}
 
@@ -79,29 +80,24 @@ func generateComponentStatusTable(i *discordgo.InteractionCreate) string {
 			_, err := fmt.Fprint(compNameAndStatus, "\n")
 			if nil != err {
 				C.Logger().Warn("Failed to write linebreak while building component list entry for \"%v\"",
-					comp.Name)
+					regComp.Name)
 			}
 		}
 
-		regComp, ok := database.GetRegisteredComponent(C, comp.Code)
-		if !ok {
-			continue
-		}
-
-		globalStatus, ok := database.GetGlobalStatusDisplayString(C, regComp.ID)
-		if !ok {
-			getComponentStatusListRow(compNameAndStatus, comp.Name, globalStatus)
+		globalStatus, err := em.GlobalComponentStatus().GetDisplayString(regComp.ID)
+		if nil != err {
+			getComponentStatusListRow(compNameAndStatus, regComp.Name, globalStatus)
 
 			continue
 		}
 
-		guild, ok := database.GetGuild(C, i.GuildID)
-		if !ok {
+		guild, err := em.Guilds().Get(i.GuildID)
+		if nil != err {
 			continue
 		}
 
-		guildSpecificStatus, _ := api.GetGuildComponentStatusDisplay(C, guild.ID, regComp.ID)
-		getComponentStatusListRow(compNameAndStatus, comp.Name, guildSpecificStatus)
+		guildSpecificStatus, _ := em.GuildComponentStatus().GetDisplay(guild.ID, regComp.ID)
+		getComponentStatusListRow(compNameAndStatus, regComp.Name, guildSpecificStatus)
 	}
 
 	return compNameAndStatus.String()

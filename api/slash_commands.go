@@ -21,7 +21,6 @@ package api
 import (
 	"errors"
 	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
 // TODO: Improve this system in a future revision.
@@ -161,20 +160,20 @@ func (c *ComponentSlashCommandManager) Register(cmd *Command) error {
 		return err
 	}
 
-	slashCommand, ok := GetSlashCommand(c.owner, cmd.Cmd.Name)
-	if !ok {
-		regComp, ok := database.GetRegisteredComponent(c.owner, c.owner.Code)
-		if !ok {
-			c.owner.Logger().Warn("Could not register slash-command \"%v\" in database!", cmd.Cmd.Name)
-
-			return nil
-		}
-
-		slashCommand.RegisteredComponent = *regComp
-		slashCommand.Name = cmd.Cmd.Name
-
-		database.Create(slashCommand)
-	}
+	//slashCommand, ok := GetSlashCommand(c.owner, cmd.Cmd.Name)
+	//if !ok {
+	//	regComp, ok := database.GetRegisteredComponent(c.owner, c.owner.Code)
+	//	if !ok {
+	//		c.owner.Logger().Warn("Could not register slash-command \"%v\" in database!", cmd.Cmd.Name)
+	//
+	//		return nil
+	//	}
+	//
+	//	slashCommand.RegisteredComponent = *regComp
+	//	slashCommand.Name = cmd.Cmd.Name
+	//
+	//	database.Create(slashCommand)
+	//}
 
 	componentCommandMap[cmd.Cmd.Name] = cmd
 
@@ -287,10 +286,10 @@ func ProcessSubCommands(
 	i *discordgo.InteractionCreate,
 	option *discordgo.ApplicationCommandInteractionDataOption,
 	handlers map[string]func(
-		s *discordgo.Session,
-		i *discordgo.InteractionCreate,
-		option *discordgo.ApplicationCommandInteractionDataOption,
-	),
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	option *discordgo.ApplicationCommandInteractionDataOption,
+),
 ) bool {
 	// First validate that there is at least one level of nesting
 	command := i.ApplicationCommandData()
@@ -323,10 +322,10 @@ func runHandler(
 	option *discordgo.ApplicationCommandInteractionDataOption,
 	name string,
 	handlers map[string]func(
-		s *discordgo.Session,
-		i *discordgo.InteractionCreate,
-		option *discordgo.ApplicationCommandInteractionDataOption,
-	),
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	option *discordgo.ApplicationCommandInteractionDataOption,
+),
 ) bool {
 	handler, ok := handlers[name]
 
