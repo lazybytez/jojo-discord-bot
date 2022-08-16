@@ -46,8 +46,10 @@ func handleModuleEnable(
 		return
 	}
 
-	if !enableComponentForGuild(s, i, guild, regComp, resp, regComp) {
+	if !enableComponentForGuild(s, i, guild, regComp, resp) {
 		respondWithAlreadyEnabled(s, i, resp, regComp.Name)
+
+		return
 	}
 
 	generateModuleEnableSuccessfulEmbedField(resp, regComp)
@@ -65,7 +67,6 @@ func enableComponentForGuild(
 	guild *database.Guild,
 	regComp *database.RegisteredComponent,
 	resp *discordgo.InteractionResponseData,
-	comp *database.RegisteredComponent,
 ) bool {
 	em := C.EntityManager()
 
@@ -84,7 +85,7 @@ func enableComponentForGuild(
 			return false
 		}
 
-		generateModuleEnableSuccessfulEmbedField(resp, comp)
+		generateModuleEnableSuccessfulEmbedField(resp, regComp)
 		respond(s, i, resp)
 
 		return true
