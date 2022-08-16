@@ -16,27 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package components
+package database
 
-import (
-	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/api/components/bot_core"
-	"github.com/lazybytez/jojo-discord-bot/api/components/bot_log"
-	"github.com/lazybytez/jojo-discord-bot/components/pingpong"
-)
-
-// Components contains all components that should be available.
-//
-// Enabled components should be registered here.
-// When access to components is necessary use api.Components instead.
-// Note that api.Components can only being accessed after the system has been initialized,
-// which means the earliest point is in the LoadComponent lifecycle hooks.
-var Components = []*api.Component{
-	bot_core.C,
-	bot_log.C,
-	pingpong.C,
-}
-
-func init() {
-	api.Components = Components
-}
+const ColumnComponent = "component_id"
+const ColumnEnabled = "enabled"
+const ColumnGuild = "guild_id"
+const ColumnGuildId = "guild_id"
+const ColumnGuildName = "name"
+const ColumnName = "code"

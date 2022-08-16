@@ -40,10 +40,12 @@ var C *api.Component
 func init() {
 	C = &api.Component{
 		// Metadata
-		Name:        "Ping Pong Component",
-		Description: "This Component plays pingpong with you and returns Latency (maybe)",
-		State: api.State{
-			Enabled: true,
+		Code:        "ping_pong",
+		Name:        "Ping Pong",
+		Description: "This module plays ping pong with you and returns Latency (maybe)",
+
+		State: &api.State{
+			DefaultEnabled: true,
 		},
 
 		Lifecycle: api.LifecycleHooks{
@@ -53,7 +55,7 @@ func init() {
 }
 
 // LoadComponent loads the Ping-Pong Component
-func LoadComponent(discord *discordgo.Session) error {
+func LoadComponent(_ *discordgo.Session) error {
 	// Register the messageCreate func as a callback for MessageCreate events.
 	_, _ = C.HandlerManager().RegisterSimpleMessageHandler("ping", onPingMessageCreate, "ping")
 	_, _ = C.HandlerManager().RegisterSimpleMessageHandler("pong", onPongMessageCreate, "pong")

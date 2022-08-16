@@ -78,7 +78,7 @@ func InitCommandHandling(session *discordgo.Session) error {
 		return errors.New("cannot initialize command handling system twice")
 	}
 
-	session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	unregisterCommandHandler = session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if command, ok := componentCommandMap[i.ApplicationCommandData().Name]; ok {
 			command.Handler(s, i)
 		}
@@ -212,4 +212,70 @@ func (c *ComponentSlashCommandManager) validateCommand(cmd *Command) error {
 	}
 
 	return nil
+}
+
+// ProcessSubCommands is an easy way to handle sub-commands and sub-command-groups.
+// The function will return true if there was a valid sub-command to handle
+func ProcessSubCommands(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	option *discordgo.ApplicationCommandInteractionDataOption,
+	handlers map[string]func(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	option *discordgo.ApplicationCommandInteractionDataOption,
+),
+) bool {
+	// First validate that there is at least one level of nesting
+	command := i.ApplicationCommandData()
+	if len(command.Options) < 1 {
+		return false
+	}
+
+	if option == nil {
+		option = command.Options[0]
+
+		return runHandler(s, i, option, option.Name, handlers)
+	}
+
+	if len(option.Options) < 1 {
+		return false
+	}
+
+	option = option.Options[0]
+
+	return runHandler(s, i, option, option.Name, handlers)
+}
+
+// runHandler executes the actual handle
+// of the found sub-command.
+//
+// Returns false if there is no suiting sub-command.
+func runHandler(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	option *discordgo.ApplicationCommandInteractionDataOption,
+	name string,
+	handlers map[string]func(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	option *discordgo.ApplicationCommandInteractionDataOption,
+),
+) bool {
+	handler, ok := handlers[name]
+
+	if !ok {
+		_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "The executed (sub)command is invalid or does not exist!",
+			},
+		})
+
+		return false
+	}
+
+	handler(s, i, option)
+
+	return true
 }

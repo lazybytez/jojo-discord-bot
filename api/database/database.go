@@ -55,14 +55,7 @@ func Init(db *gorm.DB) error {
 
 	database = db
 
-	return autoMigrateDefaultEntities()
-}
-
-// autoMigrateDefaultEntities runs the automated migrations
-// for all core entities which are not managed through the
-// components of the application but rather through the core
-func autoMigrateDefaultEntities() error {
-	return RegisterEntity(nil, &Guild{})
+	return nil
 }
 
 // RegisterEntity registers a new entity (struct) and runs its automated
@@ -86,6 +79,11 @@ func RegisterEntity[C any](c *api.Component, entityType *C) error {
 // Create creates the passed entity in the database
 func Create[C any](entity *C) {
 	database.Create(entity)
+}
+
+// Save upserts the passed entity in the database
+func Save[C any](entity *C) {
+	database.Save(entity)
 }
 
 // GetFirstEntity fills the passed entity container with the first
@@ -128,11 +126,11 @@ func GetEntities[C any](c *api.Component, entityContainer []*C, conditions ...in
 	return db.RowsAffected > 0
 }
 
-// GetEntitiesComplex returns a gorm.DB pointer that allows to do a custom search.
+// WorkOn returns a gorm.DB pointer that allows to do a custom search or actions on an entity.
 //
 // The returned gorm.DB instance is created by using gorm.DB.Model and is therefore
 // already prepared to get started with applying filters.
-func GetEntitiesComplex[C any](entityContainer []*C) *gorm.DB {
+func WorkOn[C any](entityContainer *C) *gorm.DB {
 	return database.Model(entityContainer)
 }
 

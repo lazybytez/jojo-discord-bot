@@ -20,7 +20,6 @@ package internal
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/components"
 	"github.com/rs/zerolog/log"
 	"os"
 )
@@ -64,7 +63,7 @@ func ExitFatalGracefully(reason string) {
 // and connections are freed before the application terminates
 // gracefully.
 func releaseResources() {
-	components.UnloadComponents(discord)
+	UnloadComponents(discord)
 	api.DeinitCommandHandling(discord)
 	stopBot()
 }

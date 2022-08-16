@@ -20,7 +20,23 @@ package api
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"strings"
 )
+
+// CoreComponentPrefix is the prefix put in front of components that
+// cannot be managed by server owners, as they are important core components
+const CoreComponentPrefix = "bot_"
+
+// Components holds all registered components.
+// The field is automatically populated before component loading
+// starts by the init function of the components package.
+//
+// Note that this field can be only accessed in lifecycle hooks and handlers,
+// as the field is populated only after the component registry has been initialized.
+//
+// Conclusion: Do not use this variable in init functions or when directly initializing
+// package level variables.
+var Components []*Component
 
 // LifecycleHooks allow to specify functions that should be called
 // when components get loaded and unloaded.
@@ -36,8 +52,13 @@ type LifecycleHooks struct {
 //   - is the component enabled?
 //   - is the component currently loaded?
 type State struct {
-	Loaded  bool
-	Enabled bool
+	// Loaded is used to determine if the component
+	// has been loaded properly or not.
+	Loaded bool
+
+	// DefaultEnabled is the default status to set for the component
+	// in the database when the bot joins a new guild.
+	DefaultEnabled bool
 }
 
 // Component is the base structure that must be initialized
@@ -46,11 +67,12 @@ type State struct {
 // It holds basic metadata about the component
 type Component struct {
 	// Metadata
+	Code        string
 	Name        string
 	Description string
 
 	// State
-	State State
+	State *State
 
 	// Lifecycle hooks
 	Lifecycle LifecycleHooks
@@ -106,4 +128,12 @@ func (c *Component) UnregisterComponent(discord *discordgo.Session) error {
 	c.State.Loaded = false
 
 	return nil
+}
+
+// IsCoreComponent checks whether the passed component is a core
+// component or not.
+//
+// Core components are components which are prefixed with the CoreComponentPrefix.
+func IsCoreComponent(c *Component) bool {
+	return strings.HasPrefix(c.Code, CoreComponentPrefix)
 }

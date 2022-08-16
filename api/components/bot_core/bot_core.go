@@ -22,7 +22,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/database"
-	"strconv"
 )
 
 var C *api.Component
@@ -30,11 +29,12 @@ var C *api.Component
 func init() {
 	C = &api.Component{
 		// Metadata
+		Code:        "bot_core",
 		Name:        "Bot Core",
 		Description: "This component handles core routines and database management.",
 
-		State: api.State{
-			Enabled: true,
+		State: &api.State{
+			DefaultEnabled: true,
 		},
 
 		Lifecycle: api.LifecycleHooks{
@@ -43,65 +43,50 @@ func init() {
 	}
 }
 
-func LoadComponent(discord *discordgo.Session) error {
-	_, _ = C.HandlerManager().Register("guild_join", onGuildJoin)
-	_, _ = C.HandlerManager().Register("guild_update", onGuildUpdate)
+// LoadComponent loads the bot core component
+// and handles migration of core entities
+// and registration of important core event handlers.
+func LoadComponent(_ *discordgo.Session) error {
+	prepareDatabase()
+	initializeComponentManagement()
+
+	_, _ = C.HandlerManager().Register("´guild_join", onGuildJoin)
+	_, _ = C.HandlerManager().Register("update_registered_guilds", handleGuildUpdateOnUpdate)
+
+	// We need to handle the JOJO command special as it needs access to the component list.
+	// This is only possible after the API has been properly initialized and the components.Components
+	// list has been accessed once.
+	//
+	// Therefore, we configure and register the command when this core component is
+	// loaded, as at this point the API should know the components too.
+	initAndRegisterJojoCommand()
 
 	return nil
 }
 
-// onGuildJoin is triggered when the bot joins a guild.
-//
-// It ensures that every guild that isn't already known is registered
-// in the database. It also keeps the name of the guild updated.
-func onGuildJoin(s *discordgo.Session, g *discordgo.GuildCreate) {
-	guildId, err := strconv.Atoi(g.ID)
-	if nil != err {
-		C.Logger().Warn("Joined guild with ID \"%v\" but could not convert ID to int!", g.ID)
+// prepareDatabase updates the schema with the core entities which lay
+// in the database package.
+func prepareDatabase() {
+	// Guild related entities
+	_ = database.RegisterEntity(C, &database.Guild{})
 
-		return
-	}
-
-	guild := database.Guild{}
-
-	ok := database.GetFirstEntity(C, &guild, database.ColumnGuildId+" = ?", guildId)
-	if !ok {
-		guild.GuildID = guildId
-		guild.Name = g.Name
-
-		database.Create(&guild)
-
-		return
-	}
-
-	if guild.Name != g.Name {
-		database.UpdateEntity(C, &guild, database.ColumnGuildName, g.Name)
-	}
+	// Component related entities
+	_ = database.RegisterEntity(C, &database.RegisteredComponent{})
+	_ = database.RegisterEntity(C, &database.ComponentStatus{})
+	_ = database.RegisterEntity(C, &database.GlobalComponentStatus{})
 }
 
-// onGuildUpdate cares about updating the stored guild name
-// in the database.
-func onGuildUpdate(session *discordgo.Session, g *discordgo.GuildUpdate) {
-	guildId, err := strconv.Atoi(g.ID)
-	if nil != err {
-		C.Logger().Warn("Joined guild with ID \"%v\" named \"%v\" but could not convert ID to int!",
-			g.ID,
-			g.Name)
+// initializeComponentManagement initializes the component management
+// by populating the database with necessary data and pre-warming the cache.
+func initializeComponentManagement() {
+	registerAvailableComponents()
+	ensureGlobalComponentStatusExists()
+}
 
-		return
-	}
-
-	guild := database.Guild{}
-
-	ok := database.GetFirstEntity(C, &guild, database.ColumnGuildId+" = ?", guildId)
-	if !ok {
-		C.Logger().Warn("Could not update guild with ID \"%v\" named \"%v\" as it is missing in database!",
-			g.ID,
-			g.Name)
-		return
-	}
-
-	if guild.Name != g.Name {
-		database.UpdateEntity(C, &guild, database.ColumnGuildName, g.Name)
-	}
+// onGuildJoin is an event handler called when to bot joins a guild.
+// It ensures the guild registration and global status registrations
+// are happening in the right order.
+func onGuildJoin(s *discordgo.Session, g *discordgo.GuildCreate) {
+	handleGuildRegisterOnJoin(s, g)
+	handleInitialComponentStatusOnGuildJoin(s, g)
 }

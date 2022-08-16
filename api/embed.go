@@ -16,27 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package components
+package api
 
-import (
-	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/api/components/bot_core"
-	"github.com/lazybytez/jojo-discord-bot/api/components/bot_log"
-	"github.com/lazybytez/jojo-discord-bot/components/pingpong"
-)
-
-// Components contains all components that should be available.
-//
-// Enabled components should be registered here.
-// When access to components is necessary use api.Components instead.
-// Note that api.Components can only being accessed after the system has been initialized,
-// which means the earliest point is in the LoadComponent lifecycle hooks.
-var Components = []*api.Component{
-	bot_core.C,
-	bot_log.C,
-	pingpong.C,
-}
-
-func init() {
-	api.Components = Components
-}
+// DefaultEmbedColor is the default color that should be used for
+// embeds send by the bot
+const DefaultEmbedColor = 0x5D397C
