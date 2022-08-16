@@ -55,11 +55,7 @@ func IsComponentEnabled(comp *Component, guildId string) bool {
 
 	guildStatus, _ := em.GuildComponentStatus().Get(guild.ID, regComp.ID)
 
-	if !guildStatus.Enabled {
-		return false
-	}
-
-	return true
+	return guildStatus.Enabled
 }
 
 // registerComponentStatusDecorator adds the decorator that handles
