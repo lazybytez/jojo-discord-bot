@@ -21,7 +21,6 @@ package module
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
@@ -33,32 +32,27 @@ func handleModuleEnable(
 ) {
 	resp := generateInteractionResponseDataTemplate("Enable Module", "")
 
-	comp := findComponent(option)
-	if nil == comp || api.IsCoreComponent(comp) {
+	regComp := findComponent(option)
+	if nil == regComp || regComp.IsCoreComponent() {
 		respondWithMissingComponent(s, i, resp, option.Options[0].Value)
 
 		return
 	}
 
-	regComp, ok := database.GetRegisteredComponent(C, comp.Code)
-	if !ok {
-		respondWithMissingComponent(s, i, resp, comp.Name)
+	guild, err := C.EntityManager().Guilds().Get(i.GuildID)
+	if nil != err {
+		respondWithMissingComponent(s, i, resp, regComp.Name)
 
 		return
 	}
 
-	guild, ok := database.GetGuild(C, i.GuildID)
-	if !ok {
-		respondWithMissingComponent(s, i, resp, comp.Name)
+	if !enableComponentForGuild(s, i, guild, regComp, resp) {
+		respondWithAlreadyEnabled(s, i, resp, regComp.Name)
 
 		return
 	}
 
-	if !enableComponentForGuild(s, i, guild, regComp, resp, comp) {
-		respondWithAlreadyEnabled(s, i, resp, comp.Name)
-	}
-
-	generateModuleEnableSuccessfulEmbedField(resp, comp)
+	generateModuleEnableSuccessfulEmbedField(resp, regComp)
 	respond(s, i, resp)
 }
 
@@ -73,17 +67,25 @@ func enableComponentForGuild(
 	guild *database.Guild,
 	regComp *database.RegisteredComponent,
 	resp *discordgo.InteractionResponseData,
-	comp *api.Component,
 ) bool {
-	guildSpecificStatus, ok := database.GetComponentStatus(C, guild.ID, regComp.ID)
-	if !ok {
+	em := C.EntityManager()
+
+	guildSpecificStatus, err := em.GuildComponentStatus().Get(guild.ID, regComp.ID)
+	if nil != err {
 		guildSpecificStatus.Component = *regComp
 		guildSpecificStatus.Guild = *guild
 		guildSpecificStatus.Enabled = true
 
-		database.Create(guildSpecificStatus)
+		err = em.Create(guildSpecificStatus)
+		if nil != err {
+			C.Logger().Warn("Could not create guild component status for component \"%v\" on guild \"%v\"",
+				regComp.Code,
+				guild.GuildID)
 
-		generateModuleEnableSuccessfulEmbedField(resp, comp)
+			return false
+		}
+
+		generateModuleEnableSuccessfulEmbedField(resp, regComp)
 		respond(s, i, resp)
 
 		return true
@@ -94,14 +96,24 @@ func enableComponentForGuild(
 	}
 
 	guildSpecificStatus.Enabled = true
-	database.Save(guildSpecificStatus)
+	err = em.Save(guildSpecificStatus)
+	if nil != err {
+		C.Logger().Warn("Could not update guild component status for component \"%v\" on guild \"%v\"",
+			regComp.Code,
+			guild.GuildID)
+
+		return false
+	}
 
 	return true
 }
 
 // generateModuleEnableSuccessfulEmbedField creates the necessary embed fields
 // used to response to a successful module enable command.
-func generateModuleEnableSuccessfulEmbedField(resp *discordgo.InteractionResponseData, comp *api.Component) {
+func generateModuleEnableSuccessfulEmbedField(
+	resp *discordgo.InteractionResponseData,
+	comp *database.RegisteredComponent,
+) {
 	resp.Embeds[0].Fields = []*discordgo.MessageEmbedField{
 		{
 			Name:   "Module",

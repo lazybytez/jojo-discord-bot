@@ -16,20 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package module
+package api
 
 import (
-	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api/database"
+	"gorm.io/gorm"
 )
 
-// findComponent tries to find a specific component by its code.
-func findComponent(option *discordgo.ApplicationCommandInteractionDataOption) *database.RegisteredComponent {
-	for _, c := range C.EntityManager().RegisteredComponent().GetAvailable() {
-		if c.Code == option.Options[0].Value {
-			return c
-		}
-	}
-
-	return nil
+// ActiveSlashCommand keeps track of which command is enabled
+// on which guild
+type ActiveSlashCommand struct {
+	gorm.Model
+	SlashCommandID uint
+	SlashCommand   SlashCommand
+	GuildID        uint
+	Guild          database.Guild
+	CmdID          uint64 `gorm:"uniqueIndex"`
 }

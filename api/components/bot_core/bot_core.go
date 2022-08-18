@@ -68,12 +68,16 @@ func LoadComponent(_ *discordgo.Session) error {
 // in the database package.
 func prepareDatabase() {
 	// Guild related entities
-	_ = database.RegisterEntity(C, &database.Guild{})
+	_ = C.EntityManager().RegisterEntity(&database.Guild{})
 
 	// Component related entities
-	_ = database.RegisterEntity(C, &database.RegisteredComponent{})
-	_ = database.RegisterEntity(C, &database.ComponentStatus{})
-	_ = database.RegisterEntity(C, &database.GlobalComponentStatus{})
+	_ = C.EntityManager().RegisterEntity(&database.RegisteredComponent{})
+	_ = C.EntityManager().RegisterEntity(&database.GuildComponentStatus{})
+	_ = C.EntityManager().RegisterEntity(&database.GlobalComponentStatus{})
+
+	// Slash-command related entities
+	_ = C.EntityManager().RegisterEntity(&api.SlashCommand{})
+	_ = C.EntityManager().RegisterEntity(&api.ActiveSlashCommand{})
 }
 
 // initializeComponentManagement initializes the component management

@@ -21,7 +21,6 @@ package module
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
@@ -33,34 +32,29 @@ func handleModuleDisable(
 ) {
 	resp := generateInteractionResponseDataTemplate("Disable Module", "")
 
-	comp := findComponent(option)
-	if nil == comp || api.IsCoreComponent(comp) {
+	regComp := findComponent(option)
+	if nil == regComp || regComp.IsCoreComponent() {
 		respondWithMissingComponent(s, i, resp, option.Options[0].Value)
 
 		return
 	}
 
-	regComp, ok := database.GetRegisteredComponent(C, comp.Code)
-	if !ok {
-		respondWithMissingComponent(s, i, resp, comp.Name)
+	em := C.EntityManager()
 
-		return
-	}
-
-	guild, ok := database.GetGuild(C, i.GuildID)
-	if !ok {
-		respondWithMissingComponent(s, i, resp, comp.Name)
+	guild, err := em.Guilds().Get(i.GuildID)
+	if nil != err {
+		respondWithMissingComponent(s, i, resp, regComp.Name)
 
 		return
 	}
 
 	if !disableComponentForGuild(guild, regComp) {
-		respondWithAlreadyDisabled(s, i, resp, comp.Name)
+		respondWithAlreadyDisabled(s, i, resp, regComp.Name)
 
 		return
 	}
 
-	generateModuleDisableSuccessfulEmbedField(resp, comp)
+	generateModuleDisableSuccessfulEmbedField(resp, regComp)
 	respond(s, i, resp)
 }
 
@@ -68,8 +62,9 @@ func disableComponentForGuild(
 	guild *database.Guild,
 	regComp *database.RegisteredComponent,
 ) bool {
-	guildSpecificStatus, ok := database.GetComponentStatus(C, guild.ID, regComp.ID)
-	if !ok {
+	em := C.EntityManager()
+	guildSpecificStatus, err := em.GuildComponentStatus().Get(guild.ID, regComp.ID)
+	if nil != err {
 		// No database entry = disabled
 		return false
 	}
@@ -79,14 +74,24 @@ func disableComponentForGuild(
 	}
 
 	guildSpecificStatus.Enabled = false
-	database.Save(guildSpecificStatus)
+	err = em.Save(guildSpecificStatus)
+	if nil != err {
+		C.Logger().Warn("Could not update guild component status for component \"%v\" on guild \"%v\"",
+			regComp.Code,
+			guild.GuildID)
+
+		return false
+	}
 
 	return true
 }
 
 // generateModuleDisableSuccessfulEmbedField creates the necessary embed fields
 // used to response to a successful module disable command.
-func generateModuleDisableSuccessfulEmbedField(resp *discordgo.InteractionResponseData, comp *api.Component) {
+func generateModuleDisableSuccessfulEmbedField(
+	resp *discordgo.InteractionResponseData,
+	comp *database.RegisteredComponent,
+) {
 	resp.Embeds[0].Fields = []*discordgo.MessageEmbedField{
 		{
 			Name:   "Module",

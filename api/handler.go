@@ -255,6 +255,9 @@ func (c *ComponentHandlerContainer) Register(name string, handler interface{}) (
 	}
 	c.addComponentHandler(handlerName, assignedEvent)
 
+	// Register system decorators
+	c.registerComponentStatusDecorator(name)
+
 	c.addDiscordGoHandler(assignedEvent)
 
 	c.owner.Logger().Info("Handler with name \"%v\" for component \"%v\" has been registered! (ID: \"%v\")",
@@ -281,12 +284,13 @@ func createHandlerProxy(handler *AssignedEventHandler) func(args []reflect.Value
 		}
 
 		callOriginal := false
+		hasCalledHandlerWrapper := true
 		currentDecorator := decorators.Obtain()
 		for currentDecorator != nil {
 			decoratorHandlerWrapper := func(args []reflect.Value) []reflect.Value {
+				hasCalledHandlerWrapper = true
 				if nil == currentDecorator || nil == currentDecorator.next {
 					callOriginal = true
-					currentDecorator = nil
 
 					return []reflect.Value{}
 				}
@@ -301,10 +305,14 @@ func createHandlerProxy(handler *AssignedEventHandler) func(args []reflect.Value
 			decorateArguments := append([]reflect.Value{reflect.ValueOf(handler)}, args...)
 			decorateArguments = append(decorateArguments, decoratorHandlerEventHandler)
 
-			currentDecorator = currentDecorator.next
+			hasCalledHandlerWrapper = false
 			reflect.ValueOf(loopHandler.value).Call(decorateArguments)
-		}
+			currentDecorator = currentDecorator.next
 
+			if !hasCalledHandlerWrapper {
+				break
+			}
+		}
 		if !callOriginal {
 			return []reflect.Value{}
 		}
@@ -386,6 +394,9 @@ func (c *ComponentHandlerContainer) RegisterOnce(
 
 		return handlerName, false
 	}
+
+	// Register system decorators
+	c.registerComponentStatusDecorator(name)
 
 	c.addDiscordGoOnceTimeHandler(assignedEvent)
 

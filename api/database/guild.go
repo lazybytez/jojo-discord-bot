@@ -19,74 +19,80 @@
 package database
 
 import (
-	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/cache"
-	"gorm.io/gorm"
 	"strconv"
 	"time"
 )
 
-// Guild represents a single Discord guild
-// that the bot is currently on.
-//
-// Note that the guild name is just stored for convenience when
-// manually searching the DB for a guild.
-type Guild struct {
-	gorm.Model
-	GuildID int `gorm:"index"`
-	Name    string
+// GuildEntityManager is the Guild specific entity manager
+// that allows easy access to guilds in the database.
+type GuildEntityManager struct {
+	em    *EntityManager
+	cache *cache.Cache[uint64, Guild]
 }
 
-// guildCache caches the guilds the current instance is on.
-// A Guild is cached for 10 minutes before the application needs to pull it
-// again.
-var guildCache = cache.New[int, Guild](10 * time.Minute)
-
-// init ensure cache cleanup task is running
-func init() {
-	guildCache.EnableAutoCleanup(10 * time.Minute)
+// GuildDBAccess is the interface that defines the capabilities
+// of the GuildEntityManager
+type GuildDBAccess interface {
+	// Get tries to get a Guild from the
+	// cache. If no cache entry is present, a request to the database will be made.
+	// If no Guild can be found, the function returns a new empty
+	// Guild.
+	Get(guildId string) (*Guild, error)
+	// Update adds or updates a cached item in the Guild cache.
+	Update(guildId string, guild *Guild) error
 }
 
-// GetGuild tries to get a Guild from the
+// Guilds returns the GuildEntityManager that is currently active,
+// which can be used to do Guild specific database actions.
+func (em *EntityManager) Guilds() *GuildEntityManager {
+	if nil == em.entityManagers.guild {
+		gem := &GuildEntityManager{
+			em,
+			cache.New[uint64, Guild](10 * time.Minute),
+		}
+		em.entityManagers.guild = gem
+
+		gem.cache.EnableAutoCleanup(10 * time.Minute)
+	}
+
+	return em.entityManagers.guild
+}
+
+// Get tries to get a Guild from the
 // cache. If no cache entry is present, a request to the database will be made.
 // If no Guild can be found, the function returns a new empty
 // Guild.
-func GetGuild(c *api.Component, guildId string) (*Guild, bool) {
-	guildIdInt, err := strconv.Atoi(guildId)
+func (gem *GuildEntityManager) Get(guildId string) (*Guild, error) {
+	guildIdInt, err := strconv.ParseUint(guildId, 10, 64)
 	if nil != err {
-		c.Logger().Err(
-			err,
-			"Failed to get guild from database for id string \"%v\" due to integer conversion issues!",
-			guildId)
-
-		return &Guild{}, false
+		return &Guild{}, err
 	}
 
-	comp, ok := cache.Get(guildCache, guildIdInt)
+	comp, ok := cache.Get(gem.cache, guildIdInt)
 
 	if ok {
-		return comp, true
+		return comp, nil
 	}
 
-	regComp := &Guild{}
-	ok = GetFirstEntity(c, regComp, ColumnGuildId+" = ?", guildIdInt)
+	guild := &Guild{}
+	err = gem.em.GetFirstEntity(guild, ColumnGuildId+" = ?", guildIdInt)
+	if nil != err {
+		return &Guild{}, err
+	}
 
-	UpdateGuild(c, guildId, regComp)
+	err = gem.Update(guildId, guild)
 
-	return regComp, ok
+	return guild, err
 }
 
-// UpdateGuild adds or updates a cached item in the Guild cache.
-func UpdateGuild(c *api.Component, guildId string, component *Guild) {
-	guildIdInt, err := strconv.Atoi(guildId)
+// Update adds or updates a cached item in the Guild cache.
+func (gem *GuildEntityManager) Update(guildId string, guild *Guild) error {
+	guildIdInt, err := strconv.ParseUint(guildId, 10, 64)
 	if nil != err {
-		c.Logger().Err(
-			err,
-			"Failed to get guild from database for id string \"%v\" due to integer conversion issues!",
-			guildId)
-
-		return
+		return err
 	}
 
-	cache.Update(guildCache, guildIdInt, component)
+	cache.Update(gem.cache, guildIdInt, guild)
+	return nil
 }

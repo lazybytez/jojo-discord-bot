@@ -16,20 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package module
+package api
 
-import (
-	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api/database"
-)
+import "github.com/lazybytez/jojo-discord-bot/api/database"
 
-// findComponent tries to find a specific component by its code.
-func findComponent(option *discordgo.ApplicationCommandInteractionDataOption) *database.RegisteredComponent {
-	for _, c := range C.EntityManager().RegisteredComponent().GetAvailable() {
-		if c.Code == option.Options[0].Value {
-			return c
-		}
-	}
-
-	return nil
+// EntityManager returns the currently active database.DBAccess.
+// The currently active database.DBAccess is shared across components.
+//
+// The database.DBAccess allows to interact with the database of the application.
+func (c *Component) EntityManager() *database.EntityManager {
+	return database.GetEntityManager()
 }

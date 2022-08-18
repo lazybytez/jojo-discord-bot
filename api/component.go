@@ -20,23 +20,13 @@ package api
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"github.com/lazybytez/jojo-discord-bot/api/database"
 	"strings"
 )
 
 // CoreComponentPrefix is the prefix put in front of components that
 // cannot be managed by server owners, as they are important core components
 const CoreComponentPrefix = "bot_"
-
-// Components holds all registered components.
-// The field is automatically populated before component loading
-// starts by the init function of the components package.
-//
-// Note that this field can be only accessed in lifecycle hooks and handlers,
-// as the field is populated only after the component registry has been initialized.
-//
-// Conclusion: Do not use this variable in init functions or when directly initializing
-// package level variables.
-var Components []*Component
 
 // LifecycleHooks allow to specify functions that should be called
 // when components get loaded and unloaded.
@@ -92,6 +82,35 @@ type Component struct {
 type RegistrableComponent interface {
 	RegisterComponent(discord *discordgo.Session) error
 	UnregisterComponent(discord *discordgo.Session) error
+}
+
+// ComponentFeatureSet is a simple interface that defines the methods
+// that provide the APIs features, like Logger
+type ComponentFeatureSet interface {
+	// Logger is used to obtain the Logger of a component
+	//
+	// On first call, this function initializes the private Component.logger
+	// field. On consecutive calls, the already present Logger will be used.
+	Logger() Logger
+	// HandlerManager returns the management interface for event handlers.
+	//
+	// It allows the registration, decoration and general
+	// management of event handlers.
+	//
+	// It should be always used when event handlers to listen  for
+	// Discord events are necessary. It natively handles stuff like logging
+	// event Handler status.
+	HandlerManager() ComponentHandlerManager
+	// SlashCommandManager is used to obtain the components slash Command management
+	//
+	// On first call, this function initializes the private Component.slashCommandManager
+	// field. On consecutive calls, the already present SlashCommandManager will be used.
+	SlashCommandManager() SlashCommandManager
+	// EntityManager returns the currently active database.DBAccess.
+	// The currently active database.DBAccess is shared across components.
+	//
+	// The database.DBAccess allows to interact with the database of the application.
+	EntityManager() database.DBAccess
 }
 
 // RegisterComponent is used by the component registration system that

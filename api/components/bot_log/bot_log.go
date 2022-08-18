@@ -24,7 +24,7 @@ import (
 )
 
 // Core component that handles logging of essential
-// events that happen during the bots lifecycle.
+// events that happen during the bot lifecycle.
 
 var C *api.Component
 

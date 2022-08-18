@@ -20,7 +20,6 @@ package database
 
 import (
 	"fmt"
-	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/log"
 	"github.com/lazybytez/jojo-discord-bot/api/util"
 	"gorm.io/gorm"
@@ -39,118 +38,155 @@ import (
 // Most functions expect parameters in a similar way they would be passed
 // to GORM.
 
-// LoggerPrefix is the prefix used for logging
+// loggerPrefix is the prefix used for logging
 // when no component is associated with an action.
-const LoggerPrefix = "DB API"
+const loggerPrefix = "database_api"
 
-var database *gorm.DB
+// entityManager is the DBAccess used during application
+// lifetime. It is initialized using the Init function.
+var entityManager *EntityManager
+
+// EntityManager is a container struct that holds the
+// gorm.DB instance to use for database interaction.
+//
+// When calling DBAccess() on a api.Component,
+// in reality this type is returned internally.
+type EntityManager struct {
+	database *gorm.DB
+
+	entityManagers *entityManagers
+}
+
+// GetEntityManager returns the currently active DBAccess (EntityManager).
+//
+// When needing database access in a component, use the components
+// DBAccess() method instead! This function is meant for use by the
+// API.
+func GetEntityManager() *EntityManager {
+	return entityManager
+}
+
+// DBAccess is a wrapper around gorm.DB and forces the application
+// to redirect all calls through the API.
+//
+// Reason for this is to keep control on the API up to a specific degree.
+// Also, it allows to provide a unified way of accessing the database
+// that perfectly suites the applications structure.
+type DBAccess interface {
+	// RegisterEntity registers a new entity (struct) and runs its automated
+	// migration to ensure the database schema is up-to-date.
+	RegisterEntity(entityType interface{}) error
+
+	// Create creates the passed entity in the database
+	Create(entity interface{}) error
+	// Save upserts the passed entity in the database
+	Save(entity interface{}) error
+	// UpdateEntity can be used to update the passed entity in the database
+	UpdateEntity(entityContainer interface{}, column string, value interface{}) error
+
+	// GetFirstEntity fills the passed entity container with the first
+	// found entity matching the passed conditions.
+	//
+	// Returns an error if no record could be found.
+	GetFirstEntity(entityContainer interface{}, conditions ...interface{}) error
+	// GetLastEntity fills the passed entity container with the last
+	// found entity matching the passed conditions.
+	//
+	// Returns false if no entries could be found.
+	GetLastEntity(entityContainer interface{}, conditions ...interface{}) error
+	// GetEntities fills the passed entities slice with the entities
+	// that have been found for the specified condition.
+	GetEntities(entities []interface{}, conditions ...interface{}) error
+
+	// WorkOn returns a gorm.DB pointer that allows to do a custom search or actions on entities.
+	//
+	// The returned gorm.DB instance is created by using gorm.DB.Model() and is therefore
+	// already prepared to get started with applying filters.
+	// This function is the only interface point to get direct access to gorm.DB
+	WorkOn(entityContainer interface{}) *gorm.DB
+
+	// entitySpecificManagerAccess provides methods to work with discrete entities
+	entitySpecificManagerAccess
+}
 
 // Init database instance for the database API
 // and register default entity types that are managed by
 // the bot core.
 func Init(db *gorm.DB) error {
-	if nil != database {
+	if nil != entityManager {
 		return fmt.Errorf("database API already initialized")
 	}
 
-	database = db
+	entityManager = &EntityManager{
+		db,
+		&entityManagers{},
+	}
 
 	return nil
 }
 
 // RegisterEntity registers a new entity (struct) and runs its automated
 // migration to ensure the database schema is up-to-date.
-func RegisterEntity[C any](c *api.Component, entityType *C) error {
-	componentName := LoggerPrefix
-	if nil != c {
-		componentName = c.Name
-	}
-
-	err := database.AutoMigrate(entityType)
+func (em *EntityManager) RegisterEntity(entityType interface{}) error {
+	err := em.database.AutoMigrate(entityType)
 	if nil != err {
+		log.Err(loggerPrefix, err, "Failed to auto-migrated entity \"%v\"", util.ExtractTypeName(entityType))
+
 		return err
 	}
 
-	log.Info(componentName, "Auto-migrated entity \"%v\"", util.ExtractTypeName(entityType))
+	log.Info(loggerPrefix, "Auto-migrated entity \"%v\"", util.ExtractTypeName(entityType))
 
 	return nil
-}
-
-// Create creates the passed entity in the database
-func Create[C any](entity *C) {
-	database.Create(entity)
-}
-
-// Save upserts the passed entity in the database
-func Save[C any](entity *C) {
-	database.Save(entity)
 }
 
 // GetFirstEntity fills the passed entity container with the first
 // found entity matching the passed conditions.
 //
-// Returns false if no entries could be found.
-func GetFirstEntity[C any](c *api.Component, entityContainer *C, conditions ...interface{}) bool {
-	db := database.First(entityContainer, conditions...)
-
-	if nil != db.Error {
-		log.Err(c.Name, db.Error, "Something went wrong when retrieving first entity!")
-	}
-
-	return db.RowsAffected > 0
+// Returns an error if no record could be found.
+func (em *EntityManager) GetFirstEntity(entityContainer interface{}, conditions ...interface{}) error {
+	return em.database.First(entityContainer, conditions...).Error
 }
 
 // GetLastEntity fills the passed entity container with the last
 // found entity matching the passed conditions.
 //
 // Returns false if no entries could be found.
-func GetLastEntity[C any](c *api.Component, entityContainer *C, conditions ...interface{}) bool {
-	db := database.Last(entityContainer, conditions...)
-
-	if nil != db.Error {
-		log.Err(c.Name, db.Error, "Something went wrong when retrieving last entity!")
-	}
-
-	return db.RowsAffected > 0
+func (em *EntityManager) GetLastEntity(entityContainer interface{}, conditions ...interface{}) error {
+	return em.database.Last(entityContainer, conditions...).Error
 }
 
-// GetEntities fills the passed entity container slice with the entities
+// GetEntities fills the passed entities slice with the entities
 // that have been found for the specified condition.
-func GetEntities[C any](c *api.Component, entityContainer []*C, conditions ...interface{}) bool {
-	db := database.Find(entityContainer, conditions...)
-
-	if nil != db.Error {
-		log.Err(c.Name, db.Error, "Something went wrong when retrieving entities!")
-	}
-
-	return db.RowsAffected > 0
+func (em *EntityManager) GetEntities(entities []interface{}, conditions ...interface{}) error {
+	return em.database.Find(entities, conditions...).Error
 }
 
-// WorkOn returns a gorm.DB pointer that allows to do a custom search or actions on an entity.
-//
-// The returned gorm.DB instance is created by using gorm.DB.Model and is therefore
-// already prepared to get started with applying filters.
-func WorkOn[C any](entityContainer *C) *gorm.DB {
-	return database.Model(entityContainer)
+// Create creates the passed entity in the database
+func (em *EntityManager) Create(entity interface{}) error {
+	return em.database.Create(entity).Error
+}
+
+// Save upserts the passed entity in the database
+func (em *EntityManager) Save(entity interface{}) error {
+	return em.database.Save(entity).Error
 }
 
 // UpdateEntity can be used to update the passed entity in the database
-func UpdateEntity[C any](c *api.Component, entityContainer *C, column string, value interface{}) bool {
-	db := database.Model(entityContainer).Update(column, value)
-	if nil != db.Error {
-		log.Err(c.Name, db.Error, "Something went wrong when retrieving an entity!")
-	}
-
-	return nil != db.Error && db.RowsAffected > 0
+func (em *EntityManager) UpdateEntity(entityContainer interface{}, column string, value interface{}) error {
+	return em.database.Model(entityContainer).Update(column, value).Error
 }
 
 // DeleteEntity deletes the passed entity from the database.
-func DeleteEntity[C any](c *api.Component, entityContainer *C) bool {
-	db := database.Delete(entityContainer)
+func (em *EntityManager) DeleteEntity(entityContainer interface{}) error {
+	return em.database.Delete(entityContainer).Error
+}
 
-	if nil != db.Error {
-		log.Err(c.Name, db.Error, "Something went wrong when deleting an entity!")
-	}
-
-	return nil != db.Error && db.RowsAffected > 0
+// WorkOn returns a gorm.DB pointer that allows to do a custom search or actions on entities.
+//
+// The returned gorm.DB instance is created by using gorm.DB.Model() and is therefore
+// already prepared to get started with applying filters.
+// This function is the only interface point to get direct access to gorm.DB
+func (em *EntityManager) WorkOn(entityContainer interface{}) *gorm.DB {
+	return em.database.Model(entityContainer)
 }

@@ -20,77 +20,101 @@ package database
 
 import (
 	"fmt"
-	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/cache"
-	"gorm.io/gorm"
 	"time"
 )
 
-var GuildComponentStatusEnabledDisplay = ":white_check_mark:"
-var GuildComponentStatusDisabledDisplay = ":x:"
+const GuildComponentStatusEnabledDisplay = ":white_check_mark:"
+const GuildComponentStatusDisabledDisplay = ":x:"
 
-// ComponentStatus holds the status of a component on a specific server
-type ComponentStatus struct {
-	gorm.Model
-	GuildID     uint
-	Guild       Guild `gorm:"index:idx_guild_component;constraint:OnDelete:CASCADE;"`
-	ComponentID uint
-	Component   RegisteredComponent `gorm:"index:idx_guild_component;index:idx_component;constraint:OnDelete:CASCADE;"`
-	Enabled     bool
+// GuildComponentStatusEntityManager is the GuildCom specific entity manager
+// that allows easy access to guilds in the database.
+type GuildComponentStatusEntityManager struct {
+	em    *EntityManager
+	cache *cache.Cache[string, GuildComponentStatus]
 }
 
-// componentStatusCache is the cache used to reduce
-// amount of database calls for the global component status.
-var componentStatusCache = cache.New[string, ComponentStatus](10 * time.Minute)
+// GuildComponentStatusDBAccess is the interface that defines the capabilities
+// of the GuildComponentStatusEntityManager
+type GuildComponentStatusDBAccess interface {
+	// Get tries to get a GuildComponentStatus from the
+	// cache. If no cache entry is present, a request to the database will be made.
+	// If no GuildComponentStatus can be found, the function returns a new empty
+	// GuildComponentStatus.
+	Get(guildId uint, componentId uint) (*Guild, error)
+	// GetDisplay returns the status of a component in a form
+	// that can be directly displayed in Discord.
+	GetDisplay(guildId uint, componentId uint) (string, error)
+	// Update adds or updates a cached item in the GuildComponentStatus cache.
+	Update(guildId string, guild *Guild) error
 
-// init ensure cache cleanup task is running
-func init() {
-	componentStatusCache.EnableAutoCleanup(10 * time.Minute)
+	// getComponentStatusCacheKey concatenates the passed guild and component ids to create
+	// a new unique cache key for the component status
+	getComponentStatusCacheKey(guildId uint, componentId uint) string
 }
 
-// GetComponentStatus tries to get a ComponentStatus from the
-// cache. If no cache entry is present, a request to the database will be made.
-// If no ComponentStatus can be found, the function returns a new empty
-// ComponentStatus.
-func GetComponentStatus(c *api.Component, guildId uint, componentId uint) (*ComponentStatus, bool) {
-	cacheKey := getComponentStatusCacheKey(guildId, componentId)
-	comp, ok := cache.Get(componentStatusCache, cacheKey)
+// GuildComponentStatus returns the GuildComponentStatusEntityManager that is currently active,
+// which can be used to do GuildComponentStatus specific database actions.
+func (em *EntityManager) GuildComponentStatus() *GuildComponentStatusEntityManager {
+	if nil == em.entityManagers.guildComponentStatusEntityManager {
+		gem := &GuildComponentStatusEntityManager{
+			em,
+			cache.New[string, GuildComponentStatus](10 * time.Minute),
+		}
+		em.entityManagers.guildComponentStatusEntityManager = gem
 
-	if ok {
-		return comp, true
+		gem.cache.EnableAutoCleanup(10 * time.Minute)
 	}
 
-	regComp := &ComponentStatus{}
-	queryStr := ColumnGuild + " = ? AND " + ColumnComponent + " = ?"
-	ok = GetFirstEntity(c, regComp, queryStr, guildId, componentId)
-
-	UpdateComponentStatus(c, guildId, componentId, regComp)
-
-	return regComp, ok
+	return em.entityManagers.guildComponentStatusEntityManager
 }
 
-// GetGuildComponentStatusDisplay returns the status of a component in a form
+// Get tries to get a GuildComponentStatus from the
+// cache. If no cache entry is present, a request to the database will be made.
+// If no GuildComponentStatus can be found, the function returns a new empty
+// GuildComponentStatus.
+func (gcsem *GuildComponentStatusEntityManager) Get(guildId uint, componentId uint) (*GuildComponentStatus, error) {
+	cacheKey := gcsem.getComponentStatusCacheKey(guildId, componentId)
+	comp, ok := cache.Get(gcsem.cache, cacheKey)
+
+	if ok {
+		return comp, nil
+	}
+
+	regComp := &GuildComponentStatus{}
+	queryStr := ColumnGuild + " = ? AND " + ColumnComponent + " = ?"
+	err := gcsem.em.GetFirstEntity(regComp, queryStr, guildId, componentId)
+	if nil != err {
+		return regComp, err
+	}
+
+	gcsem.Update(guildId, componentId, regComp)
+
+	return regComp, nil
+}
+
+// GetDisplay returns the status of a component in a form
 // that can be directly displayed in Discord.
-func GetGuildComponentStatusDisplay(c *api.Component, guildId uint, componentId uint) (string, bool) {
-	compState, ok := GetComponentStatus(c, guildId, componentId)
-	if !ok {
-		return GuildComponentStatusDisabledDisplay, false
+func (gcsem *GuildComponentStatusEntityManager) GetDisplay(guildId uint, componentId uint) (string, error) {
+	compState, err := gcsem.Get(guildId, componentId)
+	if nil != err {
+		return GuildComponentStatusDisabledDisplay, err
 	}
 
 	if compState.Enabled {
-		return GuildComponentStatusEnabledDisplay, true
+		return GuildComponentStatusEnabledDisplay, nil
 	}
 
-	return GuildComponentStatusDisabledDisplay, false
+	return GuildComponentStatusDisabledDisplay, nil
 }
 
-// UpdateComponentStatus adds or updates a cached item in the ComponentStatus cache.
-func UpdateComponentStatus(_ *api.Component, guildId uint, componentId uint, component *ComponentStatus) {
-	cache.Update(componentStatusCache, getComponentStatusCacheKey(guildId, componentId), component)
+// Update adds or updates a cached item in the GuildComponentStatus cache.
+func (gcsem *GuildComponentStatusEntityManager) Update(guildId uint, componentId uint, component *GuildComponentStatus) {
+	cache.Update(gcsem.cache, gcsem.getComponentStatusCacheKey(guildId, componentId), component)
 }
 
 // getComponentStatusCacheKey concatenates the passed guild and component ids to create
 // a new unique cache key for the component status
-func getComponentStatusCacheKey(guildId uint, componentId uint) string {
+func (gcsem *GuildComponentStatusEntityManager) getComponentStatusCacheKey(guildId uint, componentId uint) string {
 	return fmt.Sprintf("%v_%v", guildId, componentId)
 }
