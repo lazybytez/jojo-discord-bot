@@ -97,8 +97,8 @@ type GuildComponentStatus struct {
 // SlashCommand represents an available slash-command in the database
 type SlashCommand struct {
 	gorm.Model
-	RegisteredComponentID uint
-	RegisteredComponent   RegisteredComponent `gorm:"index:idx_component;constraint:OnDelete:CASCADE;"`
+	RegisteredComponentID uint                `gorm:"index:idx_slash_command_component_id;"`
+	RegisteredComponent   RegisteredComponent `gorm:"constraint:OnDelete:CASCADE;"`
 	Name                  string              `gorm:"uniqueIndex"`
 }
 
