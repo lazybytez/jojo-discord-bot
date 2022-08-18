@@ -16,10 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package api
+package database
 
 import (
-	"github.com/lazybytez/jojo-discord-bot/api/database"
 	"gorm.io/gorm"
 )
 
@@ -30,6 +29,6 @@ type ActiveSlashCommand struct {
 	SlashCommandID uint
 	SlashCommand   SlashCommand
 	GuildID        uint
-	Guild          database.Guild
+	Guild          Guild
 	CmdID          uint64 `gorm:"uniqueIndex"`
 }

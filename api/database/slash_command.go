@@ -16,20 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package api
-
-import (
-	"github.com/lazybytez/jojo-discord-bot/api/database"
-	"gorm.io/gorm"
-)
-
-// SlashCommand represents an available slash-command in the database
-type SlashCommand struct {
-	gorm.Model
-	RegisteredComponentID uint
-	RegisteredComponent   database.RegisteredComponent
-	Name                  string `gorm:"uniqueIndex"`
-}
+package database
 
 //// slashCommandCache is the cache used to reduce
 //// amount of database calls for the global component status.

@@ -21,7 +21,6 @@ package bot_core
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/api/database"
 )
 
 var C *api.Component
@@ -47,7 +46,6 @@ func init() {
 // and handles migration of core entities
 // and registration of important core event handlers.
 func LoadComponent(_ *discordgo.Session) error {
-	prepareDatabase()
 	initializeComponentManagement()
 
 	_, _ = C.HandlerManager().Register("´guild_join", onGuildJoin)
@@ -62,22 +60,6 @@ func LoadComponent(_ *discordgo.Session) error {
 	initAndRegisterJojoCommand()
 
 	return nil
-}
-
-// prepareDatabase updates the schema with the core entities which lay
-// in the database package.
-func prepareDatabase() {
-	// Guild related entities
-	_ = C.EntityManager().RegisterEntity(&database.Guild{})
-
-	// Component related entities
-	_ = C.EntityManager().RegisterEntity(&database.RegisteredComponent{})
-	_ = C.EntityManager().RegisterEntity(&database.GuildComponentStatus{})
-	_ = C.EntityManager().RegisterEntity(&database.GlobalComponentStatus{})
-
-	// Slash-command related entities
-	_ = C.EntityManager().RegisterEntity(&api.SlashCommand{})
-	_ = C.EntityManager().RegisterEntity(&api.ActiveSlashCommand{})
 }
 
 // initializeComponentManagement initializes the component management

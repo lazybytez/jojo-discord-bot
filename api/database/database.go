@@ -122,7 +122,7 @@ func Init(db *gorm.DB) error {
 		&entityManagers{},
 	}
 
-	return nil
+	return registerDefaultEntities(entityManager)
 }
 
 // RegisterEntity registers a new entity (struct) and runs its automated

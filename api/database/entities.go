@@ -18,6 +18,7 @@
 
 package database
 
+import "C"
 import (
 	"gorm.io/gorm"
 )
@@ -78,17 +79,61 @@ type Guild struct {
 // This allows disabling a bugging component globally if necessary.
 type GlobalComponentStatus struct {
 	gorm.Model
-	ComponentID uint
-	Component   RegisteredComponent `gorm:"index:idx_guild_component;index:idx_component;constraint:OnDelete:CASCADE;"`
+	ComponentID uint                `gorm:"index:idx_global_component_status_component_id;"`
+	Component   RegisteredComponent `gorm:"constraint:OnDelete:CASCADE;"`
 	Enabled     bool
 }
 
 // GuildComponentStatus holds the status of a component on a specific server
 type GuildComponentStatus struct {
 	gorm.Model
-	GuildID     uint
-	Guild       Guild `gorm:"index:idx_guild_component;constraint:OnDelete:CASCADE;"`
-	ComponentID uint
-	Component   RegisteredComponent `gorm:"index:idx_guild_component;index:idx_component;constraint:OnDelete:CASCADE;"`
+	GuildID     uint                `gorm:"index:idx_guild_component_status_guild_id;index:idx_guild_component_status_guild_id_component_id;"`
+	Guild       Guild               `gorm:"constraint:OnDelete:CASCADE;"`
+	ComponentID uint                `gorm:"index:idx_guild_component_status_component_id;index:idx_guild_component_status_guild_id_component_id;"`
+	Component   RegisteredComponent `gorm:"constraint:OnDelete:CASCADE;"`
 	Enabled     bool
+}
+
+// SlashCommand represents an available slash-command in the database
+type SlashCommand struct {
+	gorm.Model
+	RegisteredComponentID uint
+	RegisteredComponent   RegisteredComponent `gorm:"index:idx_component;constraint:OnDelete:CASCADE;"`
+	Name                  string              `gorm:"uniqueIndex"`
+}
+
+// registerDefaultEntities takes care of letting gorm
+// know about all entities in this file.
+func registerDefaultEntities(em *EntityManager) error {
+	// Guild related entities
+	err := em.RegisterEntity(&Guild{})
+	if nil != err {
+		return err
+	}
+
+	// Component related entities
+	err = em.RegisterEntity(&RegisteredComponent{})
+	if nil != err {
+		return err
+	}
+	err = em.RegisterEntity(&GlobalComponentStatus{})
+	if nil != err {
+		return err
+	}
+	err = em.RegisterEntity(&GuildComponentStatus{})
+	if nil != err {
+		return err
+	}
+
+	// Slash-command related entities
+	err = em.RegisterEntity(&SlashCommand{})
+	if nil != err {
+		return err
+	}
+	err = em.RegisterEntity(&ActiveSlashCommand{})
+	if nil != err {
+		return err
+	}
+
+	return nil
 }
