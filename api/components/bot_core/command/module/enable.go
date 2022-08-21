@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api/database"
+	"github.com/lazybytez/jojo-discord-bot/api/slash_commands"
 )
 
 // handleModuleEnable enables the targeted module.
@@ -30,7 +31,7 @@ func handleModuleEnable(
 	i *discordgo.InteractionCreate,
 	option *discordgo.ApplicationCommandInteractionDataOption,
 ) {
-	resp := generateInteractionResponseDataTemplate("Enable Module", "")
+	resp := slash_commands.GenerateInteractionResponseDataTemplate("Enable Module", "")
 
 	regComp := findComponent(option)
 	if nil == regComp || regComp.IsCoreComponent() {
@@ -55,7 +56,7 @@ func handleModuleEnable(
 	C.SlashCommandManager().SyncApplicationComponentCommands(s, i.GuildID)
 
 	generateModuleEnableSuccessfulEmbedField(resp, regComp)
-	respond(s, i, resp)
+	slash_commands.Respond(C, s, i, resp)
 }
 
 // enableComponentForGuild enables the specified component
@@ -88,7 +89,7 @@ func enableComponentForGuild(
 		}
 
 		generateModuleEnableSuccessfulEmbedField(resp, regComp)
-		respond(s, i, resp)
+		slash_commands.Respond(C, s, i, resp)
 
 		return true
 	}
@@ -147,5 +148,5 @@ func respondWithAlreadyEnabled(
 
 	resp.Embeds[0].Fields = embeds
 
-	respond(s, i, resp)
+	slash_commands.Respond(C, s, i, resp)
 }

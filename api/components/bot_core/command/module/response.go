@@ -21,40 +21,7 @@ package module
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api"
 )
-
-// generateShowInteractionResponseTemplate creates a prefilled discordgo.InteractionResponseData
-// that is prepared to be filled with specific data or errors.
-//
-// The template will get an empty embed with the specified name and description.
-func generateInteractionResponseDataTemplate(name string, description string) *discordgo.InteractionResponseData {
-	resp := &discordgo.InteractionResponseData{
-		Embeds: []*discordgo.MessageEmbed{
-			{
-				Title:       name,
-				Description: description,
-				Color:       api.DefaultEmbedColor,
-				Fields:      []*discordgo.MessageEmbedField{},
-			},
-		},
-	}
-	return resp
-}
-
-// respond to the passed interaction with the passed
-// discordgo.InteractionResponseData as a message in the channel
-// where the interaction has been triggered.
-func respond(s *discordgo.Session, i *discordgo.InteractionCreate, resp *discordgo.InteractionResponseData) {
-	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: resp,
-	})
-
-	if nil != err {
-		C.Logger().Err(err, "Failed to deliver interaction response on slash-command!")
-	}
-}
 
 // respondWithMissingComponent fills the passed discordgo.InteractionResponseData
 // with an embed field that indicates that the specified component could not be found.
