@@ -71,7 +71,7 @@ func buildStatOutput() string {
 	buf := &bytes.Buffer{}
 
 	w.Init(buf, 0, 4, 0, ' ', 0)
-	fmt.Fprintf(w, "Uptime: **%v**\n", getDurationString(time.Now().Sub(statsStartTime)))
+	fmt.Fprintf(w, "Uptime: **%v**\n", getDurationString(time.Since(statsStartTime)))
 	fmt.Fprintf(w, "Memory used: **%s / %s**\n", humanize.Bytes(m.Alloc), humanize.Bytes(m.Sys))
 	fmt.Fprintf(w, "Garbage collected: **%s**\n", humanize.Bytes(m.TotalAlloc))
 	fmt.Fprintf(w, "Threads: **%s**\n", humanize.Comma(int64(runtime.NumGoroutine())))

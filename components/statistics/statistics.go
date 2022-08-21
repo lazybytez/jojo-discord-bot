@@ -12,12 +12,11 @@ var C *api.Component
 func init() {
 	C = &api.Component{
 		// Metadata
-		Name:         "Statistics Component",
-		Description:  "This Component returns statistics about the bot and the runtime.",
-		DmPermission: true,
+		Name:        "Statistics Component",
+		Description: "This Component returns statistics about the bot and the runtime.",
 
-		State: api.State{
-			Enabled: true,
+		State: &api.State{
+			DefaultEnabled: true,
 		},
 
 		Lifecycle: api.LifecycleHooks{

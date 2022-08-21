@@ -29,24 +29,13 @@ import (
 // lifecycle events that cannot be assigned to a specific component.
 const slashCommandLogPrefix = "slash_command_manager"
 
-var (
-	// componentCommandMap is a map that holds the discordgo.ApplicationCommand
-	// as value and the name of the discordgo.ApplicationCommand as key.
-	componentCommandMap map[string]*Command
-
-	// unregisterCommandHandler holds the function that can be used to unregister
-	// the command Handler registered by InitCommandHandling
-	unregisterCommandHandler func()
-
-	// slashCommandManagerLogger is the logger used by the slash command management
-	// when there os no component a log message could be assigned to
-	slashCommandManagerLogger *log.Logger
-)
+// componentCommandMap is a map that holds the discordgo.ApplicationCommand
+// as value and the name of the discordgo.ApplicationCommand as key.
+var componentCommandMap map[string]*Command
 
 // init slash command sub-system
 func init() {
 	componentCommandMap = make(map[string]*Command)
-	slashCommandManagerLogger = log.New(slashCommandLogPrefix, nil)
 }
 
 // Command is a struct that acts as a container for
@@ -59,17 +48,17 @@ type Command struct {
 	c       *Component
 }
 
-// SlashCommandManager is a type that is used to hold
+// ComponentSlashCommandManager is a type that is used to hold
 // the owner that keeps the information about the
 // component used by the slash Command manager methods.
-type SlashCommandManager struct {
+type ComponentSlashCommandManager struct {
 	owner *Component
 }
 
-// CommonSlashCommandManager provides a standardized interface
+// SlashCommandManager provides a standardized interface
 // how slash commands should be created and registered
 // in the application
-type CommonSlashCommandManager interface {
+type SlashCommandManager interface {
 	// Register allows to register a command
 	//
 	// It requires a Command to be passed.
@@ -85,7 +74,12 @@ type CommonSlashCommandManager interface {
 	// Also orphaned commands are cleaned up.
 	// This is executed whenever a guild is joined or a component is toggled.
 	SyncApplicationComponentCommands(session *discordgo.Session, guildId string)
+	GetCommandCount() int
 }
+
+// unregisterCommandHandler holds the function that can be used to unregister
+// the command Handler registered by InitCommandHandling
+var unregisterCommandHandler func()
 
 // InitCommandHandling initializes the command handling
 // by registering the necessary event Handler.
@@ -109,14 +103,16 @@ func InitCommandHandling(session *discordgo.Session) error {
 	// TODO: Remove in some safe future version!
 	commands, err := session.ApplicationCommands(session.State.User.ID, "")
 	if nil != err {
-		slashCommandManagerLogger.Err(
+		log.Err(
+			slashCommandLogPrefix,
 			err,
 			"Failed to retrieve globally registered commands!")
 	}
 	for _, cmd := range commands {
 		err = session.ApplicationCommandDelete(session.State.User.ID, "", cmd.ID)
 		if nil != err {
-			slashCommandManagerLogger.Err(
+			log.Err(
+				slashCommandLogPrefix,
 				err,
 				"Failed to remove global slash-command with name \"%v\"!",
 				cmd.Name)
@@ -139,10 +135,10 @@ func DeinitCommandHandling() {
 // SlashCommandManager is used to obtain the components slash Command management
 //
 // On first call, this function initializes the private Component.slashCommandManager
-// field. On consecutive calls, the already present CommonSlashCommandManager will be used.
-func (c *Component) SlashCommandManager() *SlashCommandManager {
+// field. On consecutive calls, the already present SlashCommandManager will be used.
+func (c *Component) SlashCommandManager() SlashCommandManager {
 	if nil == c.slashCommandManager {
-		c.slashCommandManager = &SlashCommandManager{owner: c}
+		c.slashCommandManager = &ComponentSlashCommandManager{owner: c}
 	}
 
 	return c.slashCommandManager
@@ -153,7 +149,7 @@ func (c *Component) SlashCommandManager() *SlashCommandManager {
 // It requires a Command to be passed.
 // The Command holds the common discordgo.ApplicationCommand
 // and the function that should handle the command.
-func (c *SlashCommandManager) Register(cmd *Command) error {
+func (c *ComponentSlashCommandManager) Register(cmd *Command) error {
 	cmd.c = c.owner
 
 	err := c.validateCommand(cmd)
@@ -186,7 +182,7 @@ func (c *SlashCommandManager) Register(cmd *Command) error {
 
 // validateCommand validates the passed command to ensure it is valid
 // and can be registered properly.
-func (c *SlashCommandManager) validateCommand(cmd *Command) error {
+func (c *ComponentSlashCommandManager) validateCommand(cmd *Command) error {
 	if nil == cmd.Cmd {
 		err := errors.New("the discordgo.ApplicationCommand of the passed command is nil")
 
@@ -218,9 +214,10 @@ func (c *SlashCommandManager) validateCommand(cmd *Command) error {
 
 		c.owner.Logger().Err(
 			err,
-			"Failed to register the slash-Cmd \"%v\" for component \"%v\"!",
+			"Failed to register the slash-Cmd \"%v\" for component \"%v\" on guild \"%v\": %v!",
 			cmd.Cmd.Name,
-			c.owner.Name)
+			c.owner.Name,
+			err.Error())
 
 		return err
 	}
@@ -242,13 +239,14 @@ func (c *SlashCommandManager) validateCommand(cmd *Command) error {
 //   - remove disabled commands
 //   - add new commands
 //   - update existing commands
-func (c *SlashCommandManager) SyncApplicationComponentCommands(
+func (c *ComponentSlashCommandManager) SyncApplicationComponentCommands(
 	session *discordgo.Session,
 	guildId string,
 ) {
 	registeredCommands, err := session.ApplicationCommands(session.State.User.ID, guildId)
 	if nil != err {
-		slashCommandManagerLogger.Err(
+		log.Err(
+			slashCommandLogPrefix,
 			err,
 			"Failed to handle guild slash-command sync for guild \"%v\"!",
 			guildId)
@@ -256,7 +254,8 @@ func (c *SlashCommandManager) SyncApplicationComponentCommands(
 		return
 	}
 
-	slashCommandManagerLogger.Info(
+	log.Info(
+		slashCommandLogPrefix,
 		"Syncing slash-commands for guild \"%v\"...",
 		guildId)
 	registeredCommands = c.removeOrphanedCommands(session, guildId, registeredCommands)
@@ -264,7 +263,8 @@ func (c *SlashCommandManager) SyncApplicationComponentCommands(
 	registeredCommands = c.addCommandsByComponentState(session, guildId, registeredCommands)
 	_ = c.updateRegisteredCommands(session, guildId, registeredCommands)
 
-	slashCommandManagerLogger.Info(
+	log.Info(
+		slashCommandLogPrefix,
 		"Finished syncing slash-commands for guild \"%v\"...",
 		guildId)
 }
@@ -274,7 +274,7 @@ func (c *SlashCommandManager) SyncApplicationComponentCommands(
 //
 // The function returns the passed list of commands,
 // with the removed commands being removed.
-func (c *SlashCommandManager) removeOrphanedCommands(
+func (c *ComponentSlashCommandManager) removeOrphanedCommands(
 	session *discordgo.Session,
 	guildId string,
 	commands []*discordgo.ApplicationCommand,
@@ -283,7 +283,8 @@ func (c *SlashCommandManager) removeOrphanedCommands(
 		if _, ok := componentCommandMap[registeredCommand.Name]; !ok {
 			err := session.ApplicationCommandDelete(session.State.User.ID, guildId, registeredCommand.ID)
 			if nil != err {
-				slashCommandManagerLogger.Err(
+				log.Err(
+					slashCommandLogPrefix,
 					err,
 					"Failed to remove orphaned slash-command \"%v\" from guild \"%v\"!",
 					registeredCommand.Name,
@@ -297,7 +298,8 @@ func (c *SlashCommandManager) removeOrphanedCommands(
 				slicedCommands = commands[key+1:]
 			}
 			commands = append(commands[:key], slicedCommands...)
-			slashCommandManagerLogger.Info(
+			log.Info(
+				slashCommandLogPrefix,
 				"Removed orphaned slash-command \"%v\" from guild \"%v\"!",
 				registeredCommand.Name,
 				guildId)
@@ -309,7 +311,7 @@ func (c *SlashCommandManager) removeOrphanedCommands(
 
 // removeCommandsByComponentState removes commands from
 // the specified guild depending on the owning components state.
-func (c *SlashCommandManager) removeCommandsByComponentState(
+func (c *ComponentSlashCommandManager) removeCommandsByComponentState(
 	session *discordgo.Session,
 	guildId string,
 	commands []*discordgo.ApplicationCommand,
@@ -318,7 +320,8 @@ func (c *SlashCommandManager) removeCommandsByComponentState(
 	for key, command := range commands {
 		componentCommand, ok := componentCommandMap[command.Name]
 		if !ok {
-			slashCommandManagerLogger.Warn(
+			log.Warn(
+				slashCommandLogPrefix,
 				"Missing component command for registered slash-command \"%v\"!",
 				command.Name)
 
@@ -357,7 +360,7 @@ func (c *SlashCommandManager) removeCommandsByComponentState(
 
 // addCommandsByComponentState removes commands from
 // the specified guild depending on the owning components state.
-func (c *SlashCommandManager) addCommandsByComponentState(
+func (c *ComponentSlashCommandManager) addCommandsByComponentState(
 	session *discordgo.Session,
 	guildId string,
 	commands []*discordgo.ApplicationCommand,
@@ -394,7 +397,7 @@ func (c *SlashCommandManager) addCommandsByComponentState(
 
 // updateRegisteredCommands checks all registered commands
 // and updates (deletes and creates) differing commands.
-func (c *SlashCommandManager) updateRegisteredCommands(
+func (c *ComponentSlashCommandManager) updateRegisteredCommands(
 	session *discordgo.Session,
 	guildId string,
 	commands []*discordgo.ApplicationCommand,
@@ -402,7 +405,7 @@ func (c *SlashCommandManager) updateRegisteredCommands(
 	for key, command := range commands {
 		componentCommand, ok := componentCommandMap[command.Name]
 		if !ok {
-			slashCommandManagerLogger.Warn("Cannot check for command updates for \"%v\" "+
+			log.Warn(slashCommandLogPrefix, "Cannot check for command updates for \"%v\" "+
 				"as a corresponding component command is missing!",
 				command.Name)
 
@@ -436,7 +439,7 @@ func (c *SlashCommandManager) updateRegisteredCommands(
 
 // isCommandNameInApplicationCommandList checks if a command with the provided name
 // is present in the provided discordgo.ApplicationCommand slice.
-func (c *SlashCommandManager) isCommandNameInApplicationCommandList(commands []*discordgo.ApplicationCommand, name string) bool {
+func (c *ComponentSlashCommandManager) isCommandNameInApplicationCommandList(commands []*discordgo.ApplicationCommand, name string) bool {
 	for _, command := range commands {
 		if command.Name == name {
 			return true
@@ -448,7 +451,7 @@ func (c *SlashCommandManager) isCommandNameInApplicationCommandList(commands []*
 
 // compareCommands compares to discordgo.Application commands
 // using some key factors and returns of they are equal or not
-func (c *SlashCommandManager) compareCommands(
+func (c *ComponentSlashCommandManager) compareCommands(
 	a *discordgo.ApplicationCommand,
 	b *discordgo.ApplicationCommand,
 ) bool {
@@ -499,7 +502,7 @@ func (c *SlashCommandManager) compareCommands(
 }
 
 // compareCommandOptions compares the options of a command with another
-func (c *SlashCommandManager) compareCommandOptions(a *discordgo.ApplicationCommandOption, b *discordgo.ApplicationCommandOption) bool {
+func (c *ComponentSlashCommandManager) compareCommandOptions(a *discordgo.ApplicationCommandOption, b *discordgo.ApplicationCommandOption) bool {
 	// Common data
 	if a.Name != b.Name {
 		return false
@@ -654,4 +657,9 @@ func runHandler(
 	handler(s, i, option)
 
 	return true
+}
+
+// GetCommandCount returns the number of registered slash commands
+func (c *ComponentSlashCommandManager) GetCommandCount() int {
+	return len(componentCommandMap)
 }
