@@ -92,22 +92,42 @@ func InitCommandHandling(session *discordgo.Session) error {
 		}
 	})
 
+	// Drop global registered commands, if any.
+	// We only allow guild specific commands
+	//
+	// This is for backward compatibility, as in the past
+	// we registered commands globally.
+	//
+	// TODO: Remove in some safe future version!
+	commands, err := session.ApplicationCommands(session.State.User.ID, "")
+	if nil != err {
+		log.Err(
+			slashCommandLogPrefix,
+			err,
+			"Failed to retrieve globally registered commands!")
+	}
+	for _, cmd := range commands {
+		err = session.ApplicationCommandDelete(session.State.User.ID, "", cmd.ID)
+		if nil != err {
+			log.Err(
+				slashCommandLogPrefix,
+				err,
+				"Failed to remove global slash-command with name \"%v\"!",
+				cmd.Name)
+		}
+	}
+
 	return nil
 }
 
 // DeinitCommandHandling unregisters the event Handler
 // that is registered by InitCommandHandling.
-func DeinitCommandHandling(session *discordgo.Session) {
+func DeinitCommandHandling() {
 	if nil == unregisterCommandHandler {
 		return
 	}
 
 	unregisterCommandHandler()
-
-	for _, command := range componentCommandMap {
-		_ = session.ApplicationCommandDelete(session.State.User.ID, "", command.Cmd.ID)
-	}
-
 }
 
 // SlashCommandManager is used to obtain the components slash Command management
@@ -228,6 +248,7 @@ func (c *ComponentSlashCommandManager) SyncApplicationComponentCommands(
 		guildId)
 	registeredCommands = c.removeOrphanedCommands(session, guildId, registeredCommands)
 	registeredCommands = c.removeCommandsByComponentState(session, guildId, registeredCommands)
+	registeredCommands = c.addCommandsByComponentState(session, guildId, registeredCommands)
 
 	log.Info(
 		slashCommandLogPrefix,
@@ -259,7 +280,11 @@ func (c *ComponentSlashCommandManager) removeOrphanedCommands(
 				continue
 			}
 
-			commands = append(commands[:key], commands[key+1:]...)
+			slicedCommands := make([]*discordgo.ApplicationCommand, 0)
+			if len(commands)-1 >= key+1 {
+				slicedCommands = commands[key+1:]
+			}
+			commands = append(commands[:key], slicedCommands...)
 			log.Info(
 				slashCommandLogPrefix,
 				"Removed orphaned slash-command \"%v\" from guild \"%v\"!",
@@ -305,7 +330,11 @@ func (c *ComponentSlashCommandManager) removeCommandsByComponentState(
 			continue
 		}
 
-		commands = append(commands[:key], commands[key+1:]...)
+		slicedCommands := make([]*discordgo.ApplicationCommand, 0)
+		if len(commands)-1 >= key+1 {
+			slicedCommands = commands[key+1:]
+		}
+		commands = append(commands[:key], slicedCommands...)
 
 		componentCommand.c.Logger().Info(
 			"Removed disabled slash-command \"%v\" from guild \"%v\"!",

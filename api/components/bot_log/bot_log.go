@@ -75,5 +75,11 @@ func onGuildJoin(_ *discordgo.Session, g *discordgo.GuildCreate) {
 //
 // It provides information about the guild that has been left.
 func onGuildLeave(_ *discordgo.Session, g *discordgo.GuildDelete) {
-	C.Logger().Info("The bot left the guild \"%v\" with ID \"%v\"", g.Name, g.ID)
+	guild, err := C.EntityManager().Guilds().Get(g.ID)
+	guildName := ""
+	if nil == err {
+		guildName = guild.Name
+	}
+
+	C.Logger().Info("The bot left the guild \"%v\" with ID \"%v\"", guildName, g.ID)
 }
