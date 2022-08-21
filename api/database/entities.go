@@ -94,14 +94,6 @@ type GuildComponentStatus struct {
 	Enabled     bool
 }
 
-// SlashCommand represents an available slash-command in the database
-type SlashCommand struct {
-	gorm.Model
-	RegisteredComponentID uint                `gorm:"index:idx_slash_command_component_id;"`
-	RegisteredComponent   RegisteredComponent `gorm:"constraint:OnDelete:CASCADE;"`
-	Name                  string              `gorm:"uniqueIndex"`
-}
-
 // registerDefaultEntities takes care of letting gorm
 // know about all entities in this file.
 func registerDefaultEntities(em *EntityManager) error {
@@ -121,16 +113,6 @@ func registerDefaultEntities(em *EntityManager) error {
 		return err
 	}
 	err = em.RegisterEntity(&GuildComponentStatus{})
-	if nil != err {
-		return err
-	}
-
-	// Slash-command related entities
-	err = em.RegisterEntity(&SlashCommand{})
-	if nil != err {
-		return err
-	}
-	err = em.RegisterEntity(&ActiveSlashCommand{})
 	if nil != err {
 		return err
 	}
