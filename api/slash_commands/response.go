@@ -60,3 +60,20 @@ func Respond(
 		c.Logger().Err(err, "Failed to deliver interaction response on slash-command!")
 	}
 }
+
+// RespondEdit edits the passed interaction with the passed
+// discordgo.WebhooKParams.
+func RespondEdit(
+	c *api.Component,
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	editData *discordgo.WebhookEdit,
+) *discordgo.Message {
+	message, err := s.InteractionResponseEdit(i.Interaction, editData)
+
+	if nil != err {
+		c.Logger().Err(err, "Failed to deliver interaction response on slash-command!")
+	}
+
+	return message
+}

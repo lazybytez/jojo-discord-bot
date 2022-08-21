@@ -55,6 +55,7 @@ func HandleSyncCommandSubCommand(
 		return
 	}
 
+	respondWithProcessing(s, i, resp)
 	C.Logger().Info(
 		"Manual slash-command sync has been triggered for guild \"%v\"",
 		i.GuildID)
@@ -63,7 +64,26 @@ func HandleSyncCommandSubCommand(
 	currentTime := time.Now()
 	cache.Update(lastGuildSyncCache, i.GuildID, &currentTime)
 
-	respondWitSuccess(s, i, resp)
+	finishWitSuccess(s, i, resp)
+}
+
+// respondWithProcessing responds with a message
+// telling the user the command is still processing.
+func respondWithProcessing(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	resp *discordgo.InteractionResponseData,
+) {
+	embeds := []*discordgo.MessageEmbedField{
+		{
+			Name:  ":alarm_clock: Processing...",
+			Value: "Synchronisation is in progress and can take up to a minute, please wait...",
+		},
+	}
+
+	resp.Embeds[0].Fields = embeds
+
+	slash_commands.Respond(C, s, i, resp)
 }
 
 // respondWithOnCoolDown responds with a message
@@ -87,7 +107,7 @@ func respondWithOnCoolDown(
 
 // respondWithOnCoolDown responds with a message
 // telling the user the command is still on cool-down.
-func respondWitSuccess(
+func finishWitSuccess(
 	s *discordgo.Session,
 	i *discordgo.InteractionCreate,
 	resp *discordgo.InteractionResponseData,
@@ -99,7 +119,11 @@ func respondWitSuccess(
 		},
 	}
 
+	// We have an already appropriate embed formed, therefore just
+	// edit and use it.
 	resp.Embeds[0].Fields = embeds
 
-	slash_commands.Respond(C, s, i, resp)
+	slash_commands.RespondEdit(C, s, i, &discordgo.WebhookEdit{
+		Embeds: &resp.Embeds,
+	})
 }
