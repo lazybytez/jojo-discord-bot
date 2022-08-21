@@ -260,7 +260,7 @@ func (c *ComponentSlashCommandManager) SyncApplicationComponentCommands(
 	registeredCommands = c.removeOrphanedCommands(session, guildId, registeredCommands)
 	registeredCommands = c.removeCommandsByComponentState(session, guildId, registeredCommands)
 	registeredCommands = c.addCommandsByComponentState(session, guildId, registeredCommands)
-	registeredCommands = c.updateRegisteredCommands(session, guildId, registeredCommands)
+	_ = c.updateRegisteredCommands(session, guildId, registeredCommands)
 
 	log.Info(
 		slashCommandLogPrefix,
@@ -599,10 +599,10 @@ func ProcessSubCommands(
 	i *discordgo.InteractionCreate,
 	option *discordgo.ApplicationCommandInteractionDataOption,
 	handlers map[string]func(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-	option *discordgo.ApplicationCommandInteractionDataOption,
-),
+		s *discordgo.Session,
+		i *discordgo.InteractionCreate,
+		option *discordgo.ApplicationCommandInteractionDataOption,
+	),
 ) bool {
 	// First validate that there is at least one level of nesting
 	command := i.ApplicationCommandData()
@@ -635,10 +635,10 @@ func runHandler(
 	option *discordgo.ApplicationCommandInteractionDataOption,
 	name string,
 	handlers map[string]func(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-	option *discordgo.ApplicationCommandInteractionDataOption,
-),
+		s *discordgo.Session,
+		i *discordgo.InteractionCreate,
+		option *discordgo.ApplicationCommandInteractionDataOption,
+	),
 ) bool {
 	handler, ok := handlers[name]
 

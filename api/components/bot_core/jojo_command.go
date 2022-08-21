@@ -58,7 +58,6 @@ func initAndRegisterJojoCommand() {
 		Cmd: &discordgo.ApplicationCommand{
 			Name:        "jojo",
 			Description: "Manage modules and core settings of the bot!",
-
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:        "module",
