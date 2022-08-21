@@ -59,6 +59,12 @@ func handleGuildRegisterOnJoin(_ *discordgo.Session, g *discordgo.GuildCreate) {
 	}
 }
 
+// handleCommandSyncOnGuildJoin ensures that the appropriate set of slash commands
+// is registered for the guild.
+func handleCommandSyncOnGuildJoin(session *discordgo.Session, g *discordgo.GuildCreate) {
+	C.SlashCommandManager().SyncApplicationComponentCommands(session, g.ID)
+}
+
 // handleGuildUpdateOnUpdate cares about updating the stored guild name
 // in the database.
 func handleGuildUpdateOnUpdate(_ *discordgo.Session, g *discordgo.GuildUpdate) {

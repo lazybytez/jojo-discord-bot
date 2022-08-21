@@ -52,6 +52,8 @@ func handleModuleEnable(
 		return
 	}
 
+	C.SlashCommandManager().SyncApplicationComponentCommands(s, i.GuildID)
+
 	generateModuleEnableSuccessfulEmbedField(resp, regComp)
 	respond(s, i, resp)
 }

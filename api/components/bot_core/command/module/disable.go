@@ -54,6 +54,8 @@ func handleModuleDisable(
 		return
 	}
 
+	C.SlashCommandManager().SyncApplicationComponentCommands(s, i.GuildID)
+
 	generateModuleDisableSuccessfulEmbedField(resp, regComp)
 	respond(s, i, resp)
 }

@@ -75,4 +75,5 @@ func initializeComponentManagement() {
 func onGuildJoin(s *discordgo.Session, g *discordgo.GuildCreate) {
 	handleGuildRegisterOnJoin(s, g)
 	handleInitialComponentStatusOnGuildJoin(s, g)
+	handleCommandSyncOnGuildJoin(s, g)
 }
