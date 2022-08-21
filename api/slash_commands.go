@@ -458,8 +458,14 @@ func (c *ComponentSlashCommandManager) compareCommands(
 	if a.Name != b.Name {
 		return false
 	}
+	if !util.MapsEqual(a.NameLocalizations, b.NameLocalizations) {
+		return false
+	}
 
 	if a.Description != b.Description {
+		return false
+	}
+	if !util.MapsEqual(a.DescriptionLocalizations, b.DescriptionLocalizations) {
 		return false
 	}
 
@@ -500,8 +506,14 @@ func (c *ComponentSlashCommandManager) compareCommandOptions(a *discordgo.Applic
 	if a.Name != b.Name {
 		return false
 	}
+	if !util.MapsEqual(&a.NameLocalizations, &b.NameLocalizations) {
+		return false
+	}
 
 	if a.Description != b.Description {
+		return false
+	}
+	if !util.MapsEqual(&a.DescriptionLocalizations, &b.DescriptionLocalizations) {
 		return false
 	}
 
@@ -526,7 +538,7 @@ func (c *ComponentSlashCommandManager) compareCommandOptions(a *discordgo.Applic
 	}
 
 	// Channel types
-	if !util.ArrayEqual(a.ChannelTypes, b.ChannelTypes) {
+	if !util.ArraysEqual(&a.ChannelTypes, &b.ChannelTypes) {
 		return false
 	}
 
@@ -566,6 +578,9 @@ func compareCommandOptionChoices(
 		}
 
 		if choiceA.Name != choiceB.Name {
+			return false
+		}
+		if !util.MapsEqual(&choiceA.NameLocalizations, &choiceB.NameLocalizations) {
 			return false
 		}
 

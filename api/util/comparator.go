@@ -18,14 +18,59 @@
 
 package util
 
-// ArrayEqual checks if two arrays are equal and returns the result
-func ArrayEqual[T comparable](a []T, b []T) bool {
-	if len(a) != len(b) {
+// ArraysEqual checks if two arrays are equal and returns the result.
+// Note that this function requires comparable types!
+//
+// The arguments are passed by reference to allow nil
+// comparisons.
+// When nil is passed, true will be returned if both slice references are nil.
+// If only one slice is nil, the result will be false.
+func ArraysEqual[T comparable](a *[]T, b *[]T) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
 		return false
 	}
 
-	for k, val := range a {
-		if val != b[k] {
+	aV := *a
+	bV := *b
+	if len(aV) != len(bV) {
+		return false
+	}
+
+	for k, val := range aV {
+		if val != bV[k] {
+			return false
+		}
+	}
+
+	return true
+}
+
+// MapsEqual checks if two maps have the same content
+// Note that this function requires comparable types for key and value!
+//
+// The arguments are passed by reference to allow nil
+// comparisons.
+// When nil is passed, true will be returned if both maps references are nil.
+// If only one map reference is nil, the result will be false.
+func MapsEqual[K comparable, V comparable](a *map[K]V, b *map[K]V) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+
+	aV := *a
+	bV := *b
+	if len(aV) != len(bV) {
+		return false
+	}
+
+	for k, valA := range aV {
+		if valB, ok := bV[k]; !ok || valA != valB {
 			return false
 		}
 	}
