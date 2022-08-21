@@ -22,6 +22,7 @@ import (
 	"errors"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api/log"
+	"github.com/lazybytez/jojo-discord-bot/api/util"
 )
 
 // slashCommandLogPrefix is the prefix used by the log management during
@@ -169,6 +170,10 @@ func (c *ComponentSlashCommandManager) Register(cmd *Command) error {
 		return err
 	}
 
+	if 0 == cmd.Cmd.Type {
+		cmd.Cmd.Type = discordgo.ChatApplicationCommand
+	}
+
 	componentCommandMap[cmd.Cmd.Name] = cmd
 
 	return nil
@@ -227,6 +232,12 @@ func (c *ComponentSlashCommandManager) validateCommand(cmd *Command) error {
 //
 // Also orphaned commands are cleaned up.
 // This is executed whenever a guild is joined or a component is toggled.
+//
+// Sync is a four-step process:
+//   - remove orphaned commands
+//   - remove disabled commands
+//   - add new commands
+//   - update existing commands
 func (c *ComponentSlashCommandManager) SyncApplicationComponentCommands(
 	session *discordgo.Session,
 	guildId string,
@@ -249,6 +260,7 @@ func (c *ComponentSlashCommandManager) SyncApplicationComponentCommands(
 	registeredCommands = c.removeOrphanedCommands(session, guildId, registeredCommands)
 	registeredCommands = c.removeCommandsByComponentState(session, guildId, registeredCommands)
 	registeredCommands = c.addCommandsByComponentState(session, guildId, registeredCommands)
+	registeredCommands = c.updateRegisteredCommands(session, guildId, registeredCommands)
 
 	log.Info(
 		slashCommandLogPrefix,
@@ -273,7 +285,7 @@ func (c *ComponentSlashCommandManager) removeOrphanedCommands(
 				log.Err(
 					slashCommandLogPrefix,
 					err,
-					"Failed to remove orphaned slash-command \"%v\" from guild \"%v\"",
+					"Failed to remove orphaned slash-command \"%v\" from guild \"%v\"!",
 					registeredCommand.Name,
 					guildId)
 
@@ -323,7 +335,7 @@ func (c *ComponentSlashCommandManager) removeCommandsByComponentState(
 		if nil != err {
 			componentCommand.c.Logger().Err(
 				err,
-				"Failed to remove disabled slash-command \"%v\" from guild \"%v\"",
+				"Failed to remove disabled slash-command \"%v\" from guild \"%v\"!",
 				command.Name,
 				guildId)
 
@@ -353,7 +365,7 @@ func (c *ComponentSlashCommandManager) addCommandsByComponentState(
 	commands []*discordgo.ApplicationCommand,
 ) []*discordgo.ApplicationCommand {
 	for _, componentCommand := range componentCommandMap {
-		if isCommandNameInApplicationCommandList(commands, componentCommand.Cmd.Name) {
+		if c.isCommandNameInApplicationCommandList(commands, componentCommand.Cmd.Name) {
 			continue
 		}
 
@@ -365,7 +377,7 @@ func (c *ComponentSlashCommandManager) addCommandsByComponentState(
 		if nil != err {
 			componentCommand.c.Logger().Err(
 				err,
-				"Failed to add enabled slash-command \"%v\" to guild \"%v\"",
+				"Failed to add enabled slash-command \"%v\" to guild \"%v\"!",
 				componentCommand.Cmd.Name,
 				guildId)
 
@@ -382,9 +394,51 @@ func (c *ComponentSlashCommandManager) addCommandsByComponentState(
 	return commands
 }
 
+// updateRegisteredCommands checks all registered commands
+// and updates (deletes and creates) differing commands.
+func (c *ComponentSlashCommandManager) updateRegisteredCommands(
+	session *discordgo.Session,
+	guildId string,
+	commands []*discordgo.ApplicationCommand,
+) []*discordgo.ApplicationCommand {
+	for key, command := range commands {
+		componentCommand, ok := componentCommandMap[command.Name]
+		if !ok {
+			log.Warn(slashCommandLogPrefix, "Cannot check for command updates for \"%v\" "+
+				"as a corresponding component command is missing!",
+				command.Name)
+
+			continue
+		}
+
+		if c.compareCommands(command, componentCommand.Cmd) {
+			continue
+		}
+
+		createdCommand, err := session.ApplicationCommandCreate(session.State.User.ID, guildId, componentCommand.Cmd)
+		if nil != err {
+			componentCommand.c.Logger().Err(
+				err,
+				"Failed to add slash-command \"%v\" to guild \"%v\" during command update!",
+				componentCommand.Cmd.Name,
+				guildId)
+
+			continue
+		}
+
+		commands[key] = createdCommand
+		componentCommand.c.Logger().Info(
+			"Updated slash-command \"%v\" of guild \"%v\"!",
+			componentCommand.Cmd.Name,
+			guildId)
+	}
+
+	return commands
+}
+
 // isCommandNameInApplicationCommandList checks if a command with the provided name
 // is present in the provided discordgo.ApplicationCommand slice.
-func isCommandNameInApplicationCommandList(commands []*discordgo.ApplicationCommand, name string) bool {
+func (c *ComponentSlashCommandManager) isCommandNameInApplicationCommandList(commands []*discordgo.ApplicationCommand, name string) bool {
 	for _, command := range commands {
 		if command.Name == name {
 			return true
@@ -392,6 +446,135 @@ func isCommandNameInApplicationCommandList(commands []*discordgo.ApplicationComm
 	}
 
 	return false
+}
+
+// compareCommands compares to discordgo.Application commands
+// using some key factors and returns of they are equal or not
+func (c *ComponentSlashCommandManager) compareCommands(
+	a *discordgo.ApplicationCommand,
+	b *discordgo.ApplicationCommand,
+) bool {
+	// Common data
+	if a.Name != b.Name {
+		return false
+	}
+
+	if a.Description != b.Description {
+		return false
+	}
+
+	if a.DefaultMemberPermissions != b.DefaultMemberPermissions {
+		return false
+	}
+
+	if a.DMPermission != b.DMPermission {
+		return false
+	}
+
+	if uint8(a.Type) != uint8(b.Type) {
+		return false
+	}
+
+	// Options
+	if len(a.Options) != len(b.Options) {
+		return false
+	}
+
+	for key, optionA := range a.Options {
+		optionB := b.Options[key]
+		if nil == optionB {
+			return false
+		}
+
+		if !c.compareCommandOptions(optionA, optionB) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// compareCommandOptions compares the options of a command with another
+func (c *ComponentSlashCommandManager) compareCommandOptions(a *discordgo.ApplicationCommandOption, b *discordgo.ApplicationCommandOption) bool {
+	// Common data
+	if a.Name != b.Name {
+		return false
+	}
+
+	if a.Description != b.Description {
+		return false
+	}
+
+	if uint8(a.Type) != uint8(b.Type) {
+		return false
+	}
+
+	if a.Required != b.Required {
+		return false
+	}
+
+	if a.Autocomplete != b.Autocomplete {
+		return false
+	}
+
+	if a.MaxLength != b.MaxLength {
+		return false
+	}
+
+	if a.MinLength != b.MinLength {
+		return false
+	}
+
+	// Channel types
+	if !util.ArrayEqual(a.ChannelTypes, b.ChannelTypes) {
+		return false
+	}
+
+	// Options
+	if len(a.Options) != len(b.Options) {
+		return false
+	}
+
+	for k, optionA := range a.Options {
+		optionB := b.Options[k]
+		if nil == optionB {
+			return false
+		}
+
+		if !c.compareCommandOptions(optionA, optionB) {
+			return false
+		}
+	}
+
+	return compareCommandOptionChoices(a.Choices, b.Choices)
+}
+
+// compareCommandOptionChoices compares the choices of a command option
+// and returns the result.
+func compareCommandOptionChoices(
+	a []*discordgo.ApplicationCommandOptionChoice,
+	b []*discordgo.ApplicationCommandOptionChoice,
+) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for k, choiceA := range a {
+		choiceB := b[k]
+		if nil == choiceB {
+			return false
+		}
+
+		if choiceA.Name != choiceB.Name {
+			return false
+		}
+
+		if choiceA.Value != choiceB.Value {
+			return false
+		}
+	}
+
+	return true
 }
 
 // ProcessSubCommands is an easy way to handle sub-commands and sub-command-groups.

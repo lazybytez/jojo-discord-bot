@@ -58,6 +58,7 @@ func initAndRegisterJojoCommand() {
 		Cmd: &discordgo.ApplicationCommand{
 			Name:        "jojo",
 			Description: "Manage modules and core settings of the bot!",
+
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:        "module",
@@ -115,8 +116,8 @@ func initAndRegisterJojoCommand() {
 				},
 				{
 					Name: "sync-commands",
-					Description: "Trigger a re-synchronisation of slash-commands for the guild to tackle " +
-						"inconsistencies (max. once every 10 minutes!",
+					Description: "Trigger a re-synchronisation of slash-commands for the " +
+						"guild to tackle inconsistencies",
 					Type: discordgo.ApplicationCommandOptionSubCommand,
 				},
 			},
