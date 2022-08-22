@@ -102,8 +102,6 @@ func TestCache_EnableAutoCleanup(t *testing.T) {
 		delaySeconds time.Duration
 		expectedOK   bool
 	}{
-		{"test1", &str, 0, 0, true},
-		{"test2", &str, 0, 2, true},
 		{"test3", &str, 3, 1, true},
 		{"test4", &str, 1, 2, false},
 	}
@@ -119,14 +117,17 @@ func TestCache_EnableAutoCleanup(t *testing.T) {
 		}
 		testCache.EnableAutoCleanup(500 * time.Millisecond)
 
+		testCache.lock.Lock()
 		testCache.cache[table.key] = &Item[*string]{
 			table.value,
 			time.Now(),
 			time.Now(),
 		}
+		testCache.lock.Unlock()
 
 		time.Sleep(table.delaySeconds * time.Second)
 
+		testCache.lock.RLock()
 		if _, ok := testCache.cache[table.key]; ok != table.expectedOK {
 			t.Errorf("output of cache get with key \"%v\" and "+
 				"value \"%v\" was incorrect, got: %v, want: %v.",
@@ -135,6 +136,7 @@ func TestCache_EnableAutoCleanup(t *testing.T) {
 				ok,
 				table.expectedOK)
 		}
+		testCache.lock.RUnlock()
 	}
 }
 
@@ -148,8 +150,6 @@ func TestCache_DisableAutoCleanup(t *testing.T) {
 		delaySeconds time.Duration
 		expectedOK   bool
 	}{
-		{"test1", &str, 0, 0, true},
-		{"test2", &str, 0, 2, true},
 		{"test3", &str, 3, 1, true},
 		{"test4", &str, 1, 2, true},
 	}
@@ -165,15 +165,19 @@ func TestCache_DisableAutoCleanup(t *testing.T) {
 		}
 		testCache.EnableAutoCleanup(500 * time.Millisecond)
 
+		testCache.lock.Lock()
 		testCache.cache[table.key] = &Item[*string]{
 			table.value,
 			time.Now(),
 			time.Now(),
 		}
+		testCache.lock.Unlock()
+
 		testCache.DisableAutoCleanup()
 
 		time.Sleep(table.delaySeconds * time.Second)
 
+		testCache.lock.RLock()
 		if _, ok := testCache.cache[table.key]; ok != table.expectedOK {
 			t.Errorf("output of cache get with key \"%v\" and "+
 				"value \"%v\" was incorrect, got: %v, want: %v.",
@@ -182,6 +186,7 @@ func TestCache_DisableAutoCleanup(t *testing.T) {
 				ok,
 				table.expectedOK)
 		}
+		testCache.lock.RUnlock()
 	}
 }
 
