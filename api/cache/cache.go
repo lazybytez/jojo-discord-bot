@@ -84,8 +84,8 @@ func New[I comparable, C any](lifetime time.Duration) *Cache[I, C] {
 // Get an Item from the cache, if there is one with a valid lifetime
 func Get[I comparable, C any](cache *Cache[I, C], key I) (*C, bool) {
 	cache.lock.RLock()
-	defer cache.lock.RUnlock()
 	item, ok := cache.cache[key]
+	cache.lock.RUnlock()
 
 	if !ok {
 		return nil, false
@@ -96,21 +96,24 @@ func Get[I comparable, C any](cache *Cache[I, C], key I) (*C, bool) {
 		return nil, false
 	}
 
+	cache.lock.Lock()
 	item.lastAccessed = time.Now()
+	cache.lock.Unlock()
 
 	return item.value, true
 }
 
 // Update adds or updates an item in the cache.
 func Update[I comparable, C any](cache *Cache[I, C], key I, value *C) {
+	cache.lock.Lock()
+	defer cache.lock.Unlock()
+
 	item, ok := cache.cache[key]
 
 	if !ok {
 		item = &Item[*C]{}
 
-		cache.lock.Lock()
 		cache.cache[key] = item
-		cache.lock.Unlock()
 	}
 
 	item.value = value
@@ -128,6 +131,9 @@ func Update[I comparable, C any](cache *Cache[I, C], key I, value *C) {
 // and interrupting a cleanup should never lead to data loss as data is only
 // cached for read.
 func (c *Cache[I, C]) EnableAutoCleanup(interval time.Duration) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
 	if c.lifetime < 1 {
 		log.Warn(LogPrefix, "It makes no sense to start a cleanup routine "+
 			"for infinite lifetime caches!")
@@ -148,9 +154,12 @@ func (c *Cache[I, C]) EnableAutoCleanup(interval time.Duration) {
 // autoCleanupRoutine is the function used to start go routines
 // that enable automated cleanup of a cache.
 func autoCleanupRoutine[I comparable, C any](c *Cache[I, C], interval time.Duration) {
-	for c.autoCleanup {
+	for {
+		c.lock.RLock()
+		if !c.autoCleanup {
+			break
+		}
 
-		c.lock.Lock()
 		var markedForDelete []I
 
 		// Stage 1: Collect old items
@@ -161,12 +170,19 @@ func autoCleanupRoutine[I comparable, C any](c *Cache[I, C], interval time.Durat
 				markedForDelete = append(markedForDelete, key)
 			}
 		}
+		c.lock.RUnlock()
+
+		// We don't want to read lock if we can avoid
+		if len(markedForDelete) == 0 {
+			time.Sleep(interval)
+			continue
+		}
 
 		// Stage 2: Delete old items
+		c.lock.Lock()
 		for _, marked := range markedForDelete {
 			delete(c.cache, marked)
 		}
-
 		c.lock.Unlock()
 
 		if len(markedForDelete) > 0 {
@@ -180,5 +196,8 @@ func autoCleanupRoutine[I comparable, C any](c *Cache[I, C], interval time.Durat
 // DisableAutoCleanup disables the automated cleanup by notifying the
 // cleanup routine that it should stop cleaning up things.
 func (c *Cache[I, C]) DisableAutoCleanup() {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
 	c.autoCleanup = false
 }
