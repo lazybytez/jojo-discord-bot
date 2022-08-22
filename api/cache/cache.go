@@ -96,7 +96,9 @@ func Get[I comparable, C any](cache *Cache[I, C], key I) (*C, bool) {
 		return nil, false
 	}
 
+	cache.lock.Lock()
 	item.lastAccessed = time.Now()
+	cache.lock.Unlock()
 
 	return item.value, true
 }
@@ -172,6 +174,7 @@ func autoCleanupRoutine[I comparable, C any](c *Cache[I, C], interval time.Durat
 
 		// We don't want to read lock if we can avoid
 		if len(markedForDelete) == 0 {
+			time.Sleep(interval)
 			continue
 		}
 
