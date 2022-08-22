@@ -170,6 +170,11 @@ func autoCleanupRoutine[I comparable, C any](c *Cache[I, C], interval time.Durat
 		}
 		c.lock.RUnlock()
 
+		// We don't want to read lock if we can avoid
+		if len(markedForDelete) == 0 {
+			continue
+		}
+
 		// Stage 2: Delete old items
 		c.lock.Lock()
 		for _, marked := range markedForDelete {
