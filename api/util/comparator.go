@@ -25,6 +25,8 @@ package util
 // comparisons.
 // When nil is passed, true will be returned if both slice references are nil.
 // If only one slice is nil, the result will be false.
+//
+// Note that the order of elements is also checked.
 func ArraysEqual[T comparable](a *[]T, b *[]T) bool {
 	if a == nil && b == nil {
 		return true
@@ -55,6 +57,8 @@ func ArraysEqual[T comparable](a *[]T, b *[]T) bool {
 // comparisons.
 // When nil is passed, true will be returned if both maps references are nil.
 // If only one map reference is nil, the result will be false.
+//
+// Note that the order of elements is ignored.
 func MapsEqual[K comparable, V comparable](a *map[K]V, b *map[K]V) bool {
 	if a == nil && b == nil {
 		return true
