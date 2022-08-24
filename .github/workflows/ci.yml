@@ -44,7 +44,7 @@ jobs:
         run: go build .
 
       - name: Run Go tests
-        run: go test -race -covermode=atomic -coverprofile=coverage.out ./...
+        run: go test -race -covermode=atomic -coverpkg=all -coverprofile=coverage.out ./...
 
       - name: Upload coverage report to CodeCov
         uses: codecov/codecov-action@v3
