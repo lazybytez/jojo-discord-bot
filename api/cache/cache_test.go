@@ -19,12 +19,17 @@
 package cache
 
 import (
+	"github.com/stretchr/testify/suite"
 	"sync"
 	"testing"
 	"time"
 )
 
-func TestNew(t *testing.T) {
+type CacheTestSuite struct {
+	suite.Suite
+}
+
+func (suite *CacheTestSuite) TestNew() {
 	tables := []struct {
 		lifetime time.Duration
 		expected int64
@@ -35,16 +40,17 @@ func TestNew(t *testing.T) {
 	}
 
 	for _, table := range tables {
-		if cache := New[string, string](table.lifetime); cache.lifetime != table.expected {
-			t.Errorf("output of cache new was incorrect with %v, got: %v, want: %v.",
-				table.lifetime,
-				cache.lifetime,
-				table.expected)
-		}
+		result := New[string, string](table.lifetime).lifetime
+
+		suite.Equal(
+			table.expected,
+			result,
+			"Arguments: %v",
+			table.lifetime)
 	}
 }
 
-func TestGet(t *testing.T) {
+func (suite *CacheTestSuite) TestGeWithHit() {
 	str := "some value"
 
 	tables := []struct {
@@ -78,20 +84,42 @@ func TestGet(t *testing.T) {
 			currentTime,
 		}
 
-		if r, ok := Get(testCache, table.key); r != table.expected || ok != table.expectedOK {
-			t.Errorf("output of cache get with key \"%v\" and "+
-				"value \"%v\" was incorrect, got: %v & %v, want: %v & %v.",
-				table.key,
-				table.value,
-				r,
-				ok,
-				table.expected,
-				table.expectedOK)
-		}
+		resultItem, resultOk := Get(testCache, table.key)
+
+		suite.Equalf(table.expectedOK, resultOk, "(ok check) Arguments: %v, %v", table.key, table.value)
+		suite.Equalf(table.expected, resultItem, "(item check) Arguments: %v, %v", table.key, table.value)
 	}
 }
 
-func TestCache_EnableAutoCleanup(t *testing.T) {
+func (suite *CacheTestSuite) TestGeWithMiss() {
+	firstKey := "my_item"
+
+	testCache := &Cache[string, string]{
+		map[string]*Item[*string]{},
+		sync.RWMutex{},
+		0,
+		false,
+	}
+
+	// 1. Check with empty cache
+	firstResultItem, firstResultOk := testCache.cache[firstKey]
+	suite.False(firstResultOk, "(ok check) Arguments: %v", firstKey)
+	suite.Nil(firstResultItem, "(item check) Arguments: %v", firstKey)
+
+	// 1. Check with some value in cache
+	testValue := "you expected a value, but it was me, DIO!"
+	testCache.cache["some_key"] = &Item[*string]{
+		&testValue,
+		time.Now(),
+		time.Now(),
+	}
+
+	secondResultItem, secondResultOk := testCache.cache[firstKey]
+	suite.False(secondResultOk, "(ok check) Arguments: %v", firstKey)
+	suite.Nil(secondResultItem, "(item check) Arguments: %v", firstKey)
+}
+
+func (suite *CacheTestSuite) TestCache_EnableAutoCleanupWithSuccess() {
 	str := "some value"
 
 	tables := []struct {
@@ -127,22 +155,17 @@ func TestCache_EnableAutoCleanup(t *testing.T) {
 		}
 		testCache.lock.Unlock()
 
-		time.Sleep(10 * time.Millisecond) // Cleanup is async, ensure its through
+		time.Sleep(10 * time.Millisecond) // Cleanup is async task, ensure its through
 
 		testCache.lock.RLock()
-		if _, ok := testCache.cache[table.key]; ok != table.expectedOK {
-			t.Errorf("output of cache get with key \"%v\" and "+
-				"value \"%v\" was incorrect, got: %v, want: %v.",
-				table.key,
-				table.value,
-				ok,
-				table.expectedOK)
-		}
+		_, resultOk := testCache.cache[table.key]
 		testCache.lock.RUnlock()
+
+		suite.Equalf(table.expectedOK, resultOk, "(Arguments: %v, %v", table.key, table.value)
 	}
 }
 
-func TestCache_DisableAutoCleanup(t *testing.T) {
+func (suite *CacheTestSuite) TestCache_DisableAutoCleanup() {
 	str := "some value"
 
 	tables := []struct {
@@ -182,15 +205,10 @@ func TestCache_DisableAutoCleanup(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 
 		testCache.lock.RLock()
-		if _, ok := testCache.cache[table.key]; ok != table.expectedOK {
-			t.Errorf("output of cache get with key \"%v\" and "+
-				"value \"%v\" was incorrect, got: %v, want: %v.",
-				table.key,
-				table.value,
-				ok,
-				table.expectedOK)
-		}
+		_, resultOk := testCache.cache[table.key]
 		testCache.lock.RUnlock()
+
+		suite.Equalf(table.expectedOK, resultOk, "(Arguments: %v, %v", table.key, table.value)
 	}
 }
 
@@ -233,4 +251,8 @@ func TestUpdate(t *testing.T) {
 			testDataB,
 			true)
 	}
+}
+
+func TestCache(t *testing.T) {
+	suite.Run(t, new(CacheTestSuite))
 }
