@@ -21,6 +21,7 @@ package module
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api/database"
+	"github.com/lazybytez/jojo-discord-bot/api/slash_commands"
 )
 
 // handleModuleShow prints out a list of all commands and their status.
@@ -29,7 +30,7 @@ func handleModuleShow(
 	i *discordgo.InteractionCreate,
 	option *discordgo.ApplicationCommandInteractionDataOption,
 ) {
-	resp := generateInteractionResponseDataTemplate("Module Information", "")
+	resp := slash_commands.GenerateInteractionResponseDataTemplate("Module Information", "")
 
 	regComp := findComponent(option)
 	if nil == regComp || regComp.IsCoreComponent() {
@@ -52,7 +53,7 @@ func handleModuleShow(
 
 	populateComponentStatusEmbedFields(resp, regComp, guildSpecificStatusOutput, globalStatusOutput)
 
-	respond(s, i, resp)
+	slash_commands.Respond(C, s, i, resp)
 }
 
 // populateComponentStatusEmbedFields cares about filling up the interaction

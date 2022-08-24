@@ -41,7 +41,7 @@ func handleInitialComponentStatusOnGuildJoin(_ *discordgo.Session, create *disco
 		}
 
 		componentStatus, err := em.GuildComponentStatus().Get(guild.ID, regComp.ID)
-		if nil != err {
+		if nil == err {
 			continue
 		}
 

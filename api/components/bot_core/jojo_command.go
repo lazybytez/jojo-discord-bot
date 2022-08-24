@@ -22,6 +22,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/components/bot_core/command/module"
+	"github.com/lazybytez/jojo-discord-bot/api/components/bot_core/command/sync_commands"
 )
 
 // jojoCommand holds the command configuration for the jojo command.
@@ -51,16 +52,17 @@ func getModuleCommandChoices() []*discordgo.ApplicationCommandOptionChoice {
 func initAndRegisterJojoCommand() {
 	// Ensure the module package knows about the component
 	module.C = C
+	sync_commands.C = C
 
 	jojoCommand = &api.Command{
 		Cmd: &discordgo.ApplicationCommand{
 			Name:        "jojo",
 			Description: "Manage modules and core settings of the bot!",
 			Options: []*discordgo.ApplicationCommandOption{
-
 				{
 					Name:        "module",
 					Description: "Manage which modules should be enabled / disabled on your server!",
+					Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Name:        "list",
@@ -110,7 +112,12 @@ func initAndRegisterJojoCommand() {
 							},
 						},
 					},
-					Type: discordgo.ApplicationCommandOptionSubCommandGroup,
+				},
+				{
+					Name: "sync-commands",
+					Description: "Trigger a re-synchronisation of slash-commands for the " +
+						"guild to tackle inconsistencies",
+					Type: discordgo.ApplicationCommandOptionSubCommand,
 				},
 			},
 		},
@@ -128,7 +135,8 @@ func handleJojoCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		i *discordgo.InteractionCreate,
 		option *discordgo.ApplicationCommandInteractionDataOption,
 	){
-		"module": module.HandleModuleSubCommand,
+		"module":        module.HandleModuleSubCommand,
+		"sync-commands": sync_commands.HandleSyncCommandSubCommand,
 	}
 
 	api.ProcessSubCommands(

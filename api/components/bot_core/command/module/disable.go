@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api/database"
+	"github.com/lazybytez/jojo-discord-bot/api/slash_commands"
 )
 
 // handleModuleDisable enables the targeted module.
@@ -30,7 +31,7 @@ func handleModuleDisable(
 	i *discordgo.InteractionCreate,
 	option *discordgo.ApplicationCommandInteractionDataOption,
 ) {
-	resp := generateInteractionResponseDataTemplate("Disable Module", "")
+	resp := slash_commands.GenerateInteractionResponseDataTemplate("Disable Module", "")
 
 	regComp := findComponent(option)
 	if nil == regComp || regComp.IsCoreComponent() {
@@ -54,8 +55,10 @@ func handleModuleDisable(
 		return
 	}
 
+	C.SlashCommandManager().SyncApplicationComponentCommands(s, i.GuildID)
+
 	generateModuleDisableSuccessfulEmbedField(resp, regComp)
-	respond(s, i, resp)
+	slash_commands.Respond(C, s, i, resp)
 }
 
 func disableComponentForGuild(
@@ -123,5 +126,5 @@ func respondWithAlreadyDisabled(
 
 	resp.Embeds[0].Fields = embeds
 
-	respond(s, i, resp)
+	slash_commands.Respond(C, s, i, resp)
 }

@@ -21,17 +21,17 @@ package api
 import (
 	"errors"
 	"github.com/bwmarrin/discordgo"
+	"github.com/lazybytez/jojo-discord-bot/api/log"
+	"github.com/lazybytez/jojo-discord-bot/api/util"
 )
 
-// TODO: Improve this system in a future revision.
+// slashCommandLogPrefix is the prefix used by the log management during
+// lifecycle events that cannot be assigned to a specific component.
+const slashCommandLogPrefix = "slash_command_manager"
 
 // componentCommandMap is a map that holds the discordgo.ApplicationCommand
 // as value and the name of the discordgo.ApplicationCommand as key.
 var componentCommandMap map[string]*Command
-
-// isInitialized holds the current state if the
-// command handling is fully initialized or not
-var isInitialized = false
 
 // init slash command sub-system
 func init() {
@@ -65,6 +65,15 @@ type SlashCommandManager interface {
 	// The Command holds the common discordgo.ApplicationCommand
 	// and the function that should handle the command.
 	Register(cmd *Command) error
+	// SyncApplicationComponentCommands ensures that the available discordgo.ApplicationCommand
+	// are synced for the given component with the given guild.
+	//
+	// This means that disabled commands are enabled and enabled commands are disabled
+	// depending on the component enable state.
+	//
+	// Also orphaned commands are cleaned up.
+	// This is executed whenever a guild is joined or a component is toggled.
+	SyncApplicationComponentCommands(session *discordgo.Session, guildId string)
 }
 
 // unregisterCommandHandler holds the function that can be used to unregister
@@ -84,41 +93,42 @@ func InitCommandHandling(session *discordgo.Session) error {
 		}
 	})
 
-	for _, command := range componentCommandMap {
-		createCommand(session, command)
+	// Drop global registered commands, if any.
+	// We only allow guild specific commands
+	//
+	// This is for backward compatibility, as in the past
+	// we registered commands globally.
+	//
+	// TODO: Remove in some safe future version!
+	commands, err := session.ApplicationCommands(session.State.User.ID, "")
+	if nil != err {
+		log.Err(
+			slashCommandLogPrefix,
+			err,
+			"Failed to retrieve globally registered commands!")
 	}
-
-	isInitialized = true
+	for _, cmd := range commands {
+		err = session.ApplicationCommandDelete(session.State.User.ID, "", cmd.ID)
+		if nil != err {
+			log.Err(
+				slashCommandLogPrefix,
+				err,
+				"Failed to remove global slash-command with name \"%v\"!",
+				cmd.Name)
+		}
+	}
 
 	return nil
 }
 
-func createCommand(session *discordgo.Session, command *Command) {
-	_, err := session.ApplicationCommandCreate(session.State.User.ID, "", command.Cmd)
-
-	if nil != err {
-		command.c.Logger().Err(
-			err,
-			"Failed to register the slash-Cmd \"%v\" for component \"%v\": Could not create application Cmd!",
-			command.Cmd.Name,
-			command.c.Name)
-	}
-}
-
 // DeinitCommandHandling unregisters the event Handler
 // that is registered by InitCommandHandling.
-func DeinitCommandHandling(session *discordgo.Session) {
+func DeinitCommandHandling() {
 	if nil == unregisterCommandHandler {
 		return
 	}
 
 	unregisterCommandHandler()
-
-	for _, command := range componentCommandMap {
-		_ = session.ApplicationCommandDelete(session.State.User.ID, "", command.Cmd.ID)
-	}
-
-	isInitialized = false
 }
 
 // SlashCommandManager is used to obtain the components slash Command management
@@ -152,7 +162,7 @@ func (c *ComponentSlashCommandManager) Register(cmd *Command) error {
 
 		c.owner.Logger().Err(
 			err,
-			"Failed to register the slash-Cmd \"%v\" for component \"%v\": %v!",
+			"Failed to register the slash-cmd \"%v\" for component \"%v\": %v!",
 			cmd.Cmd.Name,
 			c.owner.Name,
 			err.Error())
@@ -160,26 +170,11 @@ func (c *ComponentSlashCommandManager) Register(cmd *Command) error {
 		return err
 	}
 
-	//slashCommand, ok := GetSlashCommand(c.owner, cmd.Cmd.Name)
-	//if !ok {
-	//	regComp, ok := database.GetRegisteredComponent(c.owner, c.owner.Code)
-	//	if !ok {
-	//		c.owner.Logger().Warn("Could not register slash-command \"%v\" in database!", cmd.Cmd.Name)
-	//
-	//		return nil
-	//	}
-	//
-	//	slashCommand.RegisteredComponent = *regComp
-	//	slashCommand.Name = cmd.Cmd.Name
-	//
-	//	database.Create(slashCommand)
-	//}
+	if 0 == cmd.Cmd.Type {
+		cmd.Cmd.Type = discordgo.ChatApplicationCommand
+	}
 
 	componentCommandMap[cmd.Cmd.Name] = cmd
-
-	if isInitialized {
-		createCommand(c.owner.discord, cmd)
-	}
 
 	return nil
 }
@@ -234,50 +229,368 @@ func (c *ComponentSlashCommandManager) validateCommand(cmd *Command) error {
 //
 // This means that disabled commands are enabled and enabled commands are disabled
 // depending on the component enable state.
-func SyncApplicationComponentCommands(session *discordgo.Session, c *Component, guildId string) {
+//
+// Also orphaned commands are cleaned up.
+// This is executed whenever a guild is joined or a component is toggled.
+//
+// Sync is a four-step process:
+//   - remove orphaned commands
+//   - remove disabled commands
+//   - add new commands
+//   - update existing commands
+func (c *ComponentSlashCommandManager) SyncApplicationComponentCommands(
+	session *discordgo.Session,
+	guildId string,
+) {
+	registeredCommands, err := session.ApplicationCommands(session.State.User.ID, guildId)
+	if nil != err {
+		log.Err(
+			slashCommandLogPrefix,
+			err,
+			"Failed to handle guild slash-command sync for guild \"%v\"!",
+			guildId)
 
+		return
+	}
+
+	log.Info(
+		slashCommandLogPrefix,
+		"Syncing slash-commands for guild \"%v\"...",
+		guildId)
+	registeredCommands = c.removeOrphanedCommands(session, guildId, registeredCommands)
+	registeredCommands = c.removeCommandsByComponentState(session, guildId, registeredCommands)
+	registeredCommands = c.addCommandsByComponentState(session, guildId, registeredCommands)
+	_ = c.updateRegisteredCommands(session, guildId, registeredCommands)
+
+	log.Info(
+		slashCommandLogPrefix,
+		"Finished syncing slash-commands for guild \"%v\"...",
+		guildId)
 }
 
-//// EnableCommandsForComponent enables all commands of the passed component for the
-//// specified guild.
-//func EnableCommandsForComponent(session *discordgo.Session, c *Component, guildId string) {
-//	for _, componentCommand := range componentCommandMap {
-//		if componentCommand.c != c {
-//			continue
-//		}
+// removeOrphanedCommands removes all slash-commands commands from a guild,
+// that are no longer registered in the bots slash-command management.
 //
-//		_, err := session.ApplicationCommandCreate(session.State.User.ID, guildId, componentCommand.Cmd)
-//		if nil != err {
-//			c.Logger().Err(
-//				err,
-//				"Failed to register the slash-Cmd \"%v\" for component \"%v\" on guild \"%v\"!",
-//				componentCommand.Cmd.Name,
-//				c.Name,
-//				guildId)
-//		}
-//	}
-//}
-//
-//// DisableCommandsForComponent disables all commands of the passed component for the
-//// specified guild.
-//func DisableCommandsForComponent(session *discordgo.Session, c *Component, guildId string) {
-//	for _, componentCommand := range componentCommandMap {
-//		if componentCommand.c != c {
-//			continue
-//		}
-//
-//		var g discordgo.Guild
-//		//_, err := session.ApplicationCommandDelete(session.State.User.ID, guildId, componentCommand.Cmd)
-//		if nil != err {
-//			c.Logger().Err(
-//				err,
-//				"Failed to register the slash-Cmd \"%v\" for component \"%v\" on guild \"%v\"!",
-//				componentCommand.Cmd.Name,
-//				c.Name,
-//				guildId)
-//		}
-//	}
-//}
+// The function returns the passed list of commands,
+// with the removed commands being removed.
+func (c *ComponentSlashCommandManager) removeOrphanedCommands(
+	session *discordgo.Session,
+	guildId string,
+	commands []*discordgo.ApplicationCommand,
+) []*discordgo.ApplicationCommand {
+	for key, registeredCommand := range commands {
+		if _, ok := componentCommandMap[registeredCommand.Name]; !ok {
+			err := session.ApplicationCommandDelete(session.State.User.ID, guildId, registeredCommand.ID)
+			if nil != err {
+				log.Err(
+					slashCommandLogPrefix,
+					err,
+					"Failed to remove orphaned slash-command \"%v\" from guild \"%v\"!",
+					registeredCommand.Name,
+					guildId)
+
+				continue
+			}
+
+			slicedCommands := make([]*discordgo.ApplicationCommand, 0)
+			if len(commands)-1 >= key+1 {
+				slicedCommands = commands[key+1:]
+			}
+			commands = append(commands[:key], slicedCommands...)
+			log.Info(
+				slashCommandLogPrefix,
+				"Removed orphaned slash-command \"%v\" from guild \"%v\"!",
+				registeredCommand.Name,
+				guildId)
+		}
+	}
+
+	return commands
+}
+
+// removeCommandsByComponentState removes commands from
+// the specified guild depending on the owning components state.
+func (c *ComponentSlashCommandManager) removeCommandsByComponentState(
+	session *discordgo.Session,
+	guildId string,
+	commands []*discordgo.ApplicationCommand,
+) []*discordgo.ApplicationCommand {
+	// First of all remove disabled existing commands
+	for key, command := range commands {
+		componentCommand, ok := componentCommandMap[command.Name]
+		if !ok {
+			log.Warn(
+				slashCommandLogPrefix,
+				"Missing component command for registered slash-command \"%v\"!",
+				command.Name)
+
+			continue
+		}
+
+		if IsComponentEnabled(componentCommand.c, guildId) {
+			continue
+		}
+
+		err := session.ApplicationCommandDelete(session.State.User.ID, guildId, command.ID)
+		if nil != err {
+			componentCommand.c.Logger().Err(
+				err,
+				"Failed to remove disabled slash-command \"%v\" from guild \"%v\"!",
+				command.Name,
+				guildId)
+
+			continue
+		}
+
+		slicedCommands := make([]*discordgo.ApplicationCommand, 0)
+		if len(commands)-1 >= key+1 {
+			slicedCommands = commands[key+1:]
+		}
+		commands = append(commands[:key], slicedCommands...)
+
+		componentCommand.c.Logger().Info(
+			"Removed disabled slash-command \"%v\" from guild \"%v\"!",
+			command.Name,
+			guildId)
+	}
+
+	return commands
+}
+
+// addCommandsByComponentState removes commands from
+// the specified guild depending on the owning components state.
+func (c *ComponentSlashCommandManager) addCommandsByComponentState(
+	session *discordgo.Session,
+	guildId string,
+	commands []*discordgo.ApplicationCommand,
+) []*discordgo.ApplicationCommand {
+	for _, componentCommand := range componentCommandMap {
+		if c.isCommandNameInApplicationCommandList(commands, componentCommand.Cmd.Name) {
+			continue
+		}
+
+		if !IsComponentEnabled(componentCommand.c, guildId) {
+			continue
+		}
+
+		createdCommand, err := session.ApplicationCommandCreate(session.State.User.ID, guildId, componentCommand.Cmd)
+		if nil != err {
+			componentCommand.c.Logger().Err(
+				err,
+				"Failed to add enabled slash-command \"%v\" to guild \"%v\"!",
+				componentCommand.Cmd.Name,
+				guildId)
+
+			continue
+		}
+
+		commands = append(commands, createdCommand)
+		componentCommand.c.Logger().Info(
+			"Added enabled slash-command \"%v\" to guild \"%v\"!",
+			componentCommand.Cmd.Name,
+			guildId)
+	}
+
+	return commands
+}
+
+// updateRegisteredCommands checks all registered commands
+// and updates (deletes and creates) differing commands.
+func (c *ComponentSlashCommandManager) updateRegisteredCommands(
+	session *discordgo.Session,
+	guildId string,
+	commands []*discordgo.ApplicationCommand,
+) []*discordgo.ApplicationCommand {
+	for key, command := range commands {
+		componentCommand, ok := componentCommandMap[command.Name]
+		if !ok {
+			log.Warn(slashCommandLogPrefix, "Cannot check for command updates for \"%v\" "+
+				"as a corresponding component command is missing!",
+				command.Name)
+
+			continue
+		}
+
+		if c.compareCommands(command, componentCommand.Cmd) {
+			continue
+		}
+
+		createdCommand, err := session.ApplicationCommandCreate(session.State.User.ID, guildId, componentCommand.Cmd)
+		if nil != err {
+			componentCommand.c.Logger().Err(
+				err,
+				"Failed to add slash-command \"%v\" to guild \"%v\" during command update!",
+				componentCommand.Cmd.Name,
+				guildId)
+
+			continue
+		}
+
+		commands[key] = createdCommand
+		componentCommand.c.Logger().Info(
+			"Updated slash-command \"%v\" of guild \"%v\"!",
+			componentCommand.Cmd.Name,
+			guildId)
+	}
+
+	return commands
+}
+
+// isCommandNameInApplicationCommandList checks if a command with the provided name
+// is present in the provided discordgo.ApplicationCommand slice.
+func (c *ComponentSlashCommandManager) isCommandNameInApplicationCommandList(commands []*discordgo.ApplicationCommand, name string) bool {
+	for _, command := range commands {
+		if command.Name == name {
+			return true
+		}
+	}
+
+	return false
+}
+
+// compareCommands compares to discordgo.Application commands
+// using some key factors and returns of they are equal or not
+func (c *ComponentSlashCommandManager) compareCommands(
+	a *discordgo.ApplicationCommand,
+	b *discordgo.ApplicationCommand,
+) bool {
+	// Common data
+	if a.Name != b.Name {
+		return false
+	}
+	if !util.MapsEqual(a.NameLocalizations, b.NameLocalizations) {
+		return false
+	}
+
+	if a.Description != b.Description {
+		return false
+	}
+	if !util.MapsEqual(a.DescriptionLocalizations, b.DescriptionLocalizations) {
+		return false
+	}
+
+	if a.DefaultMemberPermissions != b.DefaultMemberPermissions {
+		return false
+	}
+
+	if a.DMPermission != b.DMPermission {
+		return false
+	}
+
+	if uint8(a.Type) != uint8(b.Type) {
+		return false
+	}
+
+	// Options
+	if len(a.Options) != len(b.Options) {
+		return false
+	}
+
+	for key, optionA := range a.Options {
+		optionB := b.Options[key]
+		if nil == optionB {
+			return false
+		}
+
+		if !c.compareCommandOptions(optionA, optionB) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// compareCommandOptions compares the options of a command with another
+func (c *ComponentSlashCommandManager) compareCommandOptions(a *discordgo.ApplicationCommandOption, b *discordgo.ApplicationCommandOption) bool {
+	// Common data
+	if a.Name != b.Name {
+		return false
+	}
+	if !util.MapsEqual(&a.NameLocalizations, &b.NameLocalizations) {
+		return false
+	}
+
+	if a.Description != b.Description {
+		return false
+	}
+	if !util.MapsEqual(&a.DescriptionLocalizations, &b.DescriptionLocalizations) {
+		return false
+	}
+
+	if uint8(a.Type) != uint8(b.Type) {
+		return false
+	}
+
+	if a.Required != b.Required {
+		return false
+	}
+
+	if a.Autocomplete != b.Autocomplete {
+		return false
+	}
+
+	if a.MaxLength != b.MaxLength {
+		return false
+	}
+
+	if a.MinLength != b.MinLength {
+		return false
+	}
+
+	// Channel types
+	if !util.ArraysEqual(&a.ChannelTypes, &b.ChannelTypes) {
+		return false
+	}
+
+	// Options
+	if len(a.Options) != len(b.Options) {
+		return false
+	}
+
+	for k, optionA := range a.Options {
+		optionB := b.Options[k]
+		if nil == optionB {
+			return false
+		}
+
+		if !c.compareCommandOptions(optionA, optionB) {
+			return false
+		}
+	}
+
+	return compareCommandOptionChoices(a.Choices, b.Choices)
+}
+
+// compareCommandOptionChoices compares the choices of a command option
+// and returns the result.
+func compareCommandOptionChoices(
+	a []*discordgo.ApplicationCommandOptionChoice,
+	b []*discordgo.ApplicationCommandOptionChoice,
+) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for k, choiceA := range a {
+		choiceB := b[k]
+		if nil == choiceB {
+			return false
+		}
+
+		if choiceA.Name != choiceB.Name {
+			return false
+		}
+		if !util.MapsEqual(&choiceA.NameLocalizations, &choiceB.NameLocalizations) {
+			return false
+		}
+
+		if choiceA.Value != choiceB.Value {
+			return false
+		}
+	}
+
+	return true
+}
 
 // ProcessSubCommands is an easy way to handle sub-commands and sub-command-groups.
 // The function will return true if there was a valid sub-command to handle
@@ -286,10 +599,10 @@ func ProcessSubCommands(
 	i *discordgo.InteractionCreate,
 	option *discordgo.ApplicationCommandInteractionDataOption,
 	handlers map[string]func(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-	option *discordgo.ApplicationCommandInteractionDataOption,
-),
+		s *discordgo.Session,
+		i *discordgo.InteractionCreate,
+		option *discordgo.ApplicationCommandInteractionDataOption,
+	),
 ) bool {
 	// First validate that there is at least one level of nesting
 	command := i.ApplicationCommandData()
@@ -322,10 +635,10 @@ func runHandler(
 	option *discordgo.ApplicationCommandInteractionDataOption,
 	name string,
 	handlers map[string]func(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-	option *discordgo.ApplicationCommandInteractionDataOption,
-),
+		s *discordgo.Session,
+		i *discordgo.InteractionCreate,
+		option *discordgo.ApplicationCommandInteractionDataOption,
+	),
 ) bool {
 	handler, ok := handlers[name]
 

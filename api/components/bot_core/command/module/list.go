@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api/database"
+	"github.com/lazybytez/jojo-discord-bot/api/slash_commands"
 )
 
 // handleModuleList prints out a list of all commands and their status.
@@ -34,14 +35,14 @@ func handleModuleList(
 	compNamesAndStatus := generateComponentStatusTable(i)
 	resp := createComponentStatusListResponse(compNamesAndStatus)
 
-	respond(s, i, resp)
+	slash_commands.Respond(C, s, i, resp)
 }
 
 // createComponentStatusListResponse creates an interaction response containing
 // an embed that list all components and their status.
 // Additionally, a legend is added, that describes the meaning of the different states.
 func createComponentStatusListResponse(compNamesAndStatus string) *discordgo.InteractionResponseData {
-	resp := generateInteractionResponseDataTemplate(
+	resp := slash_commands.GenerateInteractionResponseDataTemplate(
 		"Module Status",
 		"Overview of all modules and whether they are enabled or not")
 

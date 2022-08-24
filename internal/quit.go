@@ -64,6 +64,6 @@ func ExitFatalGracefully(reason string) {
 // gracefully.
 func releaseResources() {
 	UnloadComponents(discord)
-	api.DeinitCommandHandling(discord)
+	api.DeinitCommandHandling()
 	stopBot()
 }
