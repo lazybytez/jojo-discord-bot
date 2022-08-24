@@ -19,10 +19,15 @@
 package util
 
 import (
+	"github.com/stretchr/testify/suite"
 	"testing"
 )
 
-func TestArraysEqualWithStrings(t *testing.T) {
+type ArraysEqualTestSuite struct {
+	suite.Suite
+}
+
+func (suite *ArraysEqualTestSuite) TestArraysEqualWithStrings() {
 	tables := []struct {
 		inputA         *[]string
 		inputB         *[]string
@@ -40,18 +45,18 @@ func TestArraysEqualWithStrings(t *testing.T) {
 	}
 
 	for _, table := range tables {
-		if r := ArraysEqual(table.inputA, table.inputB); r != table.expectedResult {
-			t.Errorf("[STRING ARRAY] output of array equals with \"%v\" and \"%v\" "+
-				"was incorrect, got: %v, want: %v.",
-				table.inputA,
-				table.inputB,
-				r,
-				table.expectedResult)
-		}
+		result := ArraysEqual(table.inputA, table.inputB)
+
+		suite.Equalf(
+			table.expectedResult,
+			result,
+			"Arguments: %v, %v",
+			table.inputA,
+			table.inputB)
 	}
 }
 
-func TestArraysEqualWithInt(t *testing.T) {
+func (suite *ArraysEqualTestSuite) TestArraysEqualWithInt() {
 	tables := []struct {
 		inputA         *[]int
 		inputB         *[]int
@@ -69,18 +74,18 @@ func TestArraysEqualWithInt(t *testing.T) {
 	}
 
 	for _, table := range tables {
-		if r := ArraysEqual(table.inputA, table.inputB); r != table.expectedResult {
-			t.Errorf("[INT ARRAY] output of array equals with \"%v\" and \"%v\" "+
-				"was incorrect, got: %v, want: %v.",
-				table.inputA,
-				table.inputB,
-				r,
-				table.expectedResult)
-		}
+		result := ArraysEqual(table.inputA, table.inputB)
+
+		suite.Equalf(
+			table.expectedResult,
+			result,
+			"Arguments: %v, %v",
+			table.inputA,
+			table.inputB)
 	}
 }
 
-func TestArraysEqualWithBool(t *testing.T) {
+func (suite *ArraysEqualTestSuite) TestArraysEqualWithBool() {
 	tables := []struct {
 		inputA         *[]bool
 		inputB         *[]bool
@@ -99,18 +104,22 @@ func TestArraysEqualWithBool(t *testing.T) {
 	}
 
 	for _, table := range tables {
-		if r := ArraysEqual(table.inputA, table.inputB); r != table.expectedResult {
-			t.Errorf("[BOOL ARRAY] output of array equals with \"%v\" and \"%v\" was "+
-				"incorrect, got: %v, want: %v.",
-				table.inputA,
-				table.inputB,
-				r,
-				table.expectedResult)
-		}
+		result := ArraysEqual(table.inputA, table.inputB)
+
+		suite.Equalf(
+			table.expectedResult,
+			result,
+			"Arguments: %v, %v",
+			table.inputA,
+			table.inputB)
 	}
 }
 
-func TestMapsEqualEqualWithStringString(t *testing.T) {
+type MapsEqualTestSuite struct {
+	suite.Suite
+}
+
+func (suite *MapsEqualTestSuite) TestMapsEqualEqualWithStringString() {
 	tables := []struct {
 		inputA         *map[string]string
 		inputB         *map[string]string
@@ -152,18 +161,18 @@ func TestMapsEqualEqualWithStringString(t *testing.T) {
 	}
 
 	for _, table := range tables {
-		if r := MapsEqual(table.inputA, table.inputB); r != table.expectedResult {
-			t.Errorf("[STRING STRING MAP] output of array equals with \"%v\" and \"%v\" "+
-				"was incorrect, got: %v, want: %v.",
-				table.inputA,
-				table.inputB,
-				r,
-				table.expectedResult)
-		}
+		result := MapsEqual(table.inputA, table.inputB)
+
+		suite.Equalf(
+			table.expectedResult,
+			result,
+			"Arguments: %v, %v",
+			table.inputA,
+			table.inputB)
 	}
 }
 
-func TestMapsEqualEqualWithStringInt(t *testing.T) {
+func (suite *MapsEqualTestSuite) TestMapsEqualEqualWithStringInt() {
 	tables := []struct {
 		inputA         *map[string]int
 		inputB         *map[string]int
@@ -205,18 +214,18 @@ func TestMapsEqualEqualWithStringInt(t *testing.T) {
 	}
 
 	for _, table := range tables {
-		if r := MapsEqual(table.inputA, table.inputB); r != table.expectedResult {
-			t.Errorf("[STRING INT MAP] output of array equals with \"%v\" and \"%v\" "+
-				"was incorrect, got: %v, want: %v.",
-				table.inputA,
-				table.inputB,
-				r,
-				table.expectedResult)
-		}
+		result := MapsEqual(table.inputA, table.inputB)
+
+		suite.Equalf(
+			table.expectedResult,
+			result,
+			"Arguments: %v, %v",
+			table.inputA,
+			table.inputB)
 	}
 }
 
-func TestMapsEqualEqualIntBoolean(t *testing.T) {
+func (suite *MapsEqualTestSuite) TestMapsEqualEqualIntBoolean() {
 	tables := []struct {
 		inputA         *map[int]bool
 		inputB         *map[int]bool
@@ -263,13 +272,18 @@ func TestMapsEqualEqualIntBoolean(t *testing.T) {
 	}
 
 	for _, table := range tables {
-		if r := MapsEqual(table.inputA, table.inputB); r != table.expectedResult {
-			t.Errorf("[STRING INT MAP] output of array equals with \"%v\" and \"%v\" "+
-				"was incorrect, got: %v, want: %v.",
-				table.inputA,
-				table.inputB,
-				r,
-				table.expectedResult)
-		}
+		result := MapsEqual(table.inputA, table.inputB)
+
+		suite.Equalf(
+			table.expectedResult,
+			result,
+			"Arguments: %v, %v",
+			table.inputA,
+			table.inputB)
 	}
+}
+
+func TestComparator(t *testing.T) {
+	suite.Run(t, new(ArraysEqualTestSuite))
+	suite.Run(t, new(MapsEqualTestSuite))
 }

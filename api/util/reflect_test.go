@@ -20,30 +20,33 @@ package util
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"github.com/stretchr/testify/suite"
 	"testing"
 )
 
-func TestExtractTypeName(t *testing.T) {
-	type TestStruct struct {
-		Name string
-	}
+type ExtractTypeNameTestSuite struct {
+	suite.Suite
+}
 
+func (suite *ExtractTypeNameTestSuite) TestExtractTypeName() {
+	var stringVar = "other_string"
 	tables := []struct {
 		in  interface{}
 		out string
 	}{
 		{discordgo.Session{}, "Session"},
 		{&discordgo.Session{}, "Session"},
-		{TestStruct{}, "TestStruct"},
-		{&TestStruct{}, "TestStruct"},
+		{"some_string", "string"},
+		{&stringVar, "string"},
 	}
 
 	for _, table := range tables {
-		if r := ExtractTypeName(table.in); r != table.out {
-			t.Errorf("output of to type name extraction with \"%v\" was incorrect, got: %v, want: %v.",
-				table.in,
-				r,
-				table.out)
-		}
+		result := ExtractTypeName(table.in)
+
+		suite.Equalf(table.out, result, "Arguments: %v", table.in)
 	}
+}
+
+func TestReflect(t *testing.T) {
+	suite.Run(t, new(ExtractTypeNameTestSuite))
 }

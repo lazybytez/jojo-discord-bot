@@ -18,9 +18,16 @@
 
 package util
 
-import "testing"
+import (
+	"github.com/stretchr/testify/suite"
+	"testing"
+)
 
-func TestStringToSnakeCase(t *testing.T) {
+type StringToSnakeCaseTestSuite struct {
+	suite.Suite
+}
+
+func (suite *StringToSnakeCaseTestSuite) TestStringToSnakeCase() {
 	tables := []struct {
 		in  string
 		out string
@@ -33,11 +40,12 @@ func TestStringToSnakeCase(t *testing.T) {
 	}
 
 	for _, table := range tables {
-		if r := StringToSnakeCase(table.in); r != table.out {
-			t.Errorf("output of to snake case with \"%v\" was incorrect, got: %v, want: %v.",
-				table.in,
-				r,
-				table.out)
-		}
+		result := StringToSnakeCase(table.in)
+
+		suite.Equalf(table.out, result, "Arguments: %v", table.in)
 	}
+}
+
+func TestStrings(t *testing.T) {
+	suite.Run(t, new(StringToSnakeCaseTestSuite))
 }
