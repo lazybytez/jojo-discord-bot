@@ -30,6 +30,8 @@ import (
 // It is responsible to execute the startup sequence
 // and get the application up and running properly.
 func Bootstrap() {
+	initEnv()
+
 	initGorm()
 	createSession(Config.token)
 

@@ -19,7 +19,6 @@
 package internal
 
 import (
-	"fmt"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 	"os"
@@ -54,10 +53,10 @@ type JojoBotConfig struct {
 // The variable is initialized during the init function.
 var Config JojoBotConfig
 
-// Initialize environment with local .env file
+// initEnv initializes environment with local .env file
 // This will load the environment variables defined in the specified
 // env file and merge them into os.Environ.
-func init() {
+func initEnv() {
 	pwd, err := os.Getwd()
 	if nil != err {
 		ExitFatal("Failed to get current working directory to load env file from!")
@@ -67,16 +66,16 @@ func init() {
 	log.Info().Msgf("Trying to load env file from \"%v\"...", envFilePath)
 
 	err = godotenv.Load(envFilePath)
-	if nil != err {
-		ExitFatal(fmt.Sprintf("Missing env file at %v", envFilePath))
+	if nil == err {
+		log.Info().Msgf("Sucessfully loaded env file!")
 	}
-	log.Info().Msgf("Sucessfully loaded env file from \"%v\"!", envFilePath)
 
 	Config = JojoBotConfig{
 		token:   os.Getenv(token),
 		sqlMode: os.Getenv(sqlMode),
 		sqlDsn:  os.Getenv(sqlDsn),
 	}
+	log.Info().Msgf("Sucessfully loaded environment configuration!")
 
 	cleanUpSensitiveValues()
 }
