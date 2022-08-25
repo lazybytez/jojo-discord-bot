@@ -74,7 +74,7 @@ type Component struct {
 	// used to get them (Example: logger -> Component.Logger()).
 	logger              *log.Logger
 	handlerManager      ComponentHandlerManager
-	slashCommandManager CommonSlashCommandManager
+	slashCommandManager *SlashCommandManager
 	discord             *discordgo.Session
 }
 

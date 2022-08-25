@@ -40,7 +40,7 @@ var (
 
 	// slashCommandManagerLogger is the logger used by the slash command management
 	// when there os no component a log message could be assigned to
-	slashCommandManagerLogger log.Logging
+	slashCommandManagerLogger *log.Logger
 )
 
 // init slash command sub-system
@@ -136,11 +136,11 @@ func DeinitCommandHandling() {
 	unregisterCommandHandler()
 }
 
-// CommonSlashCommandManager is used to obtain the components slash Command management
+// SlashCommandManager is used to obtain the components slash Command management
 //
 // On first call, this function initializes the private Component.slashCommandManager
 // field. On consecutive calls, the already present CommonSlashCommandManager will be used.
-func (c *Component) SlashCommandManager() CommonSlashCommandManager {
+func (c *Component) SlashCommandManager() *SlashCommandManager {
 	if nil == c.slashCommandManager {
 		c.slashCommandManager = &SlashCommandManager{owner: c}
 	}
@@ -258,7 +258,6 @@ func (c *SlashCommandManager) SyncApplicationComponentCommands(
 	}
 
 	slashCommandManagerLogger.Info(
-		slashCommandLogPrefix,
 		"Syncing slash-commands for guild \"%v\"...",
 		guildId)
 	registeredCommands = c.removeOrphanedCommands(session, guildId, registeredCommands)
@@ -267,7 +266,6 @@ func (c *SlashCommandManager) SyncApplicationComponentCommands(
 	_ = c.updateRegisteredCommands(session, guildId, registeredCommands)
 
 	slashCommandManagerLogger.Info(
-		slashCommandLogPrefix,
 		"Finished syncing slash-commands for guild \"%v\"...",
 		guildId)
 }
@@ -301,7 +299,6 @@ func (c *SlashCommandManager) removeOrphanedCommands(
 			}
 			commands = append(commands[:key], slicedCommands...)
 			slashCommandManagerLogger.Info(
-				slashCommandLogPrefix,
 				"Removed orphaned slash-command \"%v\" from guild \"%v\"!",
 				registeredCommand.Name,
 				guildId)
@@ -323,7 +320,6 @@ func (c *SlashCommandManager) removeCommandsByComponentState(
 		componentCommand, ok := componentCommandMap[command.Name]
 		if !ok {
 			slashCommandManagerLogger.Warn(
-				slashCommandLogPrefix,
 				"Missing component command for registered slash-command \"%v\"!",
 				command.Name)
 
@@ -407,7 +403,7 @@ func (c *SlashCommandManager) updateRegisteredCommands(
 	for key, command := range commands {
 		componentCommand, ok := componentCommandMap[command.Name]
 		if !ok {
-			slashCommandManagerLogger.Warn(slashCommandLogPrefix, "Cannot check for command updates for \"%v\" "+
+			slashCommandManagerLogger.Warn("Cannot check for command updates for \"%v\" "+
 				"as a corresponding component command is missing!",
 				command.Name)
 
