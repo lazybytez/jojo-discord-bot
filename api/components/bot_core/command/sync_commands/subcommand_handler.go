@@ -33,7 +33,12 @@ var lastGuildSyncCache *cache.Cache[string, time.Time]
 
 func init() {
 	lastGuildSyncCache = cache.New[string, time.Time](10 * time.Minute)
-	lastGuildSyncCache.EnableAutoCleanup(10 * time.Minute)
+
+	// In ths case of error, we ignore the error. Even caching 10K guild names and
+	// timestamps does not take that much RAM. But with the passed parameters, it is
+	// to expect that the cache can be initialized. Also, the
+	// component specific available at this point
+	_ = lastGuildSyncCache.EnableAutoCleanup(10 * time.Minute)
 }
 
 // HandleSyncCommandSubCommand handles the execution of the

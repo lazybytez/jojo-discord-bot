@@ -218,7 +218,7 @@ func (c *SlashCommandManager) validateCommand(cmd *Command) error {
 
 		c.owner.Logger().Err(
 			err,
-			"Failed to register the slash-Cmd \"%v\" for component \"%v\" on guild \"%v\"!",
+			"Failed to register the slash-Cmd \"%v\" for component \"%v\"!",
 			cmd.Cmd.Name,
 			c.owner.Name)
 
