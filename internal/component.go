@@ -38,7 +38,7 @@ var componentRegistryLogger = log.New(logComponentRegistry, nil)
 // and fills the available components in the database API, to provide
 // a unified API to get component information.
 func RegisterComponents() {
-	componentRegistryLogger.Info(logComponentRegistry, "Registering components in database...")
+	componentRegistryLogger.Info("Registering components in database...")
 	em := apiDatabase.GetEntityManager()
 	for _, component := range components.Components {
 		registeredComponent, err := em.RegisteredComponent().Get(component.Code)
@@ -88,7 +88,7 @@ func RegisterComponents() {
 
 		apiDatabase.GetEntityManager().RegisteredComponent().MarkAsAvailable(component.Code)
 	}
-	componentRegistryLogger.Info(logComponentRegistry, "Components have been successfully registered...")
+	componentRegistryLogger.Info("Components have been successfully registered...")
 }
 
 // LoadComponents handles the initialization of
