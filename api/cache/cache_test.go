@@ -19,6 +19,7 @@
 package cache
 
 import (
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"sync"
 	"testing"
@@ -144,7 +145,12 @@ func (suite *CacheTestSuite) TestCache_EnableAutoCleanupWithSuccess() {
 		}
 
 		// Run every ms. With 10ms delay, cleanup should never fail during test
-		testCache.EnableAutoCleanup(1 * time.Millisecond)
+		err := testCache.EnableAutoCleanup(1 * time.Millisecond)
+		assert.NoError(
+			suite.T(),
+			err,
+			"Got an error when enabling auto cleanup, when no error was expected! Arguments:",
+			table.key, table.value)
 
 		testCache.lock.Lock()
 		currentTime := time.Now().Add(-(table.delaySeconds * time.Second))
@@ -189,7 +195,12 @@ func (suite *CacheTestSuite) TestCache_DisableAutoCleanup() {
 			false,
 		}
 
-		testCache.EnableAutoCleanup(1 * time.Millisecond)
+		err := testCache.EnableAutoCleanup(1 * time.Millisecond)
+		assert.NoError(
+			suite.T(),
+			err,
+			"Got an error when enabling auto cleanup, when no error was expected! Arguments:",
+			table.key, table.value)
 
 		testCache.lock.Lock()
 		currentTime := time.Now().Add(-(table.delaySeconds * time.Second))
