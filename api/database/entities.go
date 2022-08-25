@@ -96,7 +96,7 @@ type GuildComponentStatus struct {
 
 // registerDefaultEntities takes care of letting gorm
 // know about all entities in this file.
-func registerDefaultEntities(em *EntityManager) error {
+func registerDefaultEntities(em DBAccess) error {
 	// Guild related entities
 	err := em.RegisterEntity(&Guild{})
 	if nil != err {

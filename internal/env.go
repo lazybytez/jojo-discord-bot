@@ -20,7 +20,6 @@ package internal
 
 import (
 	"github.com/joho/godotenv"
-	"github.com/rs/zerolog/log"
 	"os"
 	"path"
 )
@@ -63,11 +62,11 @@ func initEnv() {
 	}
 
 	envFilePath := path.Join(pwd, envFile)
-	log.Info().Msgf("Trying to load env file from \"%v\"...", envFilePath)
+	coreLogger.Info("Trying to load env file from \"%v\"...", envFilePath)
 
 	err = godotenv.Load(envFilePath)
 	if nil == err {
-		log.Info().Msgf("Sucessfully loaded env file!")
+		coreLogger.Info("Sucessfully loaded env file!")
 	}
 
 	Config = JojoBotConfig{
@@ -75,7 +74,7 @@ func initEnv() {
 		sqlMode: os.Getenv(sqlMode),
 		sqlDsn:  os.Getenv(sqlDsn),
 	}
-	log.Info().Msgf("Sucessfully loaded environment configuration!")
+	coreLogger.Info("Sucessfully loaded environment configuration!")
 
 	cleanUpSensitiveValues()
 }

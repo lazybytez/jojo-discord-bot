@@ -20,11 +20,18 @@ package internal
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/rs/zerolog/log"
+	"github.com/lazybytez/jojo-discord-bot/api/log"
 	"os"
 	"os/signal"
 	"syscall"
 )
+
+const coreLoggerPrefix = "core"
+
+// coreLogger is used for all log entries generated
+// by the internal package. It is the logger for all
+// general purpose and teardown tasks.
+var coreLogger = log.New(coreLoggerPrefix, nil)
 
 // Bootstrap handles the start of the application.
 // It is responsible to execute the startup sequence
@@ -53,7 +60,7 @@ func Bootstrap() {
 // gracefully. This means all open connections or used resources are
 // freed/closed before exit.
 func waitForTerminate() {
-	log.Info().Msg("Bot is running.  Press CTRL-C to exit.")
+	coreLogger.Info("Bot is running.  Press CTRL-C to exit.")
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)

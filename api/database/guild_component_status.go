@@ -63,7 +63,11 @@ func (em *EntityManager) GuildComponentStatus() *GuildComponentStatusEntityManag
 		}
 		em.entityManagers.guildComponentStatusEntityManager = gem
 
-		gem.cache.EnableAutoCleanup(10 * time.Minute)
+		err := gem.cache.EnableAutoCleanup(10 * time.Minute)
+		if nil != err {
+			em.logger.Err(err, "Failed to initialize periodic cache cleanup task "+
+				"for GuildComponentStatus entity manager!")
+		}
 	}
 
 	return em.entityManagers.guildComponentStatusEntityManager

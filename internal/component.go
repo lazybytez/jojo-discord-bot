@@ -27,14 +27,18 @@ import (
 )
 
 // logComponentRegistry is the custom component name used
-// to identify log messages from the component management system
+// to identify log messages from the component management system.
 const logComponentRegistry = "component_manager"
+
+// componentRegistryLogger is the logger used by the component
+// registration routines. They do not use the coreLogger
+var componentRegistryLogger = log.New(logComponentRegistry, nil)
 
 // RegisterComponents registers all available components in the database
 // and fills the available components in the database API, to provide
 // a unified API to get component information.
 func RegisterComponents() {
-	log.Info(logComponentRegistry, "Registering components in database...")
+	componentRegistryLogger.Info(logComponentRegistry, "Registering components in database...")
 	em := apiDatabase.GetEntityManager()
 	for _, component := range components.Components {
 		registeredComponent, err := em.RegisteredComponent().Get(component.Code)
@@ -47,7 +51,7 @@ func RegisterComponents() {
 
 			err := em.Create(registeredComponent)
 			if nil != err {
-				log.Warn(
+				componentRegistryLogger.Warn(
 					logComponentRegistry,
 					"Failed to register component with code \"%v\" in database!",
 					registeredComponent.Code)
@@ -77,7 +81,7 @@ func RegisterComponents() {
 		if changed {
 			err := em.Save(registeredComponent)
 			if nil != err {
-				log.Warn(
+				componentRegistryLogger.Warn(
 					logComponentRegistry,
 					"Failed to update registered component for component with code \"%v\" in database!",
 					registeredComponent.Code)
@@ -86,7 +90,7 @@ func RegisterComponents() {
 
 		apiDatabase.GetEntityManager().RegisteredComponent().MarkAsAvailable(component.Code)
 	}
-	log.Info(logComponentRegistry, "Components have been successfully registered...")
+	componentRegistryLogger.Info(logComponentRegistry, "Components have been successfully registered...")
 }
 
 // LoadComponents handles the initialization of
@@ -96,22 +100,29 @@ func RegisterComponents() {
 // an error will be printed into the log.
 // The application will continue to run as nothing happened.
 func LoadComponents(discord *discordgo.Session) {
-	log.Info(logComponentRegistry, "Starting component load sequence...")
+	componentRegistryLogger.Info(logComponentRegistry, "Starting component load sequence...")
 	for _, comp := range components.Components {
 		if nil == comp.Lifecycle.LoadComponent {
-			log.Debug(logComponentRegistry, "Component \"%v\" does not have an load callback, not loading it!", comp.Name)
+			componentRegistryLogger.Debug(
+				logComponentRegistry,
+				"Component \"%v\" does not have an load callback, not loading it!",
+				comp.Name)
 			continue
 		}
 
-		log.Info(logComponentRegistry, "Loading component \"%v\"...", comp.Name)
+		componentRegistryLogger.Info(logComponentRegistry, "Loading component \"%v\"...", comp.Name)
 		err := comp.RegisterComponent(discord)
 		if nil != err {
-			log.Warn(logComponentRegistry, "Failed to load component with name \"%v\": %v", comp.Name, err.Error())
+			componentRegistryLogger.Warn(
+				logComponentRegistry,
+				"Failed to load component with name \"%v\": %v",
+				comp.Name,
+				err.Error())
 			continue
 		}
-		log.Info(logComponentRegistry, "Successfully loaded component \"%v\"!", comp.Name)
+		componentRegistryLogger.Info(logComponentRegistry, "Successfully loaded component \"%v\"!", comp.Name)
 	}
-	log.Info(logComponentRegistry, "Component load sequence completed!")
+	componentRegistryLogger.Info(logComponentRegistry, "Component load sequence completed!")
 }
 
 // UnloadComponents iterates through all registered api.Component
@@ -121,25 +132,33 @@ func LoadComponents(discord *discordgo.Session) {
 // If an api.Component does not have an UnloadComponent function defined,
 // it will be ignored.
 func UnloadComponents(discord *discordgo.Session) {
-	log.Info(logComponentRegistry, "Starting component unload sequence...")
+	componentRegistryLogger.Info(logComponentRegistry, "Starting component unload sequence...")
 	for _, comp := range components.Components {
 		if nil == comp.Lifecycle.UnloadComponent {
-			log.Debug(logComponentRegistry, "Component \"%v\" does not have an unload callback, skipping!", comp.Name)
+			componentRegistryLogger.Debug(
+				logComponentRegistry,
+				"Component \"%v\" does not have an unload callback, skipping!", comp.Name)
 			continue
 		}
 
 		if !comp.State.Loaded {
-			log.Warn(logComponentRegistry, "Component \"%v\" has not been loaded, skipping!", comp.Name)
+			componentRegistryLogger.Warn(
+				logComponentRegistry,
+				"Component \"%v\" has not been loaded, skipping!",
+				comp.Name)
 			continue
 		}
 
-		log.Info(logComponentRegistry, "Unloading component \"%v\"...", comp.Name)
+		componentRegistryLogger.Info(logComponentRegistry, "Unloading component \"%v\"...", comp.Name)
 		err := comp.UnregisterComponent(discord)
 		if nil != err {
-			log.Warn(logComponentRegistry, "Failed to unload component with name \"%v\": %v", comp.Name, err.Error())
+			componentRegistryLogger.Warn(
+				logComponentRegistry,
+				"Failed to unload component with name \"%v\": %v",
+				comp.Name, err.Error())
 			continue
 		}
-		log.Info(logComponentRegistry, "Successfully unloaded component \"%v\"!", comp.Name)
+		componentRegistryLogger.Info(logComponentRegistry, "Successfully unloaded component \"%v\"!", comp.Name)
 	}
-	log.Info(logComponentRegistry, "Unload sequence completed!")
+	componentRegistryLogger.Info(logComponentRegistry, "Unload sequence completed!")
 }

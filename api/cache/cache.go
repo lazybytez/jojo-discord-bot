@@ -19,13 +19,10 @@
 package cache
 
 import (
-	"github.com/lazybytez/jojo-discord-bot/api/log"
+	"fmt"
 	"sync"
 	"time"
 )
-
-// LogPrefix is the prefix for log messages by cache functions and routines
-const LogPrefix = "Cache"
 
 // Cache is a simple struct that
 // is used to create cache instances that allow to cache data.
@@ -130,25 +127,23 @@ func Update[I comparable, C any](cache *Cache[I, C], key I, value *C) {
 // Enabled auto-cleanups can be ignored for application shutdown
 // and interrupting a cleanup should never lead to data loss as data is only
 // cached for read.
-func (c *Cache[I, C]) EnableAutoCleanup(interval time.Duration) {
+func (c *Cache[I, C]) EnableAutoCleanup(interval time.Duration) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
 	if c.lifetime < 1 {
-		log.Warn(LogPrefix, "It makes no sense to start a cleanup routine "+
-			"for infinite lifetime caches!")
-
-		return
+		return fmt.Errorf("it makes no sense to start a cleanup routine " +
+			"for infinite lifetime caches")
 	}
 
 	if c.autoCleanup {
-		log.Warn(LogPrefix, "Something tried to register two cleanup tasks for the same cache!")
-
-		return
+		return fmt.Errorf("something tried to register two cleanup tasks for the same cache")
 	}
 
 	c.autoCleanup = true
 	go autoCleanupRoutine(c, interval)
+
+	return nil
 }
 
 // autoCleanupRoutine is the function used to start go routines
@@ -184,10 +179,6 @@ func autoCleanupRoutine[I comparable, C any](c *Cache[I, C], interval time.Durat
 			delete(c.cache, marked)
 		}
 		c.lock.Unlock()
-
-		if len(markedForDelete) > 0 {
-			log.Info(LogPrefix, "Cleaned up %v items from cache", len(markedForDelete))
-		}
 
 		time.Sleep(interval)
 	}

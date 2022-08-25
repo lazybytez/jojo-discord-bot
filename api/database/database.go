@@ -19,7 +19,6 @@
 package database
 
 import (
-	"fmt"
 	"github.com/lazybytez/jojo-discord-bot/api/log"
 	"github.com/lazybytez/jojo-discord-bot/api/util"
 	"gorm.io/gorm"
@@ -44,7 +43,7 @@ const loggerPrefix = "database_api"
 
 // entityManager is the DBAccess used during application
 // lifetime. It is initialized using the Init function.
-var entityManager *EntityManager
+var entityManager EntityManager
 
 // EntityManager is a container struct that holds the
 // gorm.DB instance to use for database interaction.
@@ -52,18 +51,18 @@ var entityManager *EntityManager
 // When calling DBAccess() on a api.Component,
 // in reality this type is returned internally.
 type EntityManager struct {
-	database *gorm.DB
-
-	entityManagers *entityManagers
+	database       *gorm.DB
+	logger         log.Logging
+	entityManagers entityManagers
 }
 
-// GetEntityManager returns the currently active DBAccess (EntityManager).
+// GetEntityManager returns the currently active DBAccess.
 //
 // When needing database access in a component, use the components
-// DBAccess() method instead! This function is meant for use by the
-// API.
+// GetEntityManager() method instead! This function is meant for use by the
+// API and Core
 func GetEntityManager() *EntityManager {
-	return entityManager
+	return &entityManager
 }
 
 // DBAccess is a wrapper around gorm.DB and forces the application
@@ -113,16 +112,13 @@ type DBAccess interface {
 // and register default entity types that are managed by
 // the bot core.
 func Init(db *gorm.DB) error {
-	if nil != entityManager {
-		return fmt.Errorf("database API already initialized")
-	}
-
-	entityManager = &EntityManager{
+	entityManager = EntityManager{
 		db,
-		&entityManagers{},
+		log.New(loggerPrefix, nil),
+		entityManagers{},
 	}
 
-	return registerDefaultEntities(entityManager)
+	return registerDefaultEntities(&entityManager)
 }
 
 // RegisterEntity registers a new entity (struct) and runs its automated
@@ -130,12 +126,12 @@ func Init(db *gorm.DB) error {
 func (em *EntityManager) RegisterEntity(entityType interface{}) error {
 	err := em.database.AutoMigrate(entityType)
 	if nil != err {
-		log.Err(loggerPrefix, err, "Failed to auto-migrated entity \"%v\"", util.ExtractTypeName(entityType))
+		em.logger.Err(err, "Failed to auto-migrated entity \"%v\"", util.ExtractTypeName(entityType))
 
 		return err
 	}
 
-	log.Info(loggerPrefix, "Auto-migrated entity \"%v\"", util.ExtractTypeName(entityType))
+	em.logger.Info("Auto-migrated entity \"%v\"", util.ExtractTypeName(entityType))
 
 	return nil
 }

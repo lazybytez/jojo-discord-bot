@@ -53,7 +53,10 @@ func (em *EntityManager) Guilds() *GuildEntityManager {
 		}
 		em.entityManagers.guild = gem
 
-		gem.cache.EnableAutoCleanup(10 * time.Minute)
+		err := gem.cache.EnableAutoCleanup(10 * time.Minute)
+		if nil != err {
+			em.logger.Err(err, "Failed to initialize periodic cache cleanup task for Guild entity manager!")
+		}
 	}
 
 	return em.entityManagers.guild
