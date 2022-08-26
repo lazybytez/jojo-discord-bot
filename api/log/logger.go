@@ -27,6 +27,13 @@ import (
 // log messages with the component name.
 const componentLogPrefix = "component"
 
+// Logger is a type that is used to hold metadata
+// that should be used in the loggers methods.
+type Logger struct {
+	loggerImpl *zerolog.Logger
+	prefix     string
+}
+
 // Logging provides useful methods that ease logging.
 // Note that these function will and should never change their
 // underlying receiver.
@@ -37,13 +44,6 @@ type Logging interface {
 	Err(err error, format string, v ...interface{})
 }
 
-// Logger is a type that is used to hold metadata
-// that should be used in the loggers methods.
-type Logger struct {
-	loggerImpl zerolog.Logger
-	prefix     string
-}
-
 // New creates a new logger with the passed prefix
 // and logger implementation.
 // When loggerImpl is nil, the default logger of zerolog will be used.
@@ -51,10 +51,10 @@ func New(prefix string, loggerImpl *zerolog.Logger) *Logger {
 	if nil == loggerImpl {
 		loggerImpl = &log.Logger
 	}
-
+	
 	return &Logger{
 		prefix:     prefix,
-		loggerImpl: *loggerImpl,
+		loggerImpl: loggerImpl,
 	}
 }
 
