@@ -19,7 +19,6 @@
 package cache
 
 import (
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"sync"
 	"testing"
@@ -115,7 +114,7 @@ func (suite *CacheTestSuite) TestGeWithMiss() {
 		time.Now(),
 	}
 
-	secondResultItem, secondResultOk := testCache.cache[firstKey]
+	secondResultItem, secondResultOk := Get(testCache, firstKey)
 	suite.False(secondResultOk, "(ok check) Arguments: %v", firstKey)
 	suite.Nil(secondResultItem, "(item check) Arguments: %v", firstKey)
 }
@@ -146,8 +145,7 @@ func (suite *CacheTestSuite) TestCache_EnableAutoCleanupWithSuccess() {
 
 		// Run every ms. With 10ms delay, cleanup should never fail during test
 		err := testCache.EnableAutoCleanup(1 * time.Millisecond)
-		assert.NoError(
-			suite.T(),
+		suite.NoError(
 			err,
 			"Got an error when enabling auto cleanup, when no error was expected! Arguments:",
 			table.key, table.value)
@@ -169,6 +167,63 @@ func (suite *CacheTestSuite) TestCache_EnableAutoCleanupWithSuccess() {
 
 		suite.Equalf(table.expectedOK, resultOk, "(Arguments: %v, %v", table.key, table.value)
 	}
+}
+
+func (suite *CacheTestSuite) TestCache_EnableAutoCleanupWithZeroOrLowerLifetime() {
+	tables := []struct {
+		lifetime time.Duration
+	}{
+		{0},
+		{-1},
+		{-10},
+	}
+
+	for _, table := range tables {
+		duration := table.lifetime * time.Second
+
+		testCache := &Cache[string, string]{
+			map[string]*Item[*string]{},
+			sync.RWMutex{},
+			duration.Milliseconds(),
+			false,
+		}
+
+		// Run every ms. With 10ms delay, cleanup should never fail during test
+		err := testCache.EnableAutoCleanup(1 * time.Millisecond)
+
+		testCache.lock.Lock()
+		testCache.autoCleanup = false
+		testCache.lock.Unlock()
+
+		suite.Error(
+			err,
+			"Got an no error when enabling auto cleanup with zero or lower lifetime! Arguments:",
+			table.lifetime)
+	}
+}
+
+func (suite *CacheTestSuite) TestCache_EnableAutoCleanupWithMultipleCalls() {
+	const lifetime = 10 * time.Millisecond
+
+	testCache := &Cache[string, string]{
+		map[string]*Item[*string]{},
+		sync.RWMutex{},
+		lifetime.Milliseconds(),
+		false,
+	}
+
+	// Run every ms. With 10ms delay, cleanup should never fail during test
+	result1 := testCache.EnableAutoCleanup(1 * time.Millisecond)
+	suite.Nil(result1, "Did not expected an error on first auto cleanup enable!")
+
+	result2 := testCache.EnableAutoCleanup(1 * time.Millisecond)
+	suite.Error(
+		result2,
+		"Got an no error when enabling auto cleanup multiple times!")
+
+	testCache.lock.Lock()
+	testCache.autoCleanup = false
+	testCache.lock.Unlock()
 }
 
 func (suite *CacheTestSuite) TestCache_DisableAutoCleanup() {
@@ -196,8 +251,7 @@ func (suite *CacheTestSuite) TestCache_DisableAutoCleanup() {
 		}
 
 		err := testCache.EnableAutoCleanup(1 * time.Millisecond)
-		assert.NoError(
-			suite.T(),
+		suite.NoError(
 			err,
 			"Got an error when enabling auto cleanup, when no error was expected! Arguments:",
 			table.key, table.value)
