@@ -31,7 +31,7 @@ func handleModuleDisable(
 	i *discordgo.InteractionCreate,
 	option *discordgo.ApplicationCommandInteractionDataOption,
 ) {
-	resp := slash_commands.GenerateInteractionResponseDataTemplate("Disable Module", "")
+	resp := slash_commands.GenerateInteractionResponseTemplate("Disable Module", "")
 
 	regComp := findComponent(option)
 	if nil == regComp || regComp.IsCoreComponent() {
