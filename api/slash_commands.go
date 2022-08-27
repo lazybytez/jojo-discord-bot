@@ -600,10 +600,10 @@ func ProcessSubCommands(
 	i *discordgo.InteractionCreate,
 	option *discordgo.ApplicationCommandInteractionDataOption,
 	handlers map[string]func(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-	option *discordgo.ApplicationCommandInteractionDataOption,
-),
+		s *discordgo.Session,
+		i *discordgo.InteractionCreate,
+		option *discordgo.ApplicationCommandInteractionDataOption,
+	),
 ) bool {
 	// First validate that there is at least one level of nesting
 	command := i.ApplicationCommandData()
@@ -636,10 +636,10 @@ func runHandler(
 	option *discordgo.ApplicationCommandInteractionDataOption,
 	name string,
 	handlers map[string]func(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-	option *discordgo.ApplicationCommandInteractionDataOption,
-),
+		s *discordgo.Session,
+		i *discordgo.InteractionCreate,
+		option *discordgo.ApplicationCommandInteractionDataOption,
+	),
 ) bool {
 	handler, ok := handlers[name]
 

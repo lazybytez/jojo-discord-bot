@@ -6,6 +6,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/dustin/go-humanize"
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"io"
+	"os"
 	"runtime"
 	"text/tabwriter"
 	"time"
@@ -70,13 +72,23 @@ func buildStatOutput() string {
 	w := &tabwriter.Writer{}
 	buf := &bytes.Buffer{}
 
-	w.Init(buf, 0, 4, 0, ' ', 0)
-	fmt.Fprintf(w, "Uptime: **%v**\n", getDurationString(time.Since(statsStartTime)))
-	fmt.Fprintf(w, "Memory used: **%s / %s**\n", humanize.Bytes(m.Alloc), humanize.Bytes(m.Sys))
-	fmt.Fprintf(w, "Garbage collected: **%s**\n", humanize.Bytes(m.TotalAlloc))
-	fmt.Fprintf(w, "Threads: **%s**\n", humanize.Comma(int64(runtime.NumGoroutine())))
+	count, _ := C.EntityManager().Guilds().Count()
+	cluster, _ := os.Hostname()
 
-	w.Flush()
+	w.Init(buf, 0, 4, 0, ' ', 0)
+	appendStatLine(w, "Uptime: **%v**\n", getDurationString(time.Since(statsStartTime)))
+	appendStatLine(w, "Memory used: **%s / %s**\n", humanize.Bytes(m.Alloc), humanize.Bytes(m.Sys))
+	appendStatLine(w, "Garbage collected: **%s**\n", humanize.Bytes(m.TotalAlloc))
+	appendStatLine(w, "Threads: **%s**\n", humanize.Comma(int64(runtime.NumGoroutine())))
+	appendStatLine(w, "Connected Servers: **%v**\n", count)
+	appendStatLine(w, "Cluster ID: **%s**\n", cluster)
+	appendStatLine(w, "Registered Slash Commands: **%v**\n", C.SlashCommandManager().GetCommandCount())
+
+	err := w.Flush()
+	if nil != err {
+		return ""
+	}
+
 	return buf.String()
 }
 
@@ -88,4 +100,11 @@ func getDurationString(duration time.Duration) string {
 		int(duration.Minutes())%60,
 		int(duration.Seconds())%60,
 	)
+}
+
+func appendStatLine(w io.Writer, msg string, values ...interface{}) {
+	_, err := fmt.Fprintf(w, msg, values...)
+	if nil != err {
+		C.Logger().Err(err, "Failed to generate statistics embed text write buffer.")
+	}
 }
