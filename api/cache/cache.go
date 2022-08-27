@@ -38,12 +38,6 @@ import (
 // Without disabling the automated cleanup, a reference to the cache
 // will be hold infinite.
 type Cache[I comparable, C any] struct {
-	// registeredComponentCache is a map that holds component
-	// codes and their reference.
-	//
-	// It acts as a cache to prevent exhaustive database calls
-	// for something that is required during the entire application
-	// lifetime and does not change.
 	cache       map[I]*Item[*C]
 	lock        sync.RWMutex
 	lifetime    int64
