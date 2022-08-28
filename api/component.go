@@ -21,6 +21,7 @@ package api
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api/database"
+	"github.com/lazybytez/jojo-discord-bot/api/log"
 	"strings"
 )
 
@@ -71,9 +72,9 @@ type Component struct {
 	// These are private and only managed by the API system.
 	// Their initialization happens through call to the methods
 	// used to get them (Example: logger -> Component.Logger()).
-	logger              Logger
+	logger              *log.Logger
 	handlerManager      ComponentHandlerManager
-	slashCommandManager SlashCommandManager
+	slashCommandManager *SlashCommandManager
 	discord             *discordgo.Session
 }
 
@@ -84,14 +85,15 @@ type RegistrableComponent interface {
 	UnregisterComponent(discord *discordgo.Session) error
 }
 
-// ComponentFeatureSet is a simple interface that defines the methods
-// that provide the APIs features, like Logger
-type ComponentFeatureSet interface {
-	// Logger is used to obtain the Logger of a component
+// ServiceManager is a simple interface that defines the methods
+// that provide the APIs features, like Logging
+type ServiceManager interface {
+	// Logger is used to obtain the Logging of a component
 	//
 	// On first call, this function initializes the private Component.logger
-	// field. On consecutive calls, the already present Logger will be used.
-	Logger() Logger
+	// field. On consecutive calls, the already present Logging will be used.
+	// field. On consecutive calls, the already present Logging will be used.
+	Logger() log.Logger
 	// HandlerManager returns the management interface for event handlers.
 	//
 	// It allows the registration, decoration and general
@@ -104,13 +106,13 @@ type ComponentFeatureSet interface {
 	// SlashCommandManager is used to obtain the components slash Command management
 	//
 	// On first call, this function initializes the private Component.slashCommandManager
-	// field. On consecutive calls, the already present SlashCommandManager will be used.
-	SlashCommandManager() SlashCommandManager
+	// field. On consecutive calls, the already present CommonSlashCommandManager will be used.
+	SlashCommandManager() CommonSlashCommandManager
 	// EntityManager returns the currently active database.DBAccess.
 	// The currently active database.DBAccess is shared across components.
 	//
 	// The database.DBAccess allows to interact with the database of the application.
-	EntityManager() database.DBAccess
+	EntityManager() *database.EntityManager
 }
 
 // RegisterComponent is used by the component registration system that

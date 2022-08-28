@@ -21,7 +21,6 @@ package internal
 import (
 	"fmt"
 	dbAPI "github.com/lazybytez/jojo-discord-bot/api/database"
-	"github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -37,19 +36,19 @@ var database *gorm.DB
 func initGorm() {
 	var dial *gorm.Dialector
 
-	log.Info().Msg("Setting up database connection...")
+	coreLogger.Info("Setting up database connection...")
 	switch Config.sqlMode {
 	case ModeSQLite:
-		log.Info().Msg("Using SQLite as database driver!")
+		coreLogger.Info("Using SQLite as database driver!")
 		dial = getSQLiteDialector()
 	case ModePostgres:
-		log.Info().Msg("Using PostgreSQL as database driver!")
+		coreLogger.Info("Using PostgreSQL as database driver!")
 		dial = getPostgresDialector()
 	default:
 		ExitFatal(fmt.Sprintf("The database mode \"%v\" is not valid!", Config.sqlMode))
 	}
 
-	log.Info().Msg("Open GORM instance...")
+	coreLogger.Info("Open GORM instance...")
 	var err error
 	database, err = gorm.Open(*dial, &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
@@ -63,7 +62,7 @@ func initGorm() {
 		ExitGracefully(err.Error())
 	}
 
-	log.Info().Msg("Database subsystem has been initialized successfully!")
+	coreLogger.Info("Database subsystem has been initialized successfully!")
 }
 
 // getSQLiteDialector creates a SQLite database and returns the gorm.Dialector instance

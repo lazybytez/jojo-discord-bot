@@ -82,7 +82,7 @@ func handleGuildUpdateOnUpdate(_ *discordgo.Session, g *discordgo.GuildUpdate) {
 
 // updateGuildOnNameChange updates the name of the passed Guild
 // in the database, if the name changed.
-func updateGuildOnNameChange(em *database.EntityManager, guild *database.Guild, g *discordgo.GuildUpdate) {
+func updateGuildOnNameChange(em database.DBAccess, guild *database.Guild, g *discordgo.GuildUpdate) {
 	if guild.Name != g.Name {
 		err := em.UpdateEntity(&guild, database.ColumnName, g.Name)
 		if nil != err {

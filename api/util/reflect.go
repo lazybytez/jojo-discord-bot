@@ -28,7 +28,8 @@ import (
 // This means, something like: *database.Guild
 // Results in: Guild
 func ExtractTypeName(t interface{}) string {
-	typeName := reflect.TypeOf(t).String()
+	typeName := strings.TrimPrefix(reflect.TypeOf(t).String(), "*")
+
 	_, after, ok := strings.Cut(typeName, ".")
 	if !ok {
 		return typeName
