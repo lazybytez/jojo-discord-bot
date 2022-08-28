@@ -39,13 +39,11 @@ func (roundTripper *RoundTripper) RoundTrip(req *http.Request) (*http.Response, 
 	resp := args.Get(0)
 	err := args.Error(1)
 
-	switch resp.(type) {
+	switch resp := resp.(type) {
 	case *http.Response:
-		return resp.(*http.Response), err
+		return resp, err
 	case http.Response:
-		respTyped := resp.(http.Response)
-
-		return &respTyped, err
+		return &resp, err
 	default:
 		return nil, err
 	}

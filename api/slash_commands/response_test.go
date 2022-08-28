@@ -214,11 +214,8 @@ func (suite *ResponseTestSuite) TestRespondWithSuccess() {
 		method = req.Method
 
 		err := json.NewDecoder(req.Body).Decode(&requestInteractionResponse)
-		if nil != err {
-			return false
-		}
 
-		return true
+		return nil == err
 	})).Once().Return(&http.Response{
 		StatusCode: http.StatusCreated,
 	}, nil)
