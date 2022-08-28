@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/bwmarrin/discordgo v0.26.0
+	github.com/dustin/go-humanize v1.0.0
 	github.com/joho/godotenv v1.4.0
 	github.com/rs/zerolog v1.27.0
 	github.com/rzajac/zltest v0.12.0

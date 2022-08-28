@@ -41,6 +41,8 @@ type GuildDBAccess interface {
 	Get(guildId string) (*Guild, error)
 	// Update adds or updates a cached item in the Guild cache.
 	Update(guildId string, guild *Guild) error
+	// Count returns the number of all guilds stored in the database
+	Count() (int64, error)
 }
 
 // Guilds returns the GuildEntityManager that is currently active,
@@ -98,4 +100,12 @@ func (gem *GuildEntityManager) Update(guildId string, guild *Guild) error {
 
 	cache.Update(gem.cache, guildIdInt, guild)
 	return nil
+}
+
+// Count returns the number of all guilds stored in the database
+func (gem *GuildEntityManager) Count() (int64, error) {
+	var count int64 = 0
+	db := gem.em.WorkOn([]Guild{}).Count(&count)
+
+	return count, db.Error
 }

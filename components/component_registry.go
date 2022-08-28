@@ -23,6 +23,7 @@ import (
 	"github.com/lazybytez/jojo-discord-bot/api/components/bot_core"
 	"github.com/lazybytez/jojo-discord-bot/api/components/bot_log"
 	"github.com/lazybytez/jojo-discord-bot/components/pingpong"
+	"github.com/lazybytez/jojo-discord-bot/components/statistics"
 )
 
 // Components contains all components that should be available.
@@ -35,4 +36,5 @@ var Components = []*api.Component{
 	bot_core.C,
 	bot_log.C,
 	pingpong.C,
+	statistics.C,
 }

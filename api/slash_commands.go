@@ -85,6 +85,8 @@ type CommonSlashCommandManager interface {
 	// Also orphaned commands are cleaned up.
 	// This is executed whenever a guild is joined or a component is toggled.
 	SyncApplicationComponentCommands(session *discordgo.Session, guildId string)
+	// GetCommandCount returns the number of registered slash commands
+	GetCommandCount() int
 }
 
 // InitCommandHandling initializes the command handling
@@ -654,4 +656,9 @@ func runHandler(
 	handler(s, i, option)
 
 	return true
+}
+
+// GetCommandCount returns the number of registered slash commands
+func (c *SlashCommandManager) GetCommandCount() int {
+	return len(componentCommandMap)
 }
