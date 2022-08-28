@@ -19,9 +19,13 @@
 package slash_commands
 
 import (
+	"encoding/json"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/test/discordgo_test"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"net/http"
 	"testing"
 )
 
@@ -175,6 +179,59 @@ func (suite *ResponseTestSuite) TestGenerateEphemeralInteractionResponseTemplate
 			table.name,
 			table.description)
 	}
+}
+
+func (suite *ResponseTestSuite) TestRespondWithSuccess() {
+	testResponseData := &discordgo.InteractionResponseData{
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title:       "Test",
+				Description: "This is a test",
+				Color:       api.DefaultEmbedColor,
+				Fields:      []*discordgo.MessageEmbedField{},
+			},
+		},
+	}
+
+	session, transport := discordgo_test.MockSession()
+
+	interactionCreate := &discordgo.InteractionCreate{}
+	interactionCreate.Interaction = &discordgo.Interaction{
+		ID:    "12345123451234512345",
+		Token: "4z842ghh2908ghviu2gz908vh42f90824ph2h298zrf928fdh2gi",
+	}
+
+	component := &api.Component{}
+
+	requestInteractionResponse := &discordgo.InteractionResponse{}
+	method := ""
+
+	transport.On("RoundTrip", mock.MatchedBy(func(req *http.Request) bool {
+		if nil == req {
+			return false
+		}
+
+		method = req.Method
+
+		err := json.NewDecoder(req.Body).Decode(&requestInteractionResponse)
+		if nil != err {
+			return false
+		}
+
+		return true
+	})).Once().Return(&http.Response{
+		StatusCode: http.StatusCreated,
+	}, nil)
+
+	Respond(component, session, interactionCreate, testResponseData)
+
+	transport.AssertExpectations(suite.T())
+
+	suite.Equalf(http.MethodPost, method, "Request was done with wrong HTTP method!")
+	suite.Equalf(
+		discordgo.InteractionResponseChannelMessageWithSource,
+		requestInteractionResponse.Type,
+		"Received wrong interaction response type!")
 }
 
 func TestResponse(t *testing.T) {
