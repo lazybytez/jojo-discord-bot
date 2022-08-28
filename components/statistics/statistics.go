@@ -5,7 +5,7 @@ import (
 	"github.com/lazybytez/jojo-discord-bot/api"
 )
 
-// C is the instance of the statistics component.
+// C is the instance of the statistics component
 var C *api.Component
 
 // init initializes the component with its metadata
@@ -25,7 +25,7 @@ func init() {
 	}
 }
 
-// LoadComponent loads the Ping-Pong Component
+// LoadComponent loads the two registered slash commands
 func LoadComponent(discord *discordgo.Session) error {
 	_ = C.SlashCommandManager().Register(statsCommand)
 	_ = C.SlashCommandManager().Register(infoCommand)

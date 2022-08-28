@@ -9,10 +9,12 @@ import (
 	"io"
 	"os"
 	"runtime"
+	"strconv"
 	"text/tabwriter"
 	"time"
 )
 
+// statsCommand registers the alias /stats
 var statsCommand = &api.Command{
 	Cmd: &discordgo.ApplicationCommand{
 		Name:        "stats",
@@ -21,6 +23,7 @@ var statsCommand = &api.Command{
 	Handler: handleStats,
 }
 
+// infoCommand registers the alias /info
 var infoCommand = &api.Command{
 	Cmd: &discordgo.ApplicationCommand{
 		Name:        "info",
@@ -29,9 +32,11 @@ var infoCommand = &api.Command{
 	Handler: handleStats,
 }
 
+// With the m variable the command can access memory runtime statistics
 var m runtime.MemStats
 
-var statsStartTime = time.Now()
+// botStartTime returns the current local time to calculate the uptime of the bot instance
+var botStartTime = time.Now()
 
 // handleStats gets called when executing the /stats or /info command
 func handleStats(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -48,12 +53,16 @@ func handleStats(s *discordgo.Session, i *discordgo.InteractionCreate) {
 func buildInfoEmbed(s *discordgo.Session) []*discordgo.MessageEmbed {
 	return []*discordgo.MessageEmbed{
 		{
-			Title: "Information",
+			Title: "Info",
 			Color: 0x5D397C,
 			Thumbnail: &discordgo.MessageEmbedThumbnail{
 				URL: s.State.User.AvatarURL(""),
 			},
 			Fields: []*discordgo.MessageEmbedField{
+				{
+					Name:  "Bot",
+					Value: buildInfoOutput(),
+				},
 				{
 					Name:  "Stats",
 					Value: buildStatOutput(),
@@ -67,26 +76,50 @@ func buildInfoEmbed(s *discordgo.Session) []*discordgo.MessageEmbed {
 	}
 }
 
+// buildInfoOutput generates a big text with some general bot information like how many slash commands it has etc.
+func buildInfoOutput() string {
+	w := &tabwriter.Writer{}
+	buf := &bytes.Buffer{}
+
+	w.Init(buf, 0, 4, 0, ' ', 0)
+
+	appendStatLine(w, "Slash Commands: **%v**\n", C.SlashCommandManager().GetCommandCount())
+
+	err := w.Flush()
+	if err != nil {
+		C.Logger().Err(err, "Could not flush statistics embed text write buffer.")
+	}
+
+	return buf.String()
+}
+
 // buildStatOutput generates a big string with all runtime statistics
 func buildStatOutput() string {
 	w := &tabwriter.Writer{}
 	buf := &bytes.Buffer{}
 
-	count, _ := C.EntityManager().Guilds().Count()
-	cluster, _ := os.Hostname()
+	count, err := C.EntityManager().Guilds().Count()
+	countMsg := strconv.FormatInt(count, 10)
+	if nil != err {
+		countMsg = "Error"
+	}
+	cluster, err := os.Hostname()
+	if nil != err {
+		cluster = "Error"
+	}
 
 	w.Init(buf, 0, 4, 0, ' ', 0)
-	appendStatLine(w, "Uptime: **%v**\n", getDurationString(time.Since(statsStartTime)))
+
+	appendStatLine(w, "Uptime: **%v**\n", getDurationString(time.Since(botStartTime)))
 	appendStatLine(w, "Memory used: **%s / %s**\n", humanize.Bytes(m.Alloc), humanize.Bytes(m.Sys))
 	appendStatLine(w, "Garbage collected: **%s**\n", humanize.Bytes(m.TotalAlloc))
 	appendStatLine(w, "Threads: **%s**\n", humanize.Comma(int64(runtime.NumGoroutine())))
-	appendStatLine(w, "Connected Servers: **%v**\n", count)
+	appendStatLine(w, "Connected Servers: **%v**\n", countMsg)
 	appendStatLine(w, "Cluster ID: **%s**\n", cluster)
-	appendStatLine(w, "Registered Slash Commands: **%v**\n", C.SlashCommandManager().GetCommandCount())
 
-	err := w.Flush()
-	if nil != err {
-		return ""
+	err = w.Flush()
+	if err != nil {
+		C.Logger().Err(err, "Could not flush statistics embed text write buffer.")
 	}
 
 	return buf.String()
@@ -102,6 +135,7 @@ func getDurationString(duration time.Duration) string {
 	)
 }
 
+// appendStatLine adds another line to a single text field in the embed
 func appendStatLine(w io.Writer, msg string, values ...interface{}) {
 	_, err := fmt.Fprintf(w, msg, values...)
 	if nil != err {
