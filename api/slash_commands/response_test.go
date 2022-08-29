@@ -19,13 +19,16 @@
 package slash_commands
 
 import (
-	"encoding/json"
+	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/test/discordgo_test"
+	"github.com/lazybytez/jojo-discord-bot/test/discordgo_mock"
+	"github.com/lazybytez/jojo-discord-bot/test/log"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"net/http"
+	"net/url"
+	"reflect"
 	"testing"
 )
 
@@ -193,7 +196,7 @@ func (suite *ResponseTestSuite) TestRespondWithSuccess() {
 		},
 	}
 
-	session, transport := discordgo_test.MockSession()
+	session, transport := discordgo_mock.MockSession()
 
 	interactionCreate := &discordgo.InteractionCreate{}
 	interactionCreate.Interaction = &discordgo.Interaction{
@@ -202,34 +205,176 @@ func (suite *ResponseTestSuite) TestRespondWithSuccess() {
 	}
 
 	component := &api.Component{}
+	loggerMock := &log.LoggerMock{}
+	component.SetLogger(loggerMock)
 
 	requestInteractionResponse := &discordgo.InteractionResponse{}
-	method := ""
 
-	transport.On("RoundTrip", mock.MatchedBy(func(req *http.Request) bool {
-		if nil == req {
-			return false
-		}
-
-		method = req.Method
-
-		err := json.NewDecoder(req.Body).Decode(&requestInteractionResponse)
-
-		return nil == err
-	})).Once().Return(&http.Response{
-		StatusCode: http.StatusCreated,
-	}, nil)
+	transport.OnRequestCaptureResult(http.MethodPost, requestInteractionResponse).Once().Return(
+		&http.Response{
+			StatusCode: http.StatusCreated,
+		}, nil)
 
 	Respond(component, session, interactionCreate, testResponseData)
 
 	transport.AssertExpectations(suite.T())
 
-	suite.Equalf(http.MethodPost, method, "Request was done with wrong HTTP method!")
+	loggerMock.AssertNotCalled(suite.T(), "Warn", mock.Anything, mock.Anything)
+	loggerMock.AssertNotCalled(suite.T(), "Err", mock.Anything, mock.Anything, mock.Anything)
+
 	suite.Equalf(
 		discordgo.InteractionResponseChannelMessageWithSource,
 		requestInteractionResponse.Type,
 		"Received wrong interaction response type!")
+	suite.NotNil(requestInteractionResponse.Data)
+	suite.NotEqual(discordgo.MessageFlagsEphemeral, requestInteractionResponse.Data.Flags)
+	suite.NotNil(requestInteractionResponse.Data.Embeds)
+	suite.Len(requestInteractionResponse.Data.Embeds, 1)
+	suite.Equal("Test", requestInteractionResponse.Data.Embeds[0].Title)
+	suite.Equal("This is a test", requestInteractionResponse.Data.Embeds[0].Description)
+	suite.Equal(api.DefaultEmbedColor, requestInteractionResponse.Data.Embeds[0].Color)
 }
+
+func (suite *ResponseTestSuite) TestRespondWithSuccessAndEphemeralMessage() {
+	testResponseData := &discordgo.InteractionResponseData{
+		Flags: discordgo.MessageFlagsEphemeral,
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title:       "Test",
+				Description: "This is a test",
+				Color:       api.DefaultEmbedColor,
+				Fields:      []*discordgo.MessageEmbedField{},
+			},
+		},
+	}
+
+	session, transport := discordgo_mock.MockSession()
+
+	interactionCreate := &discordgo.InteractionCreate{}
+	interactionCreate.Interaction = &discordgo.Interaction{
+		ID:    "12345123451234512345",
+		Token: "4z842ghh2908ghviu2gz908vh42f90824ph2h298zrf928fdh2gi",
+	}
+
+	component := &api.Component{}
+	loggerMock := &log.LoggerMock{}
+	component.SetLogger(loggerMock)
+
+	requestInteractionResponse := &discordgo.InteractionResponse{}
+
+	transport.OnRequestCaptureResult(http.MethodPost, requestInteractionResponse).Once().Return(
+		&http.Response{
+			StatusCode: http.StatusCreated,
+		}, nil)
+
+	Respond(component, session, interactionCreate, testResponseData)
+
+	transport.AssertExpectations(suite.T())
+
+	loggerMock.AssertNotCalled(suite.T(), "Warn", mock.Anything, mock.Anything)
+	loggerMock.AssertNotCalled(suite.T(), "Err", mock.Anything, mock.Anything, mock.Anything)
+
+	suite.Equalf(
+		discordgo.InteractionResponseChannelMessageWithSource,
+		requestInteractionResponse.Type,
+		"Received wrong interaction response type!")
+	suite.NotNil(requestInteractionResponse.Data)
+	suite.Equal(discordgo.MessageFlagsEphemeral, requestInteractionResponse.Data.Flags)
+	suite.NotNil(requestInteractionResponse.Data.Embeds)
+	suite.Len(requestInteractionResponse.Data.Embeds, 1)
+	suite.Equal("Test", requestInteractionResponse.Data.Embeds[0].Title)
+	suite.Equal("This is a test", requestInteractionResponse.Data.Embeds[0].Description)
+	suite.Equal(api.DefaultEmbedColor, requestInteractionResponse.Data.Embeds[0].Color)
+}
+
+func (suite *ResponseTestSuite) TestRespondWithError() {
+	testResponseData := &discordgo.InteractionResponseData{
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title:       "Test",
+				Description: "This is a test",
+				Color:       api.DefaultEmbedColor,
+				Fields:      []*discordgo.MessageEmbedField{},
+			},
+		},
+	}
+
+	session, transport := discordgo_mock.MockSession()
+
+	interactionCreate := &discordgo.InteractionCreate{}
+	interactionCreate.Interaction = &discordgo.Interaction{
+		ID:    "12345123451234512345",
+		Token: "4z842ghh2908ghviu2gz908vh42f90824ph2h298zrf928fdh2gi",
+	}
+
+	component := &api.Component{}
+	loggerMock := &log.LoggerMock{}
+	component.SetLogger(loggerMock)
+
+	requestInteractionResponse := &discordgo.InteractionResponse{}
+
+	expectedErr := fmt.Errorf("something failed while processing response")
+
+	transport.OnRequestCaptureResult(http.MethodPost, requestInteractionResponse).Once().Return(
+		nil, expectedErr)
+
+	loggerMock.On(
+		"Err",
+		mock.AnythingOfType(reflect.TypeOf(&url.Error{}).Name()),
+		mock.Anything,
+		mock.Anything).Return(nil)
+
+	Respond(component, session, interactionCreate, testResponseData)
+
+	transport.AssertExpectations(suite.T())
+
+	loggerMock.AssertNotCalled(suite.T(), "Warn", mock.Anything, mock.Anything)
+}
+
+//func (suite *ResponseTestSuite) TestEditResponseWithSuccess() {
+//	testResponseData := &discordgo.WebhookEdit{
+//		Embeds: &[]*discordgo.MessageEmbed{
+//			{
+//				Title:       "Test",
+//				Description: "This is a test",
+//				Color:       api.DefaultEmbedColor,
+//				Fields:      []*discordgo.MessageEmbedField{},
+//			},
+//		},
+//	}
+//
+//	session, transport := discordgo_mock.MockSession()
+//
+//	interactionCreate := &discordgo.InteractionCreate{}
+//	interactionCreate.Interaction = &discordgo.Interaction{
+//		ID:    "12345123451234512345",
+//		Token: "4z842ghh2908ghviu2gz908vh42f90824ph2h298zrf928fdh2gi",
+//	}
+//
+//	component := &api.Component{}
+//	loggerMock := &log.LoggerMock{}
+//	component.SetLogger(loggerMock)
+//
+//	webHookEditData := &discordgo.WebhookEdit{}
+//
+//	transport.OnRequestCaptureResult(http.MethodPost, webHookEditData).Once().Return(
+//		&http.Response{
+//			StatusCode: http.StatusCreated,
+//		}, nil)
+//
+//	EditResponse(component, session, interactionCreate, webHookEditData)
+//
+//	transport.AssertExpectations(suite.T())
+//
+//	loggerMock.AssertNotCalled(suite.T(), "Warn", mock.Anything, mock.Anything)
+//	loggerMock.AssertNotCalled(suite.T(), "Err", mock.Anything, mock.Anything, mock.Anything)
+//
+//	suite.NotNil(testResponseData.Embeds)
+//	suite.Len(testResponseData.Embeds, 1)
+//	suite.Equal("Test", (*testResponseData.Embeds)[0].Title)
+//	suite.Equal("This is a test", (*testResponseData.Embeds)[0].Description)
+//	suite.Equal(api.DefaultEmbedColor, (*testResponseData.Embeds)[0].Color)
+//}
 
 func TestResponse(t *testing.T) {
 	suite.Run(t, new(ResponseTestSuite))

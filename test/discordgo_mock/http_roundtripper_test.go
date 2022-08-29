@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"net/http"
 	"testing"
+	_ "unsafe"
 )
 
 type HttpRoundTripperTestSuite struct {

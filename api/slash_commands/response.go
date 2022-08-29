@@ -18,7 +18,6 @@
 
 package slash_commands
 
-import "C"
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
