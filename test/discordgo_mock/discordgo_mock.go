@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package discordgo_test
+package discordgo_mock
 
 import (
 	"github.com/bwmarrin/discordgo"
@@ -25,7 +25,7 @@ import (
 
 // This provides a custom http.RoundTripper that
 // embeds a mock. When creating a new discordgo.Session
-// using functions of this package, it is possible to expected
+// using functions of this package, it is possible to expect
 // specific requests and return specific responses.
 // This can be used to create integration and some-kind of unit tests.
 // Note that unit tests using this helper tend to be a discordgo integration test,

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package discordgo_test
+package discordgo_mock
 
 import (
 	"github.com/stretchr/testify/mock"
