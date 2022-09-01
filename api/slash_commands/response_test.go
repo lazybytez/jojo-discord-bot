@@ -32,11 +32,11 @@ import (
 	"testing"
 )
 
-type ResponseTestSuite struct {
+type ResponseTemplateGeneratorTestSuite struct {
 	suite.Suite
 }
 
-func (suite *ResponseTestSuite) TestGenerateInteractionResponseTemplate() {
+func (suite *ResponseTemplateGeneratorTestSuite) TestGenerateInteractionResponseTemplate() {
 	tables := []struct {
 		name        string
 		description string
@@ -110,7 +110,7 @@ func (suite *ResponseTestSuite) TestGenerateInteractionResponseTemplate() {
 	}
 }
 
-func (suite *ResponseTestSuite) TestGenerateEphemeralInteractionResponseTemplate() {
+func (suite *ResponseTemplateGeneratorTestSuite) TestGenerateEphemeralInteractionResponseTemplate() {
 	tables := []struct {
 		name        string
 		description string
@@ -184,8 +184,20 @@ func (suite *ResponseTestSuite) TestGenerateEphemeralInteractionResponseTemplate
 	}
 }
 
-func (suite *ResponseTestSuite) TestRespondWithSuccess() {
-	testResponseData := &discordgo.InteractionResponseData{
+func TestResponseTemplateGenerator(t *testing.T) {
+	suite.Run(t, new(ResponseTemplateGeneratorTestSuite))
+}
+
+type ResponseDispatcherTestSuite struct {
+	suite.Suite
+	responseData      *discordgo.InteractionResponseData
+	interactionCreate *discordgo.InteractionCreate
+	webhookEdit       *discordgo.WebhookEdit
+	message           *discordgo.Message
+}
+
+func (suite *ResponseDispatcherTestSuite) SetupTest() {
+	suite.responseData = &discordgo.InteractionResponseData{
 		Embeds: []*discordgo.MessageEmbed{
 			{
 				Title:       "Test",
@@ -196,13 +208,38 @@ func (suite *ResponseTestSuite) TestRespondWithSuccess() {
 		},
 	}
 
-	session, transport := discordgo_mock.MockSession()
-
-	interactionCreate := &discordgo.InteractionCreate{}
-	interactionCreate.Interaction = &discordgo.Interaction{
+	suite.interactionCreate = &discordgo.InteractionCreate{}
+	suite.interactionCreate.Interaction = &discordgo.Interaction{
 		ID:    "12345123451234512345",
 		Token: "4z842ghh2908ghviu2gz908vh42f90824ph2h298zrf928fdh2gi",
 	}
+
+	suite.webhookEdit = &discordgo.WebhookEdit{
+		Embeds: &[]*discordgo.MessageEmbed{
+			{
+				Title:       "Test",
+				Description: "This is a test",
+				Color:       api.DefaultEmbedColor,
+				Fields:      []*discordgo.MessageEmbedField{},
+			},
+		},
+	}
+
+	suite.message = &discordgo.Message{
+		ID: "5678998765",
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title:       "Test",
+				Description: "This is a test",
+				Color:       api.DefaultEmbedColor,
+				Fields:      []*discordgo.MessageEmbedField{},
+			},
+		},
+	}
+}
+
+func (suite *ResponseDispatcherTestSuite) TestRespondWithSuccess() {
+	session, transport := discordgo_mock.MockSession()
 
 	component := &api.Component{}
 	loggerMock := &log.LoggerMock{}
@@ -215,7 +252,7 @@ func (suite *ResponseTestSuite) TestRespondWithSuccess() {
 			StatusCode: http.StatusCreated,
 		}, nil)
 
-	Respond(component, session, interactionCreate, testResponseData)
+	Respond(component, session, suite.interactionCreate, suite.responseData)
 
 	transport.AssertExpectations(suite.T())
 
@@ -230,31 +267,16 @@ func (suite *ResponseTestSuite) TestRespondWithSuccess() {
 	suite.NotEqual(discordgo.MessageFlagsEphemeral, requestInteractionResponse.Data.Flags)
 	suite.NotNil(requestInteractionResponse.Data.Embeds)
 	suite.Len(requestInteractionResponse.Data.Embeds, 1)
-	suite.Equal("Test", requestInteractionResponse.Data.Embeds[0].Title)
-	suite.Equal("This is a test", requestInteractionResponse.Data.Embeds[0].Description)
-	suite.Equal(api.DefaultEmbedColor, requestInteractionResponse.Data.Embeds[0].Color)
+	suite.Equal(suite.responseData.Embeds[0].Title, requestInteractionResponse.Data.Embeds[0].Title)
+	suite.Equal(suite.responseData.Embeds[0].Description, requestInteractionResponse.Data.Embeds[0].Description)
+	suite.Equal(suite.responseData.Embeds[0].Color, requestInteractionResponse.Data.Embeds[0].Color)
 }
 
-func (suite *ResponseTestSuite) TestRespondWithSuccessAndEphemeralMessage() {
-	testResponseData := &discordgo.InteractionResponseData{
-		Flags: discordgo.MessageFlagsEphemeral,
-		Embeds: []*discordgo.MessageEmbed{
-			{
-				Title:       "Test",
-				Description: "This is a test",
-				Color:       api.DefaultEmbedColor,
-				Fields:      []*discordgo.MessageEmbedField{},
-			},
-		},
-	}
+func (suite *ResponseDispatcherTestSuite) TestRespondWithSuccessAndEphemeralMessage() {
+	// Add ephemeral flag
+	suite.responseData.Flags = discordgo.MessageFlagsEphemeral
 
 	session, transport := discordgo_mock.MockSession()
-
-	interactionCreate := &discordgo.InteractionCreate{}
-	interactionCreate.Interaction = &discordgo.Interaction{
-		ID:    "12345123451234512345",
-		Token: "4z842ghh2908ghviu2gz908vh42f90824ph2h298zrf928fdh2gi",
-	}
 
 	component := &api.Component{}
 	loggerMock := &log.LoggerMock{}
@@ -267,7 +289,7 @@ func (suite *ResponseTestSuite) TestRespondWithSuccessAndEphemeralMessage() {
 			StatusCode: http.StatusCreated,
 		}, nil)
 
-	Respond(component, session, interactionCreate, testResponseData)
+	Respond(component, session, suite.interactionCreate, suite.responseData)
 
 	transport.AssertExpectations(suite.T())
 
@@ -282,30 +304,13 @@ func (suite *ResponseTestSuite) TestRespondWithSuccessAndEphemeralMessage() {
 	suite.Equal(discordgo.MessageFlagsEphemeral, requestInteractionResponse.Data.Flags)
 	suite.NotNil(requestInteractionResponse.Data.Embeds)
 	suite.Len(requestInteractionResponse.Data.Embeds, 1)
-	suite.Equal("Test", requestInteractionResponse.Data.Embeds[0].Title)
-	suite.Equal("This is a test", requestInteractionResponse.Data.Embeds[0].Description)
-	suite.Equal(api.DefaultEmbedColor, requestInteractionResponse.Data.Embeds[0].Color)
+	suite.Equal(suite.responseData.Embeds[0].Title, requestInteractionResponse.Data.Embeds[0].Title)
+	suite.Equal(suite.responseData.Embeds[0].Description, requestInteractionResponse.Data.Embeds[0].Description)
+	suite.Equal(suite.responseData.Embeds[0].Color, requestInteractionResponse.Data.Embeds[0].Color)
 }
 
-func (suite *ResponseTestSuite) TestRespondWithError() {
-	testResponseData := &discordgo.InteractionResponseData{
-		Embeds: []*discordgo.MessageEmbed{
-			{
-				Title:       "Test",
-				Description: "This is a test",
-				Color:       api.DefaultEmbedColor,
-				Fields:      []*discordgo.MessageEmbedField{},
-			},
-		},
-	}
-
+func (suite *ResponseDispatcherTestSuite) TestRespondWithError() {
 	session, transport := discordgo_mock.MockSession()
-
-	interactionCreate := &discordgo.InteractionCreate{}
-	interactionCreate.Interaction = &discordgo.Interaction{
-		ID:    "12345123451234512345",
-		Token: "4z842ghh2908ghviu2gz908vh42f90824ph2h298zrf928fdh2gi",
-	}
 
 	component := &api.Component{}
 	loggerMock := &log.LoggerMock{}
@@ -324,33 +329,15 @@ func (suite *ResponseTestSuite) TestRespondWithError() {
 		mock.Anything,
 		mock.Anything).Return(nil)
 
-	Respond(component, session, interactionCreate, testResponseData)
+	Respond(component, session, suite.interactionCreate, suite.responseData)
 
 	transport.AssertExpectations(suite.T())
 
 	loggerMock.AssertNotCalled(suite.T(), "Warn", mock.Anything, mock.Anything)
 }
 
-func (suite *ResponseTestSuite) TestEditResponseWithSuccess() {
-	testWebhookEditData := &discordgo.WebhookEdit{
-		Embeds: &[]*discordgo.MessageEmbed{
-			{
-				Title:       "Test",
-				Description: "This is a test",
-				Color:       api.DefaultEmbedColor,
-				Fields:      []*discordgo.MessageEmbedField{},
-			},
-		},
-	}
-
+func (suite *ResponseDispatcherTestSuite) TestEditResponseWithSuccess() {
 	session, transport := discordgo_mock.MockSession()
-
-	interactionCreate := &discordgo.InteractionCreate{}
-	interactionCreate.Interaction = &discordgo.Interaction{
-		ID:    "12345123451234512345",
-		AppID: "543215432154321",
-		Token: "4z842ghh2908ghviu2gz908vh42f90824ph2h298zrf928fdh2gi",
-	}
 
 	component := &api.Component{}
 	loggerMock := &log.LoggerMock{}
@@ -358,23 +345,11 @@ func (suite *ResponseTestSuite) TestEditResponseWithSuccess() {
 
 	webHookEditData := &discordgo.WebhookEdit{}
 
-	expectedMessage := &discordgo.Message{
-		ID: "5678998765",
-		Embeds: []*discordgo.MessageEmbed{
-			{
-				Title:       "Test",
-				Description: "This is a test",
-				Color:       api.DefaultEmbedColor,
-				Fields:      []*discordgo.MessageEmbedField{},
-			},
-		},
-	}
-
 	call := transport.OnRequestCaptureResult(http.MethodPatch, webHookEditData).Once()
-	_, err := transport.RespondWith(call, expectedMessage)
+	_, err := transport.RespondWith(call, suite.message)
 	suite.NoError(err)
 
-	msg := EditResponse(component, session, interactionCreate, testWebhookEditData)
+	msg := EditResponse(component, session, suite.interactionCreate, suite.webhookEdit)
 
 	transport.AssertExpectations(suite.T())
 
@@ -383,37 +358,19 @@ func (suite *ResponseTestSuite) TestEditResponseWithSuccess() {
 
 	suite.NotNil(webHookEditData.Embeds)
 	suite.Len(*webHookEditData.Embeds, 1)
-	suite.Equal((*testWebhookEditData.Embeds)[0].Title, (*webHookEditData.Embeds)[0].Title)
-	suite.Equal((*testWebhookEditData.Embeds)[0].Description, (*webHookEditData.Embeds)[0].Description)
-	suite.Equal((*testWebhookEditData.Embeds)[0].Color, (*webHookEditData.Embeds)[0].Color)
+	suite.Equal((*suite.webhookEdit.Embeds)[0].Title, (*webHookEditData.Embeds)[0].Title)
+	suite.Equal((*suite.webhookEdit.Embeds)[0].Description, (*webHookEditData.Embeds)[0].Description)
+	suite.Equal((*suite.webhookEdit.Embeds)[0].Color, (*webHookEditData.Embeds)[0].Color)
 
 	suite.NotNil(msg.Embeds)
 	suite.Len(msg.Embeds, 1)
-	suite.Equal(expectedMessage.Embeds[0].Title, msg.Embeds[0].Title)
-	suite.Equal(expectedMessage.Embeds[0].Description, msg.Embeds[0].Description)
-	suite.Equal(expectedMessage.Embeds[0].Color, msg.Embeds[0].Color)
+	suite.Equal(suite.message.Embeds[0].Title, msg.Embeds[0].Title)
+	suite.Equal(suite.message.Embeds[0].Description, msg.Embeds[0].Description)
+	suite.Equal(suite.message.Embeds[0].Color, msg.Embeds[0].Color)
 }
 
-func (suite *ResponseTestSuite) TestEditResponseWithFailure() {
-	testWebhookEditData := &discordgo.WebhookEdit{
-		Embeds: &[]*discordgo.MessageEmbed{
-			{
-				Title:       "Test",
-				Description: "This is a test",
-				Color:       api.DefaultEmbedColor,
-				Fields:      []*discordgo.MessageEmbedField{},
-			},
-		},
-	}
-
+func (suite *ResponseDispatcherTestSuite) TestEditResponseWithFailure() {
 	session, transport := discordgo_mock.MockSession()
-
-	interactionCreate := &discordgo.InteractionCreate{}
-	interactionCreate.Interaction = &discordgo.Interaction{
-		ID:    "12345123451234512345",
-		AppID: "543215432154321",
-		Token: "4z842ghh2908ghviu2gz908vh42f90824ph2h298zrf928fdh2gi",
-	}
 
 	component := &api.Component{}
 	loggerMock := &log.LoggerMock{}
@@ -431,7 +388,7 @@ func (suite *ResponseTestSuite) TestEditResponseWithFailure() {
 		mock.Anything,
 		mock.Anything).Return(nil)
 
-	msg := EditResponse(component, session, interactionCreate, testWebhookEditData)
+	msg := EditResponse(component, session, suite.interactionCreate, suite.webhookEdit)
 
 	transport.AssertExpectations(suite.T())
 
@@ -441,5 +398,5 @@ func (suite *ResponseTestSuite) TestEditResponseWithFailure() {
 }
 
 func TestResponse(t *testing.T) {
-	suite.Run(t, new(ResponseTestSuite))
+	suite.Run(t, new(ResponseDispatcherTestSuite))
 }
