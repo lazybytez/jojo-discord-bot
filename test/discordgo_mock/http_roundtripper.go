@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"github.com/stretchr/testify/mock"
 	"net/http"
+	"net/http/httptest"
 )
 
 // RoundTripper is a custom http.RoundTripper set for the target discordgo.Session.
@@ -98,6 +99,24 @@ func (roundTripper *RoundTripper) OnRequestEquals(
 	req *http.Request,
 ) *mock.Call {
 	return roundTripper.On("RoundTrip", req)
+}
+
+// RespondWith converts the passed struct to JSON and lets the passed
+// call return a http.Response with the content of the passed struct
+// as data.
+func (roundTripper *RoundTripper) RespondWith(call *mock.Call, data interface{}) (*http.Response, error) {
+	jsonData, err := json.Marshal(data)
+	if nil != err {
+		return nil, err
+	}
+
+	responseRecorder := httptest.NewRecorder()
+	_, err = responseRecorder.Write(jsonData)
+
+	resp := responseRecorder.Result()
+	call.Return(resp, err)
+
+	return resp, err
 }
 
 // newRoundTripper creates a new RoundTripper to pass to discordgo.Session

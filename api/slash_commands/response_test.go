@@ -331,50 +331,114 @@ func (suite *ResponseTestSuite) TestRespondWithError() {
 	loggerMock.AssertNotCalled(suite.T(), "Warn", mock.Anything, mock.Anything)
 }
 
-//func (suite *ResponseTestSuite) TestEditResponseWithSuccess() {
-//	testResponseData := &discordgo.WebhookEdit{
-//		Embeds: &[]*discordgo.MessageEmbed{
-//			{
-//				Title:       "Test",
-//				Description: "This is a test",
-//				Color:       api.DefaultEmbedColor,
-//				Fields:      []*discordgo.MessageEmbedField{},
-//			},
-//		},
-//	}
-//
-//	session, transport := discordgo_mock.MockSession()
-//
-//	interactionCreate := &discordgo.InteractionCreate{}
-//	interactionCreate.Interaction = &discordgo.Interaction{
-//		ID:    "12345123451234512345",
-//		Token: "4z842ghh2908ghviu2gz908vh42f90824ph2h298zrf928fdh2gi",
-//	}
-//
-//	component := &api.Component{}
-//	loggerMock := &log.LoggerMock{}
-//	component.SetLogger(loggerMock)
-//
-//	webHookEditData := &discordgo.WebhookEdit{}
-//
-//	transport.OnRequestCaptureResult(http.MethodPost, webHookEditData).Once().Return(
-//		&http.Response{
-//			StatusCode: http.StatusCreated,
-//		}, nil)
-//
-//	EditResponse(component, session, interactionCreate, webHookEditData)
-//
-//	transport.AssertExpectations(suite.T())
-//
-//	loggerMock.AssertNotCalled(suite.T(), "Warn", mock.Anything, mock.Anything)
-//	loggerMock.AssertNotCalled(suite.T(), "Err", mock.Anything, mock.Anything, mock.Anything)
-//
-//	suite.NotNil(testResponseData.Embeds)
-//	suite.Len(testResponseData.Embeds, 1)
-//	suite.Equal("Test", (*testResponseData.Embeds)[0].Title)
-//	suite.Equal("This is a test", (*testResponseData.Embeds)[0].Description)
-//	suite.Equal(api.DefaultEmbedColor, (*testResponseData.Embeds)[0].Color)
-//}
+func (suite *ResponseTestSuite) TestEditResponseWithSuccess() {
+	testWebhookEditData := &discordgo.WebhookEdit{
+		Embeds: &[]*discordgo.MessageEmbed{
+			{
+				Title:       "Test",
+				Description: "This is a test",
+				Color:       api.DefaultEmbedColor,
+				Fields:      []*discordgo.MessageEmbedField{},
+			},
+		},
+	}
+
+	session, transport := discordgo_mock.MockSession()
+
+	interactionCreate := &discordgo.InteractionCreate{}
+	interactionCreate.Interaction = &discordgo.Interaction{
+		ID:    "12345123451234512345",
+		AppID: "543215432154321",
+		Token: "4z842ghh2908ghviu2gz908vh42f90824ph2h298zrf928fdh2gi",
+	}
+
+	component := &api.Component{}
+	loggerMock := &log.LoggerMock{}
+	component.SetLogger(loggerMock)
+
+	webHookEditData := &discordgo.WebhookEdit{}
+
+	expectedMessage := &discordgo.Message{
+		ID: "5678998765",
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title:       "Test",
+				Description: "This is a test",
+				Color:       api.DefaultEmbedColor,
+				Fields:      []*discordgo.MessageEmbedField{},
+			},
+		},
+	}
+
+	call := transport.OnRequestCaptureResult(http.MethodPatch, webHookEditData).Once()
+	_, err := transport.RespondWith(call, expectedMessage)
+	suite.NoError(err)
+
+	msg := EditResponse(component, session, interactionCreate, testWebhookEditData)
+
+	transport.AssertExpectations(suite.T())
+
+	loggerMock.AssertNotCalled(suite.T(), "Warn", mock.Anything, mock.Anything)
+	loggerMock.AssertNotCalled(suite.T(), "Err", mock.Anything, mock.Anything, mock.Anything)
+
+	suite.NotNil(webHookEditData.Embeds)
+	suite.Len(*webHookEditData.Embeds, 1)
+	suite.Equal((*testWebhookEditData.Embeds)[0].Title, (*webHookEditData.Embeds)[0].Title)
+	suite.Equal((*testWebhookEditData.Embeds)[0].Description, (*webHookEditData.Embeds)[0].Description)
+	suite.Equal((*testWebhookEditData.Embeds)[0].Color, (*webHookEditData.Embeds)[0].Color)
+
+	suite.NotNil(msg.Embeds)
+	suite.Len(msg.Embeds, 1)
+	suite.Equal(expectedMessage.Embeds[0].Title, msg.Embeds[0].Title)
+	suite.Equal(expectedMessage.Embeds[0].Description, msg.Embeds[0].Description)
+	suite.Equal(expectedMessage.Embeds[0].Color, msg.Embeds[0].Color)
+}
+
+func (suite *ResponseTestSuite) TestEditResponseWithFailure() {
+	testWebhookEditData := &discordgo.WebhookEdit{
+		Embeds: &[]*discordgo.MessageEmbed{
+			{
+				Title:       "Test",
+				Description: "This is a test",
+				Color:       api.DefaultEmbedColor,
+				Fields:      []*discordgo.MessageEmbedField{},
+			},
+		},
+	}
+
+	session, transport := discordgo_mock.MockSession()
+
+	interactionCreate := &discordgo.InteractionCreate{}
+	interactionCreate.Interaction = &discordgo.Interaction{
+		ID:    "12345123451234512345",
+		AppID: "543215432154321",
+		Token: "4z842ghh2908ghviu2gz908vh42f90824ph2h298zrf928fdh2gi",
+	}
+
+	component := &api.Component{}
+	loggerMock := &log.LoggerMock{}
+	component.SetLogger(loggerMock)
+
+	webHookEditData := &discordgo.WebhookEdit{}
+
+	expectedErr := fmt.Errorf("something failed while processing response")
+
+	transport.OnRequestCaptureResult(http.MethodPatch, webHookEditData).Once().Return(nil, expectedErr)
+
+	loggerMock.On(
+		"Err",
+		mock.AnythingOfType(reflect.TypeOf(&url.Error{}).Name()),
+		mock.Anything,
+		mock.Anything).Return(nil)
+
+	msg := EditResponse(component, session, interactionCreate, testWebhookEditData)
+
+	transport.AssertExpectations(suite.T())
+
+	loggerMock.AssertNotCalled(suite.T(), "Warn", mock.Anything, mock.Anything)
+
+	suite.Nil(msg)
+}
 
 func TestResponse(t *testing.T) {
 	suite.Run(t, new(ResponseTestSuite))
