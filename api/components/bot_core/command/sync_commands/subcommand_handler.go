@@ -51,7 +51,7 @@ func HandleSyncCommandSubCommand(
 	i *discordgo.InteractionCreate,
 	_ *discordgo.ApplicationCommandInteractionDataOption,
 ) {
-	resp := slash_commands.GenerateInteractionResponseDataTemplate("Slash Command Synchronisation", "")
+	resp := slash_commands.GenerateInteractionResponseTemplate("Slash Command Synchronisation", "")
 
 	lastSync, ok := cache.Get(lastGuildSyncCache, i.GuildID)
 	if ok && time.Since(*lastSync) < 10*time.Minute {
@@ -128,7 +128,7 @@ func finishWitSuccess(
 	// edit and use it.
 	resp.Embeds[0].Fields = embeds
 
-	slash_commands.RespondEdit(C, s, i, &discordgo.WebhookEdit{
+	slash_commands.EditResponse(C, s, i, &discordgo.WebhookEdit{
 		Embeds: &resp.Embeds,
 	})
 }

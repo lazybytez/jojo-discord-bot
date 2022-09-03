@@ -18,21 +18,8 @@
 
 package api
 
-import "github.com/lazybytez/jojo-discord-bot/api/log"
+import "github.com/bwmarrin/discordgo"
 
-// Logger is used to obtain the Logging of a component
-//
-// On first call, this function initializes the private Component.logger
-// field. On consecutive calls, the already present Logging will be used.
-func (c *Component) Logger() log.Logging {
-	if nil == c.logger {
-		c.logger = log.New(c.Name, nil)
-	}
-
-	return c.logger
-}
-
-// SetLogger allows to set a custom logger for the component
-func (c *Component) SetLogger(l log.Logging) {
-	c.logger = l
+type DiscordSession interface {
+	GuildApplicationCommandsPermissions(appID, guildID string) (permissions []*discordgo.GuildApplicationCommandPermissions, err error)
 }

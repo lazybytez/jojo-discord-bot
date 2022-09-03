@@ -16,23 +16,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package api
+package log
 
-import "github.com/lazybytez/jojo-discord-bot/api/log"
+import "github.com/stretchr/testify/mock"
 
-// Logger is used to obtain the Logging of a component
-//
-// On first call, this function initializes the private Component.logger
-// field. On consecutive calls, the already present Logging will be used.
-func (c *Component) Logger() log.Logging {
-	if nil == c.logger {
-		c.logger = log.New(c.Name, nil)
-	}
-
-	return c.logger
+// LoggerMock is a custom logger embedding
+// mock.Mock and allows to do expectations on logging methods.
+type LoggerMock struct {
+	mock.Mock
 }
 
-// SetLogger allows to set a custom logger for the component
-func (c *Component) SetLogger(l log.Logging) {
-	c.logger = l
+func (l *LoggerMock) Debug(format string, v ...interface{}) {
+	l.Called(format, v)
+}
+
+func (l *LoggerMock) Info(format string, v ...interface{}) {
+	l.Called(format, v)
+}
+
+func (l *LoggerMock) Warn(format string, v ...interface{}) {
+	l.Called(format, v)
+}
+
+func (l *LoggerMock) Err(err error, format string, v ...interface{}) {
+	l.Called(err, format, v)
 }

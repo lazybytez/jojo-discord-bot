@@ -159,7 +159,7 @@ func (suite *CacheTestSuite) TestCache_EnableAutoCleanupWithSuccess() {
 		}
 		testCache.lock.Unlock()
 
-		time.Sleep(10 * time.Millisecond) // Cleanup is async task, ensure its through
+		time.Sleep(50 * time.Millisecond) // Cleanup is async task, ensure its done
 
 		testCache.lock.RLock()
 		_, resultOk := testCache.cache[table.key]
@@ -267,7 +267,7 @@ func (suite *CacheTestSuite) TestCache_DisableAutoCleanup() {
 
 		testCache.DisableAutoCleanup()
 
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(50 * time.Millisecond) // Cleanup is async task, ensure its done
 
 		testCache.lock.RLock()
 		_, resultOk := testCache.cache[table.key]

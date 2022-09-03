@@ -72,7 +72,7 @@ type Component struct {
 	// These are private and only managed by the API system.
 	// Their initialization happens through call to the methods
 	// used to get them (Example: logger -> Component.Logger()).
-	logger              *log.Logger
+	logger              log.Logging
 	handlerManager      ComponentHandlerManager
 	slashCommandManager *SlashCommandManager
 	discord             *discordgo.Session

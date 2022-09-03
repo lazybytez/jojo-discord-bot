@@ -42,7 +42,7 @@ func handleModuleList(
 // an embed that list all components and their status.
 // Additionally, a legend is added, that describes the meaning of the different states.
 func createComponentStatusListResponse(compNamesAndStatus string) *discordgo.InteractionResponseData {
-	resp := slash_commands.GenerateInteractionResponseDataTemplate(
+	resp := slash_commands.GenerateInteractionResponseTemplate(
 		"Module Status",
 		"Overview of all modules and whether they are enabled or not")
 

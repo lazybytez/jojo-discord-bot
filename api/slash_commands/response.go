@@ -18,17 +18,20 @@
 
 package slash_commands
 
-import "C"
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
 )
 
-// GenerateInteractionResponseDataTemplate creates a prefilled discordgo.InteractionResponseData
+// GenerateInteractionResponseTemplate creates a prefilled discordgo.InteractionResponseData
 // that is prepared to be filled with specific data or errors.
 //
 // The template will get an empty embed with the specified name and description.
-func GenerateInteractionResponseDataTemplate(name string, description string) *discordgo.InteractionResponseData {
+// The default color of the auto-generated embed equals the one defined under api.DefaultEmbedColor
+func GenerateInteractionResponseTemplate(
+	name string,
+	description string,
+) *discordgo.InteractionResponseData {
 	resp := &discordgo.InteractionResponseData{
 		Embeds: []*discordgo.MessageEmbed{
 			{
@@ -42,7 +45,31 @@ func GenerateInteractionResponseDataTemplate(name string, description string) *d
 	return resp
 }
 
-// Respond to the passed interaction with the passed
+// GenerateEphemeralInteractionResponseTemplate creates a prefilled discordgo.InteractionResponseData
+// that is prepared to be filled with specific data or errors.
+// In addition, the discordgo.InteractionResponseData will be ephemeral and therefore only
+// show to the user that triggered the interaction.
+//
+// The template will get an empty embed with the specified name and description.
+func GenerateEphemeralInteractionResponseTemplate(
+	name string,
+	description string,
+) *discordgo.InteractionResponseData {
+	resp := &discordgo.InteractionResponseData{
+		Flags: discordgo.MessageFlagsEphemeral,
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title:       name,
+				Description: description,
+				Color:       api.DefaultEmbedColor,
+				Fields:      []*discordgo.MessageEmbedField{},
+			},
+		},
+	}
+	return resp
+}
+
+// Respond to the target interaction with the passed
 // discordgo.InteractionResponseData as a message in the channel
 // where the interaction has been triggered.
 func Respond(
@@ -61,9 +88,11 @@ func Respond(
 	}
 }
 
-// RespondEdit edits the passed interaction with the passed
-// discordgo.WebhooKParams.
-func RespondEdit(
+// EditResponse edits the passed interactions original response with
+// the passed discordgo.WebhooKParams.
+// This allows things like sending a notice that something will take some time
+// and then edit the message to tell the user that the action has been done.
+func EditResponse(
 	c *api.Component,
 	s *discordgo.Session,
 	i *discordgo.InteractionCreate,
