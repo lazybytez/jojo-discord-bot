@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"testing"
 )
 
@@ -39,7 +40,7 @@ func TestGetEntityManager(t *testing.T) {
 
 	entityManager = entityManagerDummy
 
-	assert.Equal(t, entityManagerDummy, entityManager)
+	assert.EqualValues(t, &entityManager, GetEntityManager())
 }
 
 type DatabaseTestSuite struct {
@@ -51,20 +52,22 @@ type DatabaseTestSuite struct {
 }
 
 func (suite *DatabaseTestSuite) SetupTest() {
-	sqlMock, mock, err := sqlmock.New()
+	sqlDbMock, sqlMock, err := sqlmock.New()
 	suite.NoError(err)
 
 	dialector := postgres.New(postgres.Config{
 		DSN:                  "sqlmock_db_0",
 		DriverName:           "postgres",
-		Conn:                 sqlMock,
+		Conn:                 sqlDbMock,
 		PreferSimpleProtocol: true,
 	})
 
-	dbMock, err := gorm.Open(dialector)
+	dbMock, err := gorm.Open(dialector, &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 	suite.NoError(err)
 
-	suite.sqlMock = mock
+	suite.sqlMock = sqlMock
 	suite.gormDB = dbMock
 
 	loggerMock := &log.LoggerMock{}
@@ -78,14 +81,14 @@ func (suite *DatabaseTestSuite) SetupTest() {
 }
 
 type TestEntity struct {
-	gorm.Model
+	ID   uint `gorm:"primarykey"`
 	Name string
 }
 
 func (suite *DatabaseTestSuite) TestRegisterEntityWithSuccess() {
 	testEntity := &TestEntity{
-		Model: gorm.Model{ID: 42},
-		Name:  "test entity",
+		ID:   42,
+		Name: "test entity",
 	}
 
 	// Passively check whether auto-migrate is executed or not
@@ -93,13 +96,10 @@ func (suite *DatabaseTestSuite) TestRegisterEntityWithSuccess() {
 	// we don't want to deeply test GORM. We just want some insights whether
 	// auto-migrate is executed or not. And these statements are a good
 	// indicator that AutoMigrate has been called.
-	suite.sqlMock.ExpectQuery("SELECT (.+) information_schema\\.tables (.+)").WillReturnRows(
+	suite.sqlMock.ExpectQuery("SELECT (.+) FROM information_schema\\.tables (.+)").WillReturnRows(
 		sqlmock.NewRows([]string{"COUNT(*)"}).FromCSVString("0"))
 	suite.sqlMock.ExpectExec("CREATE TABLE \"test_entities\" (.+)").WillReturnResult(
 		sqlmock.NewResult(1, 1))
-	suite.sqlMock.ExpectExec(
-		"CREATE INDEX IF NOT EXISTS \"idx_test_entities_deleted_at\" (.+)",
-	).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	suite.logger.On("Info", mock.AnythingOfType("string"), []interface{}{"TestEntity"})
 
@@ -111,13 +111,13 @@ func (suite *DatabaseTestSuite) TestRegisterEntityWithSuccess() {
 
 func (suite *DatabaseTestSuite) TestRegisterEntityWithFail() {
 	testEntity := &TestEntity{
-		Model: gorm.Model{ID: 42},
-		Name:  "test entity",
+		ID:   42,
+		Name: "test entity",
 	}
 
 	expectedErr := fmt.Errorf("your next line is \"I already expected that error to happen!\"")
 
-	suite.sqlMock.ExpectQuery("SELECT (.+) information_schema\\.tables (.+)").WillReturnRows(
+	suite.sqlMock.ExpectQuery("SELECT (.+) FROM information_schema\\.tables (.+)").WillReturnRows(
 		sqlmock.NewRows([]string{"COUNT(*)"}).FromCSVString("0"))
 	suite.sqlMock.ExpectExec("CREATE TABLE \"test_entities\" (.+)").WillReturnError(expectedErr)
 
@@ -127,6 +127,317 @@ func (suite *DatabaseTestSuite) TestRegisterEntityWithFail() {
 
 	suite.Error(err)
 	suite.NoError(suite.sqlMock.ExpectationsWereMet())
+}
+
+func (suite *DatabaseTestSuite) TestGetFirstEntityWithSuccess() {
+	expectedResult := &TestEntity{
+		ID:   42,
+		Name: "test entity",
+	}
+
+	suite.sqlMock.ExpectQuery("SELECT (.+) FROM \"test_entities\" (.+) LIMIT 1").
+		WithArgs(42).
+		WillReturnRows(
+			sqlmock.NewRows([]string{"id", "name"}).
+				AddRow(expectedResult.ID, expectedResult.Name))
+
+	resultEntity := &TestEntity{}
+
+	err := suite.em.GetFirstEntity(resultEntity, "id = ?", 42)
+
+	suite.NoError(err)
+	suite.NoError(suite.sqlMock.ExpectationsWereMet())
+
+	suite.Equal(expectedResult.ID, resultEntity.ID)
+	suite.Equal(expectedResult.Name, resultEntity.Name)
+}
+
+func (suite *DatabaseTestSuite) TestGetFirstEntityWithFailure() {
+	expectedResult := &TestEntity{
+		ID:   42,
+		Name: "test entity",
+	}
+
+	expectedErr := fmt.Errorf("no records found")
+
+	suite.sqlMock.ExpectQuery(
+		"SELECT (.+) FROM \"test_entities\" (.+) LIMIT 1",
+	).WithArgs(42).WillReturnError(expectedErr)
+
+	resultEntity := &TestEntity{}
+
+	err := suite.em.GetFirstEntity(resultEntity, "id = ?", 42)
+
+	suite.Error(err)
+	suite.NoError(suite.sqlMock.ExpectationsWereMet())
+
+	suite.NotEqual(expectedResult.ID, resultEntity.ID)
+	suite.NotEqual(expectedResult.Name, resultEntity.Name)
+}
+
+func (suite *DatabaseTestSuite) TestGetLastEntityWithSuccess() {
+	expectedResult := &TestEntity{
+		ID:   42,
+		Name: "test entity",
+	}
+
+	suite.sqlMock.ExpectQuery("SELECT (.+) FROM \"test_entities\" (.+) LIMIT 1").
+		WithArgs(42).
+		WillReturnRows(
+			sqlmock.NewRows([]string{"id", "name"}).
+				AddRow(expectedResult.ID, expectedResult.Name))
+
+	resultEntity := &TestEntity{}
+
+	err := suite.em.GetLastEntity(resultEntity, "id = ?", 42)
+
+	suite.NoError(err)
+	suite.NoError(suite.sqlMock.ExpectationsWereMet())
+
+	suite.Equal(expectedResult.ID, resultEntity.ID)
+	suite.Equal(expectedResult.Name, resultEntity.Name)
+}
+
+func (suite *DatabaseTestSuite) TestGetLastEntityWithFailure() {
+	expectedResult := &TestEntity{
+		ID:   42,
+		Name: "test entity",
+	}
+
+	expectedErr := fmt.Errorf("no records found")
+
+	suite.sqlMock.ExpectQuery(
+		"SELECT (.+) FROM \"test_entities\" (.+) LIMIT 1",
+	).WithArgs(42).WillReturnError(expectedErr)
+
+	resultEntity := &TestEntity{}
+
+	err := suite.em.GetLastEntity(resultEntity, "id = ?", 42)
+
+	suite.Error(err)
+	suite.NoError(suite.sqlMock.ExpectationsWereMet())
+
+	suite.NotEqual(expectedResult.ID, resultEntity.ID)
+	suite.NotEqual(expectedResult.Name, resultEntity.Name)
+}
+
+func (suite *DatabaseTestSuite) TestGetEntitiesWithSuccess() {
+	expectedResult := &TestEntity{
+		ID:   42,
+		Name: "test entity",
+	}
+	expectedResult2 := &TestEntity{
+		ID:   64,
+		Name: "another test entity",
+	}
+
+	suite.sqlMock.ExpectQuery("SELECT (.+) FROM \"test_entities\" (.+)").
+		WithArgs(42, 64).
+		WillReturnRows(
+			sqlmock.NewRows([]string{"id", "name"}).
+				AddRow(expectedResult.ID, expectedResult.Name).
+				AddRow(expectedResult2.ID, expectedResult2.Name))
+
+	resultEntities := make([]*TestEntity, 0)
+
+	err := suite.em.GetEntities(&resultEntities, "id = ? OR id = ?", 42, 64)
+
+	suite.NoError(err)
+	suite.NoError(suite.sqlMock.ExpectationsWereMet())
+
+	suite.Len(resultEntities, 2)
+
+	// Checks for result entity one
+	suite.Equal(expectedResult.ID, resultEntities[0].ID)
+	suite.Equal(expectedResult.Name, resultEntities[0].Name)
+
+	// Checks for result entity two
+	suite.Equal(expectedResult2.ID, resultEntities[1].ID)
+	suite.Equal(expectedResult2.Name, resultEntities[1].Name)
+}
+
+func (suite *DatabaseTestSuite) TestGetEntitiesWithFailure() {
+	expectedErr := fmt.Errorf("no records found")
+
+	suite.sqlMock.ExpectQuery("SELECT (.+) FROM \"test_entities\" (.+)").
+		WithArgs(42, 64).
+		WillReturnError(expectedErr)
+
+	resultEntities := make([]*TestEntity, 0)
+
+	err := suite.em.GetEntities(&resultEntities, "id = ? OR id = ?", 42, 64)
+
+	suite.Error(err)
+	suite.NoError(suite.sqlMock.ExpectationsWereMet())
+
+	suite.Len(resultEntities, 0)
+}
+
+func (suite *DatabaseTestSuite) TestCreateWithSuccess() {
+	entity := &TestEntity{
+		ID:   42,
+		Name: "test entity",
+	}
+
+	suite.sqlMock.ExpectBegin()
+	suite.sqlMock.ExpectQuery("INSERT INTO \"test_entities\" (.+)").
+		WithArgs(entity.Name, entity.ID).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).
+			AddRow(entity.ID))
+	suite.sqlMock.ExpectCommit()
+
+	err := suite.em.Create(entity)
+
+	suite.NoError(err)
+	suite.NoError(suite.sqlMock.ExpectationsWereMet())
+}
+
+func (suite *DatabaseTestSuite) TestCreateWithFailure() {
+	entity := &TestEntity{
+		ID:   42,
+		Name: "test entity",
+	}
+
+	expectedErr := fmt.Errorf("permission denied")
+
+	suite.sqlMock.ExpectBegin()
+	suite.sqlMock.ExpectQuery("INSERT INTO \"test_entities\" (.+)").
+		WithArgs(entity.Name, entity.ID).
+		WillReturnError(expectedErr)
+	suite.sqlMock.ExpectRollback()
+
+	err := suite.em.Create(entity)
+
+	suite.Error(err)
+	suite.NoError(suite.sqlMock.ExpectationsWereMet())
+}
+
+func (suite *DatabaseTestSuite) TestSaveWithSuccess() {
+	entity := &TestEntity{
+		ID:   42,
+		Name: "test entity",
+	}
+
+	suite.sqlMock.ExpectBegin()
+	suite.sqlMock.ExpectExec("UPDATE \"test_entities\" SET (.+)").
+		WithArgs(entity.Name, entity.ID).
+		WillReturnResult(sqlmock.NewResult(42, 1))
+	suite.sqlMock.ExpectCommit()
+
+	err := suite.em.Save(entity)
+
+	suite.NoError(err)
+	suite.NoError(suite.sqlMock.ExpectationsWereMet())
+}
+
+func (suite *DatabaseTestSuite) TestSaveWithFailure() {
+	entity := &TestEntity{
+		ID:   42,
+		Name: "test entity",
+	}
+
+	expectedErr := fmt.Errorf("permission denied")
+
+	suite.sqlMock.ExpectBegin()
+	suite.sqlMock.ExpectExec("UPDATE \"test_entities\" SET (.+)").
+		WithArgs(entity.Name, entity.ID).
+		WillReturnError(expectedErr)
+	suite.sqlMock.ExpectRollback()
+
+	err := suite.em.Save(entity)
+
+	suite.Error(err)
+	suite.NoError(suite.sqlMock.ExpectationsWereMet())
+}
+
+func (suite *DatabaseTestSuite) TestUpdateEntityWithSuccess() {
+	entity := &TestEntity{
+		ID:   42,
+		Name: "some first test",
+	}
+
+	suite.sqlMock.ExpectBegin()
+	suite.sqlMock.ExpectExec("UPDATE \"test_entities\" SET (.+)").
+		WithArgs("some second test", entity.ID).
+		WillReturnResult(sqlmock.NewResult(42, 1))
+	suite.sqlMock.ExpectCommit()
+
+	err := suite.em.UpdateEntity(entity, "name", "some second test")
+
+	suite.NoError(err)
+	suite.NoError(suite.sqlMock.ExpectationsWereMet())
+	suite.Equal("some second test", entity.Name)
+}
+
+func (suite *DatabaseTestSuite) TestUpdateEntityWithFailure() {
+	entity := &TestEntity{
+		ID:   42,
+		Name: "test entity",
+	}
+
+	expectedErr := fmt.Errorf("permission denied")
+
+	suite.sqlMock.ExpectBegin()
+	suite.sqlMock.ExpectExec("UPDATE \"test_entities\" SET (.+)").
+		WithArgs("some second test", entity.ID).
+		WillReturnError(expectedErr)
+	suite.sqlMock.ExpectRollback()
+
+	err := suite.em.UpdateEntity(entity, "name", "some second test")
+
+	suite.Error(err)
+	suite.NoError(suite.sqlMock.ExpectationsWereMet())
+}
+
+func (suite *DatabaseTestSuite) TestDeleteEntityWithSuccess() {
+	entity := &TestEntity{
+		ID:   42,
+		Name: "test entity",
+	}
+
+	suite.sqlMock.ExpectBegin()
+	suite.sqlMock.ExpectExec("DELETE FROM \"test_entities\" WHERE (.+)").
+		WithArgs(entity.ID).
+		WillReturnResult(sqlmock.NewResult(42, 1))
+	suite.sqlMock.ExpectCommit()
+
+	err := suite.em.DeleteEntity(entity)
+
+	suite.NoError(err)
+	suite.NoError(suite.sqlMock.ExpectationsWereMet())
+}
+
+func (suite *DatabaseTestSuite) TestDeleteEntityWithFailure() {
+	entity := &TestEntity{
+		ID:   42,
+		Name: "test entity",
+	}
+
+	expectedErr := fmt.Errorf("permission denied")
+
+	suite.sqlMock.ExpectBegin()
+	suite.sqlMock.ExpectExec("DELETE FROM \"test_entities\" WHERE (.+)").
+		WithArgs(entity.ID).
+		WillReturnError(expectedErr)
+	suite.sqlMock.ExpectRollback()
+
+	err := suite.em.DeleteEntity(entity)
+
+	suite.Error(err)
+	suite.NoError(suite.sqlMock.ExpectationsWereMet())
+}
+
+func (suite *DatabaseTestSuite) TestWorkOn() {
+	entity := &TestEntity{
+		ID:   42,
+		Name: "test entity",
+	}
+
+	db := suite.em.WorkOn(entity)
+
+	suite.NotNil(db)
+	suite.IsType(&gorm.DB{}, db)
+	suite.NotEqual(suite.gormDB, db)
 }
 
 func TestDatabase(t *testing.T) {

@@ -82,6 +82,8 @@ type EntityManager interface {
 	Save(entity interface{}) error
 	// UpdateEntity can be used to update the passed entity in the database
 	UpdateEntity(entityContainer interface{}, column string, value interface{}) error
+	// DeleteEntity deletes the passed entity from the database.
+	DeleteEntity(entityContainer interface{}) error
 
 	// GetFirstEntity fills the passed entity container with the first
 	// found entity matching the passed conditions.
@@ -95,7 +97,7 @@ type EntityManager interface {
 	GetLastEntity(entityContainer interface{}, conditions ...interface{}) error
 	// GetEntities fills the passed entities slice with the entities
 	// that have been found for the specified condition.
-	GetEntities(entities []interface{}, conditions ...interface{}) error
+	GetEntities(entities interface{}, conditions ...interface{}) error
 
 	// WorkOn returns a gorm.DB pointer that allows to do a custom search or actions on entities.
 	//
@@ -154,7 +156,7 @@ func (em *GormEntityManager) GetLastEntity(entityContainer interface{}, conditio
 
 // GetEntities fills the passed entities slice with the entities
 // that have been found for the specified condition.
-func (em *GormEntityManager) GetEntities(entities []interface{}, conditions ...interface{}) error {
+func (em *GormEntityManager) GetEntities(entities interface{}, conditions ...interface{}) error {
 	return em.database.Find(entities, conditions...).Error
 }
 
