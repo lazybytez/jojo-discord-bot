@@ -28,30 +28,52 @@ strict [LICENSE](https://github.com/lazybytez/jojo-discord-bot/blob/main/LICENSE
 1. [Go 1.19](https://go.dev/doc/install)
 2. Git
 
-#### Create .env
+### Setup
 
-```bash
-cp .env.example .env
+Copies env and installs dependencies
+
+```bash 
+make setup
 ```
 
-If you want to test, always insert the Token of your TestBot in the `.env`, because this file won't be committed to git.
+Copies env.example to .env
 
-### Install dependencies
-
-```bash
-go get
+```bash 
+make env
 ```
 
-### Compile and run (for development usage)
+Installs go dependencies needed to run the bot (like discordgo)
 
-```bash
-go run .
+```bash 
+make install
 ```
 
-### Build binary (for production usage)
+### Running
+
+Run your code to test and for development purposes.
 
 ```bash
-go build .
+make run 
+```
+
+Build executable for production usage.
+
+```bash 
+make build 
+```
+
+### QA
+
+Shows test and codecov results.
+
+```bash
+make test
+```
+
+Local linting to assure code styling.
+
+```bash
+make lint
 ```
 
 ## Contributing
