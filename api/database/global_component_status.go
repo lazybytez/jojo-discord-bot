@@ -29,7 +29,7 @@ const GlobalComponentStatusDisabledDisplay = ":no_entry:"
 // GlobalComponentStatusEntityManager is the GlobalComponentStatus specific entity manager
 // that allows easy access to global component status in the database.
 type GlobalComponentStatusEntityManager struct {
-	em    *EntityManager
+	em    *GormEntityManager
 	cache *cache.Cache[uint, GlobalComponentStatus]
 }
 
@@ -51,7 +51,7 @@ type GlobalComponentStatusDBAccess interface {
 
 // GlobalComponentStatus returns the GlobalComponentStatusEntityManager that is currently active,
 // which can be used to do GlobalComponentStatus specific database actions.
-func (em *EntityManager) GlobalComponentStatus() *GlobalComponentStatusEntityManager {
+func (em *GormEntityManager) GlobalComponentStatus() *GlobalComponentStatusEntityManager {
 	if nil == em.entityManagers.globalComponentStatusEntityManager {
 		gem := &GlobalComponentStatusEntityManager{
 			em,
