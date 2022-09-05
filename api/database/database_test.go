@@ -31,18 +31,6 @@ import (
 	"testing"
 )
 
-func TestGetEntityManager(t *testing.T) {
-	entityManagerDummy := GormEntityManager{
-		nil,
-		&log.LoggerMock{},
-		entityManagers{},
-	}
-
-	entityManager = entityManagerDummy
-
-	assert.EqualValues(t, &entityManager, GetEntityManager())
-}
-
 type DatabaseTestSuite struct {
 	suite.Suite
 	sqlMock sqlmock.Sqlmock
@@ -78,6 +66,18 @@ func (suite *DatabaseTestSuite) SetupTest() {
 		loggerMock,
 		entityManagers{},
 	}
+}
+
+func (suite *DatabaseTestSuite) TestGetEntityManager() {
+	entityManagerDummy := GormEntityManager{
+		nil,
+		&log.LoggerMock{},
+		entityManagers{},
+	}
+
+	entityManager = entityManagerDummy
+
+	assert.EqualValues(suite.T(), &entityManager, GetEntityManager())
 }
 
 type TestEntity struct {
