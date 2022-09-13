@@ -10,10 +10,12 @@ import (
 var C *api.Component
 
 var minValue = float64(2)
+var memberPermissions int64 = discordgo.PermissionSendMessages
 var diceCommand = &api.Command{
 	Cmd: &discordgo.ApplicationCommand{
-		Name:        "dice",
-		Description: "throw one or more dice of your wished type.",
+		Name:                     "dice",
+		Description:              "throw one or more dice of your wished type.",
+		DefaultMemberPermissions: &memberPermissions,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Name:        "die-sites-number",
