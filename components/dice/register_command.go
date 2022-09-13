@@ -12,22 +12,22 @@ var C *api.Component
 var minValue = float64(2)
 var diceCommand = &api.Command{
 	Cmd: &discordgo.ApplicationCommand{
-		Name: "dice",
+		Name:        "dice",
 		Description: "throw one or more dice of your wished type.",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
-				Name: "die-sites-number",
+				Name:        "die-sites-number",
 				Description: "The number of how many sites the die has, default is 6",
-				Type: discordgo.ApplicationCommandOptionInteger,
-				MinValue: &minValue,
-				Required: false,
+				Type:        discordgo.ApplicationCommandOptionInteger,
+				MinValue:    &minValue,
+				Required:    false,
 			},
 			{
-				Name: "number-dice",
+				Name:        "number-dice",
 				Description: "How many dice you want to throw, default is 1",
-				Type: discordgo.ApplicationCommandOptionInteger,
-				MinValue: &minValue,
-				Required: false,
+				Type:        discordgo.ApplicationCommandOptionInteger,
+				MinValue:    &minValue,
+				Required:    false,
 			},
 		},
 	},
@@ -38,11 +38,11 @@ var diceCommand = &api.Command{
 func init() {
 	C = &api.Component{
 		// Metadata
-		Name:	"Dice Component",
+		Name:        "Dice Component",
 		Description: "This Component throws one or multiple dice",
 
-		State: api.State{
-			Enabled: true,
+		State: &api.State{
+			DefaultEnabled: true,
 		},
 
 		Lifecycle: api.LifecycleHooks{
