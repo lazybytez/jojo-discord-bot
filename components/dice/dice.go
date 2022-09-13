@@ -10,7 +10,7 @@ func rollDice(d int, n int) []int {
 	var r = make([]int, n)
 
 	for i := 0; i < n; i++ {
-		r[i] = rand.Intn(d - 1) + 1
+		r[i] = rand.Intn(d) + 1
 	}
 
 	return r
