@@ -4,21 +4,25 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/bwmarrin/discordgo"
 )
 
-func createAnswerText(n int, d int, r []int) string {
-	s := arrayIntToArrayString(r)
-
+func createAnswerEmbedMessage(n int, d int, r []int) discordgo.MessageEmbed {
 	st := createAnswerTitle(n, d)
 	srt := createAnswerResultTitle(n)
+
+	s := arrayIntToArrayString(r)
 	src := createAnswerResultContent(s)
 
-	return st + srt + src
+	e := createMessageEmbed(st, srt, src)
+
+	return e
 }
 
 // Create the answer title
 func createAnswerTitle(n int, d int) string {
-	answer := fmt.Sprintf("You rolled %d d%d,\n", n, d)
+	answer := fmt.Sprintf("You rolled %d d%d", n, d)
 
 	return answer
 }
@@ -27,9 +31,9 @@ func createAnswerTitle(n int, d int) string {
 func createAnswerResultTitle(n int) string {
 	r := "The Result"
 	if n > 1 {
-		r += "s are:\n"
+		r += "s are"
 	} else {
-		r += " is:\n"
+		r += " is"
 	}
 
 	return r

@@ -1,8 +1,8 @@
-
 package dice
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"github.com/lazybytez/jojo-discord-bot/api/slash_commands"
 )
 
 func handleDice(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -11,8 +11,9 @@ func handleDice(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	d := getIntOption(options, "die-sites-number", 6)
 
 	r := rollDice(d, n)
-	a := createAnswerText(n, d, r)
-	sendAnswer(s, i, a)
+	e := createAnswerEmbedMessage(n, d, r)
+	eSlice := [1]*discordgo.MessageEmbed{&e}
+	sendAnswer(s, i, eSlice[:])
 }
 
 // create a map and insert the command options
@@ -37,11 +38,9 @@ func getIntOption(options map[string]*discordgo.ApplicationCommandInteractionDat
 }
 
 // Send the Answer
-func sendAnswer(s *discordgo.Session, i *discordgo.InteractionCreate, answerText string) {
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: answerText,
-		},
-	})
+func sendAnswer(s *discordgo.Session, i *discordgo.InteractionCreate, e []*discordgo.MessageEmbed) {
+	resp := &discordgo.InteractionResponseData{
+		Embeds: e,
+	}
+	slash_commands.Respond(C, s, i, resp)
 }
