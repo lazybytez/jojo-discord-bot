@@ -29,7 +29,6 @@ func TestCreateAnswerEmbedMessage(t *testing.T) {
 	checkIfTwoMessageEmbedAreTheSame(t, e, r)
 }
 
-// Check if two message-embed have the same values
 func checkIfTwoMessageEmbedAreTheSame(t *testing.T, e discordgo.MessageEmbed, g discordgo.MessageEmbed) {
 	checkIfTwoStringsAreTheSame(t, e.URL, g.URL, "urls")
 	checkIfTwoStringsAreTheSame(t, string(e.Type), string(g.Type), "Types")
@@ -48,7 +47,6 @@ func checkIfTwoMessageEmbedAreTheSame(t *testing.T, e discordgo.MessageEmbed, g 
 	checkIfTwoObjectsAreTheSameInDepth(t, e, g, "message-embed")
 }
 
-// Check if two message-embed-field-slices have the same values
 func checkIfTwoMessageEmbedFieldsSlicesAreTheSame(t *testing.T, e []*discordgo.MessageEmbedField, g []*discordgo.MessageEmbedField) {
 	for k, elem := range e {
 		gElem := g[k]
@@ -56,7 +54,6 @@ func checkIfTwoMessageEmbedFieldsSlicesAreTheSame(t *testing.T, e []*discordgo.M
 	}
 }
 
-// Check if two message-embed-fields are the same
 func checkIfTwoMessageEmbedFieldsAreTheSame(t *testing.T, e discordgo.MessageEmbedField, g discordgo.MessageEmbedField) {
 	checkIfTwoStringsAreTheSame(t, e.Name, g.Name, "names")
 	checkIfTwoStringsAreTheSame(t, e.Value, g.Value, "values")

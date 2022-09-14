@@ -8,6 +8,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// createAnswerEmbedMessage create the answer parts and put them in a embedMessage
 func createAnswerEmbedMessage(n int, d int, r []int) discordgo.MessageEmbed {
 	st := createAnswerTitle(n, d)
 	srt := createAnswerResultTitle(n)
@@ -20,14 +21,14 @@ func createAnswerEmbedMessage(n int, d int, r []int) discordgo.MessageEmbed {
 	return e
 }
 
-// Create the answer title
+// createAnswerTitle creates the answer title
 func createAnswerTitle(n int, d int) string {
 	answer := fmt.Sprintf("You rolled %d d%d", n, d)
 
 	return answer
 }
 
-// Create the answer result title
+// createAnswerResultTitle creates the answer result title
 func createAnswerResultTitle(n int) string {
 	r := "The Result"
 	if n > 1 {
@@ -39,12 +40,12 @@ func createAnswerResultTitle(n int) string {
 	return r
 }
 
-// Create the answer result content
+// createAnswerResultContent creates the answer result content
 func createAnswerResultContent(s []string) string {
 	return strings.Join(s, ", ")
 }
 
-// Convert an array of int to an array of string
+// arrayIntToArrayString converts an array of int to an array of string
 func arrayIntToArrayString(ints []int) []string {
 	strings := make([]string, len(ints))
 

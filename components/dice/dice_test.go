@@ -34,21 +34,18 @@ func getTestStruct() []struct {
 	return tables
 }
 
-// Check if the dice-array (dice) has more or lessed thrown dice than wanted (n)
 func checkIfMoreOrLessDiceWhereRolled(dice []int, n int, t *testing.T) {
 	if len(dice) != n {
 		t.Errorf("The number of rolled dices is incorrect, rolled: %d, want: %d", len(dice), n)
 	}
 }
 
-// Check if the dice (d) has a lower value than 1
 func checkIfDieLowerThanOne(d int, t *testing.T) {
 	if d < 1 {
 		t.Errorf("The dice should not be lower 1, got %d", d)
 	}
 }
 
-// Check if the dice (d) has a higher value than expecet (e)
 func checkIfDieHigherThanExpected(d int, e int, t *testing.T) {
 	if d > e {
 		t.Errorf("The dice should not be higher, expecet highest %d, got %d", e, d)

@@ -5,6 +5,7 @@ import (
 	"github.com/lazybytez/jojo-discord-bot/api/slash_commands"
 )
 
+// handleDice handles the dice slash command
 func handleDice(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	options := getOptionsAsMap(i)
 	n := getIntOption(options, "number-dice", 1)
@@ -16,7 +17,7 @@ func handleDice(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	sendAnswer(s, i, eSlice[:])
 }
 
-// create a map and insert the command options
+// getOptionsAsMap create a map and insert the command options
 func getOptionsAsMap(i *discordgo.InteractionCreate) map[string]*discordgo.ApplicationCommandInteractionDataOption {
 	options := i.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
@@ -27,7 +28,7 @@ func getOptionsAsMap(i *discordgo.InteractionCreate) map[string]*discordgo.Appli
 	return optionMap
 }
 
-// Create the option as int
+// getIntOption returns the option as int
 func getIntOption(options map[string]*discordgo.ApplicationCommandInteractionDataOption, name string, defaultValue int) int {
 	o := defaultValue
 	if opt, ok := options[name]; ok {
@@ -37,7 +38,7 @@ func getIntOption(options map[string]*discordgo.ApplicationCommandInteractionDat
 	return o
 }
 
-// Send the Answer
+// sendAnser sends the Answer
 func sendAnswer(s *discordgo.Session, i *discordgo.InteractionCreate, e []*discordgo.MessageEmbed) {
 	resp := &discordgo.InteractionResponseData{
 		Embeds: e,
