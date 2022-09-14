@@ -53,21 +53,20 @@ func checkIfDieHigherThanExpected(d int, e int, t *testing.T) {
 }
 
 func TestDiceForAllValues(t *testing.T) {
-	throws := 1000
+	throws := 100000
 	d := 3
-	dice := rollDice(d, throws)
+
 	one := false
 	two := false
 	three := false
-
-	for _, die := range dice {
-		if die == 1 {
+	for i := 1; i < throws; i++ {
+		die := rollDice(d, 1)
+		switch die[0] {
+		case 1:
 			one = true
-		}
-		if die == 2 {
+		case 2:
 			two = true
-		}
-		if die == 3 {
+		case 3:
 			three = true
 		}
 
