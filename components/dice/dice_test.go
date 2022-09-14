@@ -1,18 +1,28 @@
 package dice
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/suite"
+)
+
+type DiceTestSuite struct{ suite.Suite }
 
 func TestDice(t *testing.T) {
+	suite.Run(t, new(DiceTestSuite))
+}
+
+func (suite *DiceTestSuite) TestDice() {
 	tables := getTestStruct()
 
 	for _, table := range tables {
 		dice := rollDice(table.d, table.n)
 
-		checkIfMoreOrLessDiceWhereRolled(dice, table.n, t)
+		suite.Len(dice, table.n)
 
 		for _, die := range dice {
-			checkIfDieLowerThanOne(die, t)
-			checkIfDieHigherThanExpected(die, table.d, t)
+			suite.Greater(die, 0)
+			suite.LessOrEqual(die, table.d)
 		}
 	}
 }
@@ -34,25 +44,7 @@ func getTestStruct() []struct {
 	return tables
 }
 
-func checkIfMoreOrLessDiceWhereRolled(dice []int, n int, t *testing.T) {
-	if len(dice) != n {
-		t.Errorf("The number of rolled dices is incorrect, rolled: %d, want: %d", len(dice), n)
-	}
-}
-
-func checkIfDieLowerThanOne(d int, t *testing.T) {
-	if d < 1 {
-		t.Errorf("The dice should not be lower 1, got %d", d)
-	}
-}
-
-func checkIfDieHigherThanExpected(d int, e int, t *testing.T) {
-	if d > e {
-		t.Errorf("The dice should not be higher, expecet highest %d, got %d", e, d)
-	}
-}
-
-func TestDiceForAllValues(t *testing.T) {
+func (suite *DiceTestSuite) TestDiceForAllValues() {
 	throws := 100000
 	d := 3
 
@@ -75,15 +67,5 @@ func TestDiceForAllValues(t *testing.T) {
 		}
 	}
 
-	var firstFailed string
-	switch {
-	case !one:
-		firstFailed = "one"
-	case !two:
-		firstFailed = "two"
-	case !three:
-		firstFailed = "three"
-	}
-
-	t.Errorf("There was no die with result %s by %d throws", firstFailed, throws)
+	suite.FailNow("One of the following numbers was not thrown: 1, 2, 3")
 }

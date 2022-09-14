@@ -4,16 +4,19 @@ import (
 	"testing"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestCreateAnswerEmbedMessage(t *testing.T) {
+type CreateMessageEmbedTestSuite struct{ suite.Suite }
+
+func TestCreateMessageEmbed(t *testing.T) {
+	suite.Run(t, new(CreateMessageEmbedTestSuite))
+}
+
+func (suite *CreateMessageEmbedTestSuite) TestCreateAnswerEmbedMessage() {
 	e := discordgo.MessageEmbed{
-		URL:         "",
-		Type:        "",
-		Title:       "You rolled 3 d6",
-		Description: "",
-		Timestamp:   "",
-		Color:       0,
+		Title: "You rolled 3 d6",
 		Fields: []*discordgo.MessageEmbedField{
 			{
 				Name:   "The Results are",
@@ -26,36 +29,11 @@ func TestCreateAnswerEmbedMessage(t *testing.T) {
 
 	r := createAnswerEmbedMessage(3, 6, a[:])
 
-	checkIfTwoMessageEmbedAreTheSame(t, e, r)
+	suite.ObjectsAreEqual(e, r)
 }
 
-func checkIfTwoMessageEmbedAreTheSame(t *testing.T, e discordgo.MessageEmbed, g discordgo.MessageEmbed) {
-	checkIfTwoStringsAreTheSame(t, e.URL, g.URL, "urls")
-	checkIfTwoStringsAreTheSame(t, string(e.Type), string(g.Type), "Types")
-	checkIfTwoStringsAreTheSame(t, e.Title, g.Title, "titles")
-	checkIfTwoStringsAreTheSame(t, e.Description, g.Description, "descriptions")
-	checkIfTwoStringsAreTheSame(t, e.Timestamp, g.Timestamp, "timestamps")
-	checkIfTwoIntAreTheSame(t, e.Color, g.Color, "colors")
-	checkIfTwoIntAreTheSame(t, len(e.Fields), len(g.Fields), "number fields")
-	checkIfTwoObjectsAreTheSameInDepth(t, e.Footer, g.Footer, "footers")
-	checkIfTwoObjectsAreTheSameInDepth(t, e.Image, g.Image, "images")
-	checkIfTwoObjectsAreTheSameInDepth(t, e.Thumbnail, g.Thumbnail, "thumbnails")
-	checkIfTwoObjectsAreTheSameInDepth(t, e.Video, g.Video, "videos")
-	checkIfTwoObjectsAreTheSameInDepth(t, e.Provider, g.Provider, "providers")
-	checkIfTwoObjectsAreTheSameInDepth(t, e.Author, g.Author, "authors")
-	checkIfTwoMessageEmbedFieldsSlicesAreTheSame(t, e.Fields, g.Fields)
-	checkIfTwoObjectsAreTheSameInDepth(t, e, g, "message-embed")
-}
-
-func checkIfTwoMessageEmbedFieldsSlicesAreTheSame(t *testing.T, e []*discordgo.MessageEmbedField, g []*discordgo.MessageEmbedField) {
-	for k, elem := range e {
-		gElem := g[k]
-		checkIfTwoMessageEmbedFieldsAreTheSame(t, *elem, *gElem)
+func (suite *CreateMessageEmbedTestSuite) ObjectsAreEqual(expected, actual interface{}) {
+	if !assert.ObjectsAreEqual(expected, actual) {
+		suite.T().Error("objects are not equal")
 	}
-}
-
-func checkIfTwoMessageEmbedFieldsAreTheSame(t *testing.T, e discordgo.MessageEmbedField, g discordgo.MessageEmbedField) {
-	checkIfTwoStringsAreTheSame(t, e.Name, g.Name, "names")
-	checkIfTwoStringsAreTheSame(t, e.Value, g.Value, "values")
-	checkIfTwoBoolAreTheSame(t, e.Inline, g.Inline, "inlines")
 }
