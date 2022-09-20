@@ -52,4 +52,4 @@ test:
 # Lints the code
 .PHONY: lint
 lint:
-	docker run --rm -v $(pwd):/app -w /app golangci/golangci-lint:v1.49.0 golangci-lint run -v
+	docker run --rm -v $(CURRENT_DIR):/app -w /app golangci/golangci-lint:v1.49.0 golangci-lint run -v
