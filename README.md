@@ -27,6 +27,8 @@ strict [LICENSE](https://github.com/lazybytez/jojo-discord-bot/blob/main/LICENSE
 
 1. [Go 1.19](https://go.dev/doc/install)
 2. Git
+3. Docker
+4. Make 
 
 ### Setup
 
