@@ -2,19 +2,19 @@
 
 # JOJO Discord Bot
 
-![license-info][license-info]
-![discord-info][discord-info]
+[![go-ref-badge][go-ref-badge]][go-ref]
+[![gh-license-badge][gh-license-badge]][gh-license]
+[![discord-badge][discord-badge]][discord]
 
-![commit-info][commit-info]
-![contributors-info][contributors-info]
-![reposize-info][reposize-info]
-![stars][stars]
+[![codecov-badge][codecov-badge]][codecov]
+[![gh-contributors-badge][gh-contributors-badge]][gh-contributors]
+[![gh-stars-badge][gh-stars-badge]][gh-stars]
 
 </div>
 
 ## Description
 
-This is an open source Discord bot mainly developed by Lazy Bytez.  
+This is an open source Discord bot mainly developed by [Lazy Bytez][gh-team].  
 If you want to take part in the development of the bot please check out
 the [Contributing](https://github.com/lazybytez/jojo-discord-bot#contributing) section.
 
@@ -25,39 +25,63 @@ strict [LICENSE](https://github.com/lazybytez/jojo-discord-bot/blob/main/LICENSE
 
 ### Requirements
 
-1. [Go 1.18](https://go.dev/doc/install)
+1. [Go 1.19](https://go.dev/doc/install)
 2. Git
+3. Docker
+4. Make 
 
-### Create .env
+### Setup
 
-```bash
-cp .env.example .env
+Copies env and installs dependencies
+
+```bash 
+make setup
 ```
 
-If you want to test, always insert the Token of your TestBot in the `.env`, because this file won't be committed to git.
+Copies env.example to .env
 
-### Install dependencies
-
-```bash
-go get
+```bash 
+make env
 ```
 
-### Compile and run (for development usage)
+Installs go dependencies needed to run the bot (like discordgo)
 
-```bash
-go run .
+```bash 
+make install
 ```
 
-### Build binary (for production usage)
+### Running
+
+Run your code to test and for development purposes.
 
 ```bash
-go build .
+make run 
+```
+
+Build executable for production usage.
+
+```bash 
+make build 
+```
+
+### QA
+
+Shows test and codecov results.
+
+```bash
+make test
+```
+
+Local linting to assure code styling.
+
+```bash
+make lint
 ```
 
 ## Contributing
 
 If you want to take part in contribution, like fixing issues and contributing directly to the code base, please visit
-the [How to Contribute][github-contribute] document.
+the [How to Contribute][gh-contribute] document.
 
 ### Commit messages
 
@@ -112,38 +136,48 @@ Also see [CONTRIBUTING.md#commits](https://github.com/lazybytez/.github/blob/mai
 
 ## Useful links
 
-[License][github-license] -
-[Contributing][github-contribute] -
-[Code of conduct][github-codeofconduct] -
-[Issues][github-issues] -
-[Pull requests][github-pulls]
+[License][gh-license] -
+[Contributing][gh-contribute] -
+[Code of conduct][gh-codeofconduct] -
+[Issues][gh-issues] -
+[Pull requests][gh-pulls]
 
 <hr>  
 
-###### Copyright (c) [Lazy Bytez][github-team]. All rights reserved | Licensed under the AGPL-3.0 license.
+###### Copyright (c) [Lazy Bytez][gh-team]. All rights reserved | Licensed under the AGPL-3.0 license.
 
 <!-- Variables -->
 
-[github-team]: https://github.com/lazybytez
+[go-ref-badge]: https://img.shields.io/badge/godoc-reference-89dceb?style=for-the-badge&colorA=302D41&logo=go
 
-[github-license]: https://github.com/lazybytez/general-template/blob/main/LICENSE
+[go-ref]: https://pkg.go.dev/github.com/lazybytez/jojo-discord-bot
 
-[github-contribute]: https://github.com/lazybytez/.github/blob/main/docs/CONTRIBUTING.md
+[gh-license-badge]: https://img.shields.io/github/license/lazybytez/jojo-discord-bot?logo=gnu&style=for-the-badge&colorA=302D41&colorB=eba0ac
 
-[github-codeofconduct]: https://github.com/lazybytez/.github/blob/main/docs/CODE_OF_CONDUCT.md
+[gh-license]: https://github.com/lazybytez/jojo-discord-bot/blob/main/LICENSE
 
-[github-issues]: https://github.com/lazybytez/general-template/issues
+[discord-badge]: https://img.shields.io/discord/735171597362659328?label=Discord&logo=discord&style=for-the-badge&colorA=302D41&colorB=b4befe
 
-[github-pulls]: https://github.com/lazybytez/general-template/pulls
+[discord]: https://discord.gg/bcV6TN2k9V
 
-[license-info]: https://img.shields.io/github/license/lazybytez/jojo-discord-bot?logo=gnu&style=for-the-badge&colorA=302D41&colorB=f9e2af&logoColor=f9e2af
+[codecov-badge]: https://img.shields.io/codecov/c/github/lazybytez/jojo-discord-bot?style=for-the-badge&colorA=302D41
 
-[discord-info]: https://img.shields.io/discord/735171597362659328?label=Discord&logo=discord&logoColor=b4befe&style=for-the-badge&colorA=302D41&colorB=b4befe
+[codecov]: https://app.codecov.io/gh/lazybytez/jojo-discord-bot
 
-[commit-info]: https://img.shields.io/github/last-commit/lazybytez/general-template?style=for-the-badge&colorA=302D41&colorB=b4befe
+[gh-contributors-badge]: https://img.shields.io/github/contributors/lazybytez/jojo-discord-bot?style=for-the-badge&colorA=302D41&colorB=cba6f7
 
-[contributors-info]: https://img.shields.io/github/contributors/lazybytez/general-template?style=for-the-badge&colorA=302D41&colorB=cba6f7
+[gh-contributors]: https://github.com/lazybytez/jojo-discord-bot/graphs/contributors
 
-[reposize-info]: https://img.shields.io/github/repo-size/lazybytez/general-template?style=for-the-badge&colorA=302D41&colorB=89dceb
+[gh-stars-badge]: https://img.shields.io/github/stars/lazybytez/jojo-discord-bot?colorA=302D41&colorB=f9e2af&style=for-the-badge
 
-[stars]: https://img.shields.io/github/stars/lazybytez/jojo-discord-bot?colorA=302D41&colorB=f9e2af&style=for-the-badge
+[gh-stars]: https://github.com/lazybytez/jojo-discord-bot/stargazers
+
+[gh-contribute]: https://github.com/lazybytez/.github/blob/main/docs/CONTRIBUTING.md
+
+[gh-codeofconduct]: https://github.com/lazybytez/.github/blob/main/docs/CODE_OF_CONDUCT.md
+
+[gh-issues]: https://github.com/lazybytez/jojo-discord-bot/issues
+
+[gh-pulls]: https://github.com/lazybytez/jojo-discord-bot/pulls
+
+[gh-team]: https://github.com/lazybytez
