@@ -31,7 +31,7 @@ const CoreComponentPrefix = "bot_"
 // RegisteredComponentEntityManager is the RegisteredComponent specific entity manager
 // that allows easy access to global component status in the database.
 type RegisteredComponentEntityManager struct {
-	em                  *EntityManager
+	em                  *GormEntityManager
 	cache               *cache.Cache[string, RegisteredComponent]
 	availableComponents []string
 }
@@ -57,7 +57,7 @@ type RegisteredComponentDBAccess interface {
 
 // RegisteredComponent returns the RegisteredComponentEntityManager that is currently active,
 // which can be used to do RegisteredComponent specific database actions.
-func (em *EntityManager) RegisteredComponent() *RegisteredComponentEntityManager {
+func (em *GormEntityManager) RegisteredComponent() *RegisteredComponentEntityManager {
 	if nil == em.entityManagers.registeredComponentEntityManager {
 		rgem := &RegisteredComponentEntityManager{
 			em,

@@ -108,7 +108,7 @@ func generateComponentStatusTable(i *discordgo.InteractionCreate) string {
 // component status list.
 // If the writing fails, nothing will happen.
 func getComponentStatusListRow(buf *bytes.Buffer, name string, status string) {
-	_, err := fmt.Fprintf(buf, "%v - %v", status, name)
+	_, err := fmt.Fprintf(buf, "%v - %v\n", status, name)
 	if nil != err {
 		if nil != err {
 			C.Logger().Warn("Failed to write row while building component list entry for \"%v\"",

@@ -27,7 +27,7 @@ import (
 // GuildEntityManager is the Guild specific entity manager
 // that allows easy access to guilds in the database.
 type GuildEntityManager struct {
-	em    *EntityManager
+	em    *GormEntityManager
 	cache *cache.Cache[uint64, Guild]
 }
 
@@ -47,7 +47,7 @@ type GuildDBAccess interface {
 
 // Guilds returns the GuildEntityManager that is currently active,
 // which can be used to do Guild specific database actions.
-func (em *EntityManager) Guilds() *GuildEntityManager {
+func (em *GormEntityManager) Guilds() *GuildEntityManager {
 	if nil == em.entityManagers.guild {
 		gem := &GuildEntityManager{
 			em,

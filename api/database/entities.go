@@ -23,7 +23,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// entityManagers is a struct embedded by EntityManager
+// entityManagers is a struct embedded by GormEntityManager
 // that holds the instances of the entity specific entity managers
 type entityManagers struct {
 	guild                              *GuildEntityManager
@@ -94,27 +94,24 @@ type GuildComponentStatus struct {
 	Enabled     bool
 }
 
+// defaultEntities holds a list of all entities that should be
+// registered by default. The list is registered in the order
+// the entities are added to the list.
+var defaultEntities = []interface{}{
+	&Guild{},
+	&RegisteredComponent{},
+	&GlobalComponentStatus{},
+	&GuildComponentStatus{},
+}
+
 // registerDefaultEntities takes care of letting gorm
 // know about all entities in this file.
-func registerDefaultEntities(em DBAccess) error {
-	// Guild related entities
-	err := em.RegisterEntity(&Guild{})
-	if nil != err {
-		return err
-	}
-
-	// Component related entities
-	err = em.RegisterEntity(&RegisteredComponent{})
-	if nil != err {
-		return err
-	}
-	err = em.RegisterEntity(&GlobalComponentStatus{})
-	if nil != err {
-		return err
-	}
-	err = em.RegisterEntity(&GuildComponentStatus{})
-	if nil != err {
-		return err
+func registerDefaultEntities(em EntityManager) error {
+	for _, entity := range defaultEntities {
+		err := em.RegisterEntity(entity)
+		if nil != err {
+			return err
+		}
 	}
 
 	return nil

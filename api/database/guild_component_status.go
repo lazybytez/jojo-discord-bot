@@ -30,7 +30,7 @@ const GuildComponentStatusDisabledDisplay = ":x:"
 // GuildComponentStatusEntityManager is the GuildCom specific entity manager
 // that allows easy access to guilds in the database.
 type GuildComponentStatusEntityManager struct {
-	em    *EntityManager
+	em    *GormEntityManager
 	cache *cache.Cache[string, GuildComponentStatus]
 }
 
@@ -55,7 +55,7 @@ type GuildComponentStatusDBAccess interface {
 
 // GuildComponentStatus returns the GuildComponentStatusEntityManager that is currently active,
 // which can be used to do GuildComponentStatus specific database actions.
-func (em *EntityManager) GuildComponentStatus() *GuildComponentStatusEntityManager {
+func (em *GormEntityManager) GuildComponentStatus() *GuildComponentStatusEntityManager {
 	if nil == em.entityManagers.guildComponentStatusEntityManager {
 		gem := &GuildComponentStatusEntityManager{
 			em,

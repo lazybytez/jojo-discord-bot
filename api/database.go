@@ -20,10 +20,10 @@ package api
 
 import "github.com/lazybytez/jojo-discord-bot/api/database"
 
-// EntityManager returns the currently active database.DBAccess.
-// The currently active database.DBAccess is shared across components.
+// EntityManager returns the currently active database.EntityManager.
+// The currently active database.EntityManager is shared across components.
 //
-// The database.DBAccess allows to interact with the database of the application.
-func (c *Component) EntityManager() *database.EntityManager {
+// The database.EntityManager allows to interact with the database of the application.
+func (c *Component) EntityManager() *database.GormEntityManager {
 	return database.GetEntityManager()
 }
