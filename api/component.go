@@ -29,15 +29,6 @@ import (
 // cannot be managed by server owners, as they are important core components
 const CoreComponentPrefix = "bot_"
 
-// LifecycleHooks allow to specify functions that should be called
-// when components get loaded and unloaded.
-//
-// The defined functions allow some way of initializing a component.
-type LifecycleHooks struct {
-	LoadComponent   func(discord *discordgo.Session) error
-	UnloadComponent func(discord *discordgo.Session) error
-}
-
 // State holds the state of a component.
 // This includes states like:
 //   - is the component enabled?
@@ -58,15 +49,16 @@ type State struct {
 // It holds basic metadata about the component
 type Component struct {
 	// Metadata
-	Code        string
-	Name        string
-	Description string
+	Code         string
+	Name         string
+	Description  string
+	LoadPriority int
 
 	// State
 	State *State
 
 	// Lifecycle hooks
-	Lifecycle LifecycleHooks
+	loadComponentFunction func(_ *discordgo.Session) error
 
 	// Utilities
 	// These are private and only managed by the API system.
@@ -121,7 +113,7 @@ type ServiceManager interface {
 func (c *Component) RegisterComponent(discord *discordgo.Session) error {
 	c.discord = discord
 
-	err := c.Lifecycle.LoadComponent(discord)
+	err := c.loadComponentFunction(discord)
 
 	if err != nil {
 		return err
@@ -141,11 +133,6 @@ func (c *Component) RegisterComponent(discord *discordgo.Session) error {
 func (c *Component) UnregisterComponent(discord *discordgo.Session) error {
 	c.HandlerManager().unregisterAll()
 
-	err := c.Lifecycle.UnloadComponent(discord)
-
-	if err != nil {
-		return err
-	}
 	c.State.Loaded = false
 
 	return nil

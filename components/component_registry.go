@@ -19,22 +19,8 @@
 package components
 
 import (
-	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/api/components/bot_core"
-	"github.com/lazybytez/jojo-discord-bot/api/components/bot_log"
-	"github.com/lazybytez/jojo-discord-bot/components/pingpong"
-	"github.com/lazybytez/jojo-discord-bot/components/statistics"
+	_ "github.com/lazybytez/jojo-discord-bot/api/components/bot_core"
+	_ "github.com/lazybytez/jojo-discord-bot/api/components/bot_log"
+	_ "github.com/lazybytez/jojo-discord-bot/components/pingpong"
+	_ "github.com/lazybytez/jojo-discord-bot/components/statistics"
 )
-
-// Components contains all components that should be available.
-//
-// Enabled components should be registered here.
-// When access to components is necessary use api.Components instead.
-// Note that api.Components can only being accessed after the system has been initialized,
-// which means the earliest point is in the LoadComponent lifecycle hooks.
-var Components = []*api.Component{
-	bot_core.C,
-	bot_log.C,
-	pingpong.C,
-	statistics.C,
-}

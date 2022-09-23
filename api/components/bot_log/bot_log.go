@@ -26,24 +26,20 @@ import (
 // Core component that handles logging of essential
 // events that happen during the bot lifecycle.
 
-var C *api.Component
+var C = api.Component{
+	// Metadata
+	Code: "bot_log",
+	Name: "Bot Log",
+	Description: "This component prints out some basic information in the " +
+		"log when bot is ready or added to guilds.",
+
+	State: &api.State{
+		DefaultEnabled: true,
+	},
+}
 
 func init() {
-	C = &api.Component{
-		// Metadata
-		Code: "bot_log",
-		Name: "Bot Log",
-		Description: "This component prints out some basic information in the " +
-			"log when bot is ready or added to guilds.",
-
-		State: &api.State{
-			DefaultEnabled: true,
-		},
-
-		Lifecycle: api.LifecycleHooks{
-			LoadComponent: LoadComponent,
-		},
-	}
+	api.RegisterComponent(&C, LoadComponent)
 }
 
 func LoadComponent(_ *discordgo.Session) error {
