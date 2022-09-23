@@ -1,0 +1,4 @@
+run:
+  # Increase default time limit of 
+  # golangci from 1 to 5 minutes
+  timeout: 5m
