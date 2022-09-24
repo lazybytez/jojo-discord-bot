@@ -23,7 +23,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"reflect"
 	"sort"
-	"strings"
 )
 
 // Components holds all available components that
@@ -32,7 +31,7 @@ import (
 // The component code is used as key.
 // The code of a component is unique, registering multiple components
 // with the same code results in overriding a previously registered one.
-var Components = map[string]*Component{}
+var Components = make([]*Component, 0)
 
 // RegisterComponent adds the given Component to the list
 // of registered components.
@@ -41,9 +40,9 @@ var Components = map[string]*Component{}
 // components.
 // To get the application to automatically call this function, add an import
 // to the <repo-root>/components/component_registry.go.
-func RegisterComponent(component *Component, loadComponentFunction func(_ *discordgo.Session) error) {
+func RegisterComponent(component *Component, loadComponentFunction func(session *discordgo.Session) error) {
 	component.loadComponentFunction = loadComponentFunction
-	Components[component.Code] = component
+	Components = append(Components, component)
 
 	// This is run once when starting the application.
 	// It is not expected to have more than 100 components,
@@ -65,8 +64,8 @@ func sortComponents() {
 	coreComponents := make([]*Component, 0)
 	featureComponents := make([]*Component, 0)
 
-	for code, comp := range Components {
-		if strings.HasPrefix(CoreComponentPrefix, code) {
+	for _, comp := range Components {
+		if IsCoreComponent(comp) {
 			coreComponents = append(coreComponents, comp)
 
 			continue
@@ -76,20 +75,16 @@ func sortComponents() {
 	}
 
 	sort.SliceStable(coreComponents, func(i, j int) bool {
-		return coreComponents[i].LoadPriority < coreComponents[j].LoadPriority
+		return coreComponents[i].LoadPriority > coreComponents[j].LoadPriority
 	})
 
 	sort.SliceStable(featureComponents, func(i, j int) bool {
-		return featureComponents[i].LoadPriority < featureComponents[j].LoadPriority
+		return featureComponents[i].LoadPriority > featureComponents[j].LoadPriority
 	})
 
-	Components = map[string]*Component{}
-	for _, comp := range coreComponents {
-		Components[comp.Code] = comp
-	}
-	for _, comp := range featureComponents {
-		Components[comp.Code] = comp
-	}
+	Components = []*Component{}
+	Components = append(Components, coreComponents...)
+	Components = append(Components, featureComponents...)
 }
 
 // IsComponentEnabled checks if a specific component is currently enabled
