@@ -160,7 +160,10 @@ func decorateComponentStatus(
 //
 //	If everything fails, an empty string is returned.
 func getGuildIdFromEventInterface(event interface{}) string {
-	val := reflect.ValueOf(event).Elem()
+	val := reflect.ValueOf(event)
+	if reflect.Pointer == val.Kind() {
+		val = val.Elem()
+	}
 
 	if field := val.FieldByName("GuildID"); field != (reflect.Value{}) {
 		return field.String()

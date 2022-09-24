@@ -718,3 +718,35 @@ func (suite *RegisterComponentTestSuite) TestRegisterComponentWithMultipleSorted
 func TestRegisterComponent(t *testing.T) {
 	suite.Run(t, new(RegisterComponentTestSuite))
 }
+
+type GetGuildIdFromEventInterfaceTestSuite struct {
+	suite.Suite
+}
+
+func (suite *GetGuildIdFromEventInterfaceTestSuite) TestGetGuildIdFromEventInterfaceWithPossibleOptions() {
+	tables := []struct {
+		input          interface{}
+		expectedOutput string
+	}{
+		{discordgo.GuildCreate{Guild: &discordgo.Guild{ID: "this-is-some-id"}}, "this-is-some-id"},
+		{&discordgo.GuildCreate{Guild: &discordgo.Guild{ID: "this-is-some-id"}}, "this-is-some-id"},
+		{discordgo.MessageCreate{Message: &discordgo.Message{GuildID: "this-is-some-id"}}, "this-is-some-id"},
+		{&discordgo.MessageCreate{Message: &discordgo.Message{GuildID: "this-is-some-id"}}, "this-is-some-id"},
+		{
+			struct {
+				SomeField string
+			}{SomeField: "some-test"},
+			"",
+		},
+	}
+
+	for _, table := range tables {
+		result := getGuildIdFromEventInterface(table.input)
+
+		suite.Equal(table.expectedOutput, result)
+	}
+}
+
+func TestGetGuildIdFromEventInterface(t *testing.T) {
+	suite.Run(t, new(GetGuildIdFromEventInterfaceTestSuite))
+}
