@@ -13,7 +13,7 @@ type ComponentTestSuite struct {
 	suite.Suite
 }
 
-func (suite *ComponentTestSuite) LoadComponentWithSuccess() {
+func (suite *ComponentTestSuite) TestLoadComponentWithSuccess() {
 	hasCalled := false
 	mockLoadComponentFunction := func(session *discordgo.Session) error {
 		hasCalled = true
@@ -42,7 +42,7 @@ func (suite *ComponentTestSuite) LoadComponentWithSuccess() {
 	suite.True(testComponent.State.Loaded)
 }
 
-func (suite *ComponentTestSuite) LoadComponentWithFailure() {
+func (suite *ComponentTestSuite) TestLoadComponentWithFailure() {
 	hasCalled := false
 
 	mockLoadComponentFunction := func(session *discordgo.Session) error {
