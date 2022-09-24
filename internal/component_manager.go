@@ -101,7 +101,7 @@ func LoadComponents(discord *discordgo.Session) {
 	componentRegistryLogger.Info("Starting component load sequence...")
 	for _, comp := range api.Components {
 		componentRegistryLogger.Info("Loading component \"%v\"...", comp.Name)
-		err := comp.RegisterComponent(discord)
+		err := comp.LoadComponent(discord)
 		if nil != err {
 			componentRegistryLogger.Warn(
 				"Failed to load component with name \"%v\": %v",
@@ -131,7 +131,7 @@ func UnloadComponents(discord *discordgo.Session) {
 		}
 
 		componentRegistryLogger.Info("Unloading component \"%v\"...", comp.Name)
-		err := comp.UnregisterComponent(discord)
+		err := comp.UnloadComponent(discord)
 		if nil != err {
 			componentRegistryLogger.Warn(
 				"Failed to unload component with name \"%v\": %v",

@@ -73,8 +73,8 @@ type Component struct {
 // RegistrableComponent is the interface that allows a component to be
 // initialized and registered.
 type RegistrableComponent interface {
-	RegisterComponent(discord *discordgo.Session) error
-	UnregisterComponent(discord *discordgo.Session) error
+	LoadComponent(discord *discordgo.Session) error
+	UnloadComponent(discord *discordgo.Session) error
 }
 
 // ServiceManager is a simple interface that defines the methods
@@ -107,10 +107,10 @@ type ServiceManager interface {
 	EntityManager() *database.GormEntityManager
 }
 
-// RegisterComponent is used by the component registration system that
-// automatically calls the RegisterComponent method for all Component instances in
+// LoadComponent is used by the component registration system that
+// automatically calls the LoadComponent method for all Component instances in
 // the components.Components array.
-func (c *Component) RegisterComponent(discord *discordgo.Session) error {
+func (c *Component) LoadComponent(discord *discordgo.Session) error {
 	c.discord = discord
 
 	err := c.loadComponentFunction(discord)
@@ -123,15 +123,15 @@ func (c *Component) RegisterComponent(discord *discordgo.Session) error {
 	return nil
 }
 
-// UnregisterComponent is used by the component registration system that
+// UnloadComponent is used by the component registration system that
 // automatically calls the UnregisterComponent method for all Component instances in
 // the components.Components array.
 //
 // The function takes care of tasks like unregistering slash-commands and so on.
 //
 // It is used to give components the ability to gracefully shutdown.
-func (c *Component) UnregisterComponent(*discordgo.Session) error {
-	c.HandlerManager().unregisterAll()
+func (c *Component) UnloadComponent(*discordgo.Session) error {
+	c.HandlerManager().UnregisterAll()
 
 	c.State.Loaded = false
 

@@ -21,7 +21,7 @@ package database
 import (
 	"fmt"
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/lazybytez/jojo-discord-bot/test/log"
+	"github.com/lazybytez/jojo-discord-bot/test/logmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -35,7 +35,7 @@ type DatabaseTestSuite struct {
 	suite.Suite
 	sqlMock sqlmock.Sqlmock
 	gormDB  *gorm.DB
-	logger  *log.LoggerMock
+	logger  *logmock.LoggerMock
 	em      EntityManager
 }
 
@@ -58,7 +58,7 @@ func (suite *DatabaseTestSuite) SetupTest() {
 	suite.sqlMock = sqlMock
 	suite.gormDB = dbMock
 
-	loggerMock := &log.LoggerMock{}
+	loggerMock := &logmock.LoggerMock{}
 	suite.logger = loggerMock
 
 	suite.em = &GormEntityManager{
@@ -71,7 +71,7 @@ func (suite *DatabaseTestSuite) SetupTest() {
 func (suite *DatabaseTestSuite) TestGetEntityManager() {
 	entityManagerDummy := GormEntityManager{
 		nil,
-		&log.LoggerMock{},
+		&logmock.LoggerMock{},
 		entityManagers{},
 	}
 

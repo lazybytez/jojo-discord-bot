@@ -192,7 +192,7 @@ type ComponentHandlerManager interface {
 	//   - originalHandler must be the type of the original handlers function
 	AddDecorator(name string, decorator interface{}) bool
 
-	unregisterAll()
+	UnregisterAll()
 }
 
 // HandlerManager returns the management interface for event handlers.
@@ -455,9 +455,9 @@ func (c *ComponentHandlerContainer) Unregister(name string) error {
 	return nil
 }
 
-// unregisterAll takes care of unregistering all handlers
+// UnregisterAll takes care of unregistering all handlers
 // attached to the component that owns the ComponentHandlerContainer
-func (c *ComponentHandlerContainer) unregisterAll() {
+func (c *ComponentHandlerContainer) UnregisterAll() {
 	for _, handler := range handlerComponentMapping.handlers {
 		if handler.component == c.owner {
 			_ = c.Unregister(handler.name)

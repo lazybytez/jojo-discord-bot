@@ -51,7 +51,7 @@ func New(prefix string, loggerImpl *zerolog.Logger) *Logger {
 	if nil == loggerImpl {
 		loggerImpl = &log.Logger
 	}
-	
+
 	return &Logger{
 		prefix:     prefix,
 		loggerImpl: loggerImpl,

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package log
+package logmock
 
 import "github.com/stretchr/testify/mock"
 
