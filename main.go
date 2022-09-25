@@ -19,6 +19,7 @@
 package main
 
 import (
+	_ "github.com/lazybytez/jojo-discord-bot/api/components"
 	_ "github.com/lazybytez/jojo-discord-bot/components"
 
 	"github.com/lazybytez/jojo-discord-bot/internal"

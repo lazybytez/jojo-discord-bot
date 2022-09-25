@@ -28,7 +28,7 @@ var C = api.Component{
 	Code:         "bot_core",
 	Name:         "Bot Core",
 	Description:  "This component handles core routines and database management.",
-	LoadPriority: -1000,
+	LoadPriority: 1000,
 
 	State: &api.State{
 		DefaultEnabled: true,

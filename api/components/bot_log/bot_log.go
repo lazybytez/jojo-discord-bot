@@ -32,7 +32,6 @@ var C = api.Component{
 	Name: "Bot Log",
 	Description: "This component prints out some basic information in the " +
 		"log when bot is ready or added to guilds.",
-	LoadPriority: -999,
 
 	State: &api.State{
 		DefaultEnabled: true,
