@@ -16,9 +16,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package components
+package bot_log
 
 import (
-	_ "github.com/lazybytez/jojo-discord-bot/components/pingpong"
-	_ "github.com/lazybytez/jojo-discord-bot/components/statistics"
+	"github.com/lazybytez/jojo-discord-bot/test/helper"
+	"github.com/stretchr/testify/assert"
+	"testing"
 )
+
+func TestBotLogInit(t *testing.T) {
+	result := helper.TestIfComponentIsRegistered(&C)
+
+	assert.True(t, result)
+}

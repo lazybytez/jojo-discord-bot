@@ -23,7 +23,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/test/discordgo_mock"
-	"github.com/lazybytez/jojo-discord-bot/test/log"
+	"github.com/lazybytez/jojo-discord-bot/test/logmock"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"net/http"
@@ -242,7 +242,7 @@ func (suite *ResponseDispatcherTestSuite) TestRespondWithSuccess() {
 	session, transport := discordgo_mock.MockSession()
 
 	component := &api.Component{}
-	loggerMock := &log.LoggerMock{}
+	loggerMock := &logmock.LoggerMock{}
 	component.SetLogger(loggerMock)
 
 	requestInteractionResponse := &discordgo.InteractionResponse{}
@@ -279,7 +279,7 @@ func (suite *ResponseDispatcherTestSuite) TestRespondWithSuccessAndEphemeralMess
 	session, transport := discordgo_mock.MockSession()
 
 	component := &api.Component{}
-	loggerMock := &log.LoggerMock{}
+	loggerMock := &logmock.LoggerMock{}
 	component.SetLogger(loggerMock)
 
 	requestInteractionResponse := &discordgo.InteractionResponse{}
@@ -313,7 +313,7 @@ func (suite *ResponseDispatcherTestSuite) TestRespondWithError() {
 	session, transport := discordgo_mock.MockSession()
 
 	component := &api.Component{}
-	loggerMock := &log.LoggerMock{}
+	loggerMock := &logmock.LoggerMock{}
 	component.SetLogger(loggerMock)
 
 	requestInteractionResponse := &discordgo.InteractionResponse{}
@@ -340,7 +340,7 @@ func (suite *ResponseDispatcherTestSuite) TestEditResponseWithSuccess() {
 	session, transport := discordgo_mock.MockSession()
 
 	component := &api.Component{}
-	loggerMock := &log.LoggerMock{}
+	loggerMock := &logmock.LoggerMock{}
 	component.SetLogger(loggerMock)
 
 	webHookEditData := &discordgo.WebhookEdit{}
@@ -373,7 +373,7 @@ func (suite *ResponseDispatcherTestSuite) TestEditResponseWithFailure() {
 	session, transport := discordgo_mock.MockSession()
 
 	component := &api.Component{}
-	loggerMock := &log.LoggerMock{}
+	loggerMock := &logmock.LoggerMock{}
 	component.SetLogger(loggerMock)
 
 	webHookEditData := &discordgo.WebhookEdit{}

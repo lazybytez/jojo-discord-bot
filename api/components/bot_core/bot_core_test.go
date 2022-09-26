@@ -16,28 +16,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package log
+package bot_core
 
-import "github.com/stretchr/testify/mock"
+import (
+	"github.com/lazybytez/jojo-discord-bot/test/helper"
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
 
-// LoggerMock is a custom logger embedding
-// mock.Mock and allows to do expectations on logging methods.
-type LoggerMock struct {
-	mock.Mock
-}
+func TestBotCoreInit(t *testing.T) {
+	result := helper.TestIfComponentIsRegistered(&C)
 
-func (l *LoggerMock) Debug(format string, v ...interface{}) {
-	l.Called(format, v)
-}
-
-func (l *LoggerMock) Info(format string, v ...interface{}) {
-	l.Called(format, v)
-}
-
-func (l *LoggerMock) Warn(format string, v ...interface{}) {
-	l.Called(format, v)
-}
-
-func (l *LoggerMock) Err(err error, format string, v ...interface{}) {
-	l.Called(err, format, v)
+	assert.True(t, result)
 }

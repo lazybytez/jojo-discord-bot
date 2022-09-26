@@ -16,33 +16,41 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package statistics
+package helper
 
 import (
-	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
+	"testing"
 )
 
-// C is the instance of the statistics component
-var C = api.Component{
-	// Metadata
-	Name:        "Statistics Component",
-	Description: "This Component returns statistics about the bot and the runtime.",
-
-	State: &api.State{
-		DefaultEnabled: true,
-	},
+type ComponentHelperTestSuite struct {
+	suite.Suite
 }
 
-// init initializes the component with its metadata
-func init() {
-	api.RegisterComponent(&C, LoadComponent)
+func (suite *ComponentHelperTestSuite) TestTestIfComponentIsRegisteredWithNoComponentFound() {
+	testComponent := &api.Component{
+		Code: "some-component",
+	}
+
+	result := TestIfComponentIsRegistered(testComponent)
+
+	assert.False(suite.T(), result)
 }
 
-// LoadComponent loads the two registered slash commands
-func LoadComponent(_ *discordgo.Session) error {
-	_ = C.SlashCommandManager().Register(statsCommand)
-	_ = C.SlashCommandManager().Register(infoCommand)
+func (suite *ComponentHelperTestSuite) TestTestIfComponentIsRegisteredWithComponentFound() {
+	testComponent := &api.Component{
+		Code: "some-component",
+	}
 
-	return nil
+	api.Components = append(api.Components, testComponent)
+
+	result := TestIfComponentIsRegistered(testComponent)
+
+	assert.True(suite.T(), result)
+}
+
+func TestComponentHelper(t *testing.T) {
+	suite.Run(t, new(ComponentHelperTestSuite))
 }

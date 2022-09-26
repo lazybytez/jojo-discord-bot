@@ -16,9 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package components
+package helper
 
 import (
-	_ "github.com/lazybytez/jojo-discord-bot/components/pingpong"
-	_ "github.com/lazybytez/jojo-discord-bot/components/statistics"
+	"github.com/lazybytez/jojo-discord-bot/api"
 )
+
+// TestIfComponentIsRegistered checks if the given component is registered.
+// If the component is not registered. A test fail will be triggered.
+func TestIfComponentIsRegistered(comp *api.Component) bool {
+	for _, registeredComponent := range api.Components {
+		if registeredComponent == comp {
+			return true
+		}
+	}
+
+	return false
+}

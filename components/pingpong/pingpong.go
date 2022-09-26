@@ -34,24 +34,20 @@ import (
 
 // C is the instance of the ping pong component.
 // Can be used to register the component or get information about it.
-var C *api.Component
+var C = api.Component{
+	// Metadata
+	Code:        "ping_pong",
+	Name:        "Ping Pong",
+	Description: "This module plays ping pong with you and returns Latency (maybe)",
+
+	State: &api.State{
+		DefaultEnabled: true,
+	},
+}
 
 // init initializes the component with its metadata
 func init() {
-	C = &api.Component{
-		// Metadata
-		Code:        "ping_pong",
-		Name:        "Ping Pong",
-		Description: "This module plays ping pong with you and returns Latency (maybe)",
-
-		State: &api.State{
-			DefaultEnabled: true,
-		},
-
-		Lifecycle: api.LifecycleHooks{
-			LoadComponent: LoadComponent,
-		},
-	}
+	api.RegisterComponent(&C, LoadComponent)
 }
 
 // LoadComponent loads the Ping-Pong Component

@@ -19,6 +19,6 @@
 package components
 
 import (
-	_ "github.com/lazybytez/jojo-discord-bot/components/pingpong"
-	_ "github.com/lazybytez/jojo-discord-bot/components/statistics"
+	_ "github.com/lazybytez/jojo-discord-bot/api/components/bot_core"
+	_ "github.com/lazybytez/jojo-discord-bot/api/components/bot_log"
 )

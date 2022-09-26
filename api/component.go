@@ -29,15 +29,6 @@ import (
 // cannot be managed by server owners, as they are important core components
 const CoreComponentPrefix = "bot_"
 
-// LifecycleHooks allow to specify functions that should be called
-// when components get loaded and unloaded.
-//
-// The defined functions allow some way of initializing a component.
-type LifecycleHooks struct {
-	LoadComponent   func(discord *discordgo.Session) error
-	UnloadComponent func(discord *discordgo.Session) error
-}
-
 // State holds the state of a component.
 // This includes states like:
 //   - is the component enabled?
@@ -58,15 +49,16 @@ type State struct {
 // It holds basic metadata about the component
 type Component struct {
 	// Metadata
-	Code        string
-	Name        string
-	Description string
+	Code         string
+	Name         string
+	Description  string
+	LoadPriority int
 
 	// State
 	State *State
 
 	// Lifecycle hooks
-	Lifecycle LifecycleHooks
+	loadComponentFunction func(_ *discordgo.Session) error
 
 	// Utilities
 	// These are private and only managed by the API system.
@@ -81,8 +73,8 @@ type Component struct {
 // RegistrableComponent is the interface that allows a component to be
 // initialized and registered.
 type RegistrableComponent interface {
-	RegisterComponent(discord *discordgo.Session) error
-	UnregisterComponent(discord *discordgo.Session) error
+	LoadComponent(discord *discordgo.Session) error
+	UnloadComponent(discord *discordgo.Session) error
 }
 
 // ServiceManager is a simple interface that defines the methods
@@ -115,13 +107,13 @@ type ServiceManager interface {
 	EntityManager() *database.GormEntityManager
 }
 
-// RegisterComponent is used by the component registration system that
-// automatically calls the RegisterComponent method for all Component instances in
+// LoadComponent is used by the component registration system that
+// automatically calls the LoadComponent method for all Component instances in
 // the components.Components array.
-func (c *Component) RegisterComponent(discord *discordgo.Session) error {
+func (c *Component) LoadComponent(discord *discordgo.Session) error {
 	c.discord = discord
 
-	err := c.Lifecycle.LoadComponent(discord)
+	err := c.loadComponentFunction(discord)
 
 	if err != nil {
 		return err
@@ -131,21 +123,16 @@ func (c *Component) RegisterComponent(discord *discordgo.Session) error {
 	return nil
 }
 
-// UnregisterComponent is used by the component registration system that
+// UnloadComponent is used by the component registration system that
 // automatically calls the UnregisterComponent method for all Component instances in
 // the components.Components array.
 //
 // The function takes care of tasks like unregistering slash-commands and so on.
 //
 // It is used to give components the ability to gracefully shutdown.
-func (c *Component) UnregisterComponent(discord *discordgo.Session) error {
-	c.HandlerManager().unregisterAll()
+func (c *Component) UnloadComponent(*discordgo.Session) error {
+	c.HandlerManager().UnregisterAll()
 
-	err := c.Lifecycle.UnloadComponent(discord)
-
-	if err != nil {
-		return err
-	}
 	c.State.Loaded = false
 
 	return nil

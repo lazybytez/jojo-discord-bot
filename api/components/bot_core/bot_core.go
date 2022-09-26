@@ -23,23 +23,21 @@ import (
 	"github.com/lazybytez/jojo-discord-bot/api"
 )
 
-var C *api.Component
+var C = api.Component{
+	// Metadata
+	Code:         "bot_core",
+	Name:         "Bot Core",
+	Description:  "This component handles core routines and database management.",
+	LoadPriority: 1000,
+
+	State: &api.State{
+		DefaultEnabled: true,
+	},
+}
 
 func init() {
-	C = &api.Component{
-		// Metadata
-		Code:        "bot_core",
-		Name:        "Bot Core",
-		Description: "This component handles core routines and database management.",
 
-		State: &api.State{
-			DefaultEnabled: true,
-		},
-
-		Lifecycle: api.LifecycleHooks{
-			LoadComponent: LoadComponent,
-		},
-	}
+	api.RegisterComponent(&C, LoadComponent)
 }
 
 // LoadComponent loads the bot core component
@@ -48,7 +46,7 @@ func init() {
 func LoadComponent(_ *discordgo.Session) error {
 	initializeComponentManagement()
 
-	_, _ = C.HandlerManager().Register("´guild_join", onGuildJoin)
+	_, _ = C.HandlerManager().Register("guild_join", onGuildJoin)
 	_, _ = C.HandlerManager().Register("update_registered_guilds", handleGuildUpdateOnUpdate)
 
 	// We need to handle the JOJO command special as it needs access to the component list.

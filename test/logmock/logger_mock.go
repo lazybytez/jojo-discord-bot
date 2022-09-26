@@ -16,9 +16,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package components
+package logmock
 
-import (
-	_ "github.com/lazybytez/jojo-discord-bot/components/pingpong"
-	_ "github.com/lazybytez/jojo-discord-bot/components/statistics"
-)
+import "github.com/stretchr/testify/mock"
+
+// LoggerMock is a custom logger embedding
+// mock.Mock and allows to do expectations on logging methods.
+type LoggerMock struct {
+	mock.Mock
+}
+
+func (l *LoggerMock) Debug(format string, v ...interface{}) {
+	l.Called(format, v)
+}
+
+func (l *LoggerMock) Info(format string, v ...interface{}) {
+	l.Called(format, v)
+}
+
+func (l *LoggerMock) Warn(format string, v ...interface{}) {
+	l.Called(format, v)
+}
+
+func (l *LoggerMock) Err(err error, format string, v ...interface{}) {
+	l.Called(err, format, v)
+}

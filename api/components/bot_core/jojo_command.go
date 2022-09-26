@@ -51,8 +51,8 @@ func getModuleCommandChoices() []*discordgo.ApplicationCommandOptionChoice {
 // in the command API
 func initAndRegisterJojoCommand() {
 	// Ensure the module package knows about the component
-	module.C = C
-	sync_commands.C = C
+	module.C = &C
+	sync_commands.C = &C
 
 	jojoCommand = &api.Command{
 		Cmd: &discordgo.ApplicationCommand{
