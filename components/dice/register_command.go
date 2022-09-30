@@ -7,7 +7,16 @@ import (
 
 // C is the instance of the dice component.
 // Can be used to register the component or get information about it.
-var C *api.Component
+var C = api.Component{
+	// Metadata
+	Code:        "dice",
+	Name:        "Dice Component",
+	Description: "This Component throws one or multiple dice",
+
+	State: &api.State{
+		DefaultEnabled: true,
+	},
+}
 
 var minValue = float64(2)
 var memberPermissions int64 = discordgo.PermissionSendMessages
@@ -34,23 +43,6 @@ var diceCommand = &api.Command{
 		},
 	},
 	Handler: handleDice,
-}
-
-// init initializes the component with its metadata
-func init() {
-	C = &api.Component{
-		// Metadata
-		Name:        "Dice Component",
-		Description: "This Component throws one or multiple dice",
-
-		State: &api.State{
-			DefaultEnabled: true,
-		},
-
-		Lifecycle: api.LifecycleHooks{
-			LoadComponent: LoadComponent,
-		},
-	}
 }
 
 // LoadComponent loads the Dice Component

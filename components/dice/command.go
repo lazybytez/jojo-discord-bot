@@ -2,7 +2,6 @@ package dice
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api/slash_commands"
 )
 
 // handleDice handles the dice slash command
@@ -43,5 +42,8 @@ func sendAnswer(s *discordgo.Session, i *discordgo.InteractionCreate, e []*disco
 	resp := &discordgo.InteractionResponseData{
 		Embeds: e,
 	}
-	slash_commands.Respond(C, s, i, resp)
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: resp,
+	})
 }
