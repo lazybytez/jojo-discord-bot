@@ -45,6 +45,11 @@ var diceCommand = &api.Command{
 	Handler: handleDice,
 }
 
+// init initializes the component with its metadata
+func init() {
+	api.RegisterComponent(&C, LoadComponent)
+}
+
 // LoadComponent loads the Dice Component
 func LoadComponent(discord *discordgo.Session) error {
 	// Register the messageCreate func as a callback for MessageCreate events.
