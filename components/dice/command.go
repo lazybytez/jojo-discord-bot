@@ -5,6 +5,12 @@ import (
 	"github.com/lazybytez/jojo-discord-bot/api"
 )
 
+var memberPermissions int64 = discordgo.PermissionSendMessages
+
+var minValueDieSites = float64(2)
+var maxValueDieSites = float64(1000)
+var minValueDice = float64(1)
+var maxValueDice = float64(100)
 var diceCommand = &api.Command{
 	Cmd: &discordgo.ApplicationCommand{
 		Name:                     "dice",
@@ -15,14 +21,16 @@ var diceCommand = &api.Command{
 				Name:        "die-sites-number",
 				Description: "The number of how many sites the die has, default is 6",
 				Type:        discordgo.ApplicationCommandOptionInteger,
-				MinValue:    &minValue,
+				MinValue:    &minValueDieSites,
+				MaxValue:    maxValueDieSites,
 				Required:    false,
 			},
 			{
 				Name:        "number-dice",
 				Description: "How many dice you want to throw, default is 1",
 				Type:        discordgo.ApplicationCommandOptionInteger,
-				MinValue:    &minValue,
+				MinValue:    &minValueDice,
+				MaxValue:    maxValueDice,
 				Required:    false,
 			},
 		},
