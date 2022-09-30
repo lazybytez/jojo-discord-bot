@@ -18,9 +18,6 @@ var C = api.Component{
 	},
 }
 
-var minValue = float64(2)
-var memberPermissions int64 = discordgo.PermissionSendMessages
-
 // init initializes the component with its metadata
 func init() {
 	api.RegisterComponent(&C, LoadComponent)
