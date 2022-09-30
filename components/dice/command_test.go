@@ -110,7 +110,7 @@ func (suite *CommandTestSuite) TestGetIntOptionGetDefaultValue() {
 
 func (suite *CommandTestSuite) TestSendAnswer() {
 	s, r := discordgo_mock.MockSession()
-	i := *&discordgo.InteractionCreate{
+	i := discordgo.InteractionCreate{
 		Interaction: &discordgo.Interaction{
 			ID:    "interaction.ID",
 			Token: "interaction.Token",
