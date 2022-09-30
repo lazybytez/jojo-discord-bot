@@ -19,10 +19,11 @@
 package cache
 
 import (
-	"github.com/stretchr/testify/suite"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/suite"
 )
 
 type CacheTestSuite struct {
@@ -267,7 +268,7 @@ func (suite *CacheTestSuite) TestCache_DisableAutoCleanup() {
 
 		testCache.DisableAutoCleanup()
 
-		time.Sleep(50 * time.Millisecond) // Cleanup is async task, ensure its done
+		time.Sleep(200 * time.Millisecond) // Cleanup is async task, ensure its done
 
 		testCache.lock.RLock()
 		_, resultOk := testCache.cache[table.key]
