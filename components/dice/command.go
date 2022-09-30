@@ -42,7 +42,7 @@ func sendAnswer(s *discordgo.Session, i *discordgo.InteractionCreate, e []*disco
 	resp := &discordgo.InteractionResponseData{
 		Embeds: e,
 	}
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: resp,
 	})
