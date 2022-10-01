@@ -16,11 +16,34 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package components
+package events
 
 import (
-	_ "github.com/lazybytez/jojo-discord-bot/components/dice"
-	_ "github.com/lazybytez/jojo-discord-bot/components/events"
-	_ "github.com/lazybytez/jojo-discord-bot/components/pingpong"
-	_ "github.com/lazybytez/jojo-discord-bot/components/statistics"
+	"github.com/bwmarrin/discordgo"
+	"github.com/lazybytez/jojo-discord-bot/api"
 )
+
+// C is the instance of the component.
+// Can be used to register the component or get information about it.
+var C = api.Component{
+	// Metadata
+	Code:        "events",
+	Name:        "Events",
+	Description: "This module manages events.",
+
+	State: &api.State{
+		DefaultEnabled: true,
+	},
+}
+
+// init initializes the component with its metadata
+func init() {
+	api.RegisterComponent(&C, LoadComponent)
+}
+
+// LoadComponent loads the Component
+func LoadComponent(_ *discordgo.Session) error {
+	_ = C.SlashCommandManager().Register(eventsCommand)
+
+	return nil
+}
