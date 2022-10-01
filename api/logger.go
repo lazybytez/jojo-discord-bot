@@ -19,12 +19,10 @@
 package api
 
 import (
-	"github.com/lazybytez/jojo-discord-bot/service/logger"
+	"github.com/lazybytez/jojo-discord-bot/services/logger"
 )
 
 // Logger provides useful methods that ease logging.
-// Note that these function will and should never change their
-// underlying receiver.
 type Logger interface {
 	Debug(format string, v ...interface{})
 	Info(format string, v ...interface{})
