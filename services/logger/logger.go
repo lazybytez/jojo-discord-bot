@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package log
+package logger
 
 import (
 	"github.com/rs/zerolog"
@@ -24,7 +24,7 @@ import (
 )
 
 // componentLogPrefix is used by the logger to prefix
-// log messages with the component name.
+// logger messages with the component name.
 const componentLogPrefix = "component"
 
 // Logger is a type that is used to hold metadata
@@ -32,16 +32,6 @@ const componentLogPrefix = "component"
 type Logger struct {
 	loggerImpl *zerolog.Logger
 	prefix     string
-}
-
-// Logging provides useful methods that ease logging.
-// Note that these function will and should never change their
-// underlying receiver.
-type Logging interface {
-	Debug(format string, v ...interface{})
-	Info(format string, v ...interface{})
-	Warn(format string, v ...interface{})
-	Err(err error, format string, v ...interface{})
 }
 
 // New creates a new logger with the passed prefix
@@ -60,30 +50,30 @@ func New(prefix string, loggerImpl *zerolog.Logger) *Logger {
 
 // Debug logs a message with level debug.
 // This function appends the name of the Component from the receiver
-// to the log message.
+// to the logger message.
 func (l *Logger) Debug(format string, v ...interface{}) {
 	l.loggerImpl.Debug().Str(componentLogPrefix, l.prefix).Msgf(format, v...)
 }
 
 // Info logs a message with level info.
 // This function appends the name of the Component from the receiver
-// to the log message.
+// to the logger message.
 func (l *Logger) Info(format string, v ...interface{}) {
 	l.loggerImpl.Info().Str(componentLogPrefix, l.prefix).Msgf(format, v...)
 }
 
 // Warn logs a message with level warnings.
 // This function appends the name of the Component from the receiver
-// to the log message.
+// to the logger message.
 func (l *Logger) Warn(format string, v ...interface{}) {
 	l.loggerImpl.Warn().Str(componentLogPrefix, l.prefix).Msgf(format, v...)
 }
 
 // Err logs a message with level error.
 // This function appends the name of the Component from the receiver
-// to the log message.
+// to the logger message.
 //
-// The supplied error will be applied to the log message.
+// The supplied error will be applied to the logger message.
 func (l *Logger) Err(err error, format string, v ...interface{}) {
 	l.loggerImpl.Error().Err(err).Str(componentLogPrefix, l.prefix).Msgf(format, v...)
 }

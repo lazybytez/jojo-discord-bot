@@ -39,7 +39,7 @@ func handleModuleList(
 }
 
 // createComponentStatusListResponse creates an interaction response containing
-// an embed that list all components and their status.
+// an embed that list all core_components and their status.
 // Additionally, a legend is added, that describes the meaning of the different states.
 func createComponentStatusListResponse(compNamesAndStatus string) *discordgo.InteractionResponseData {
 	resp := slash_commands.GenerateInteractionResponseTemplate(

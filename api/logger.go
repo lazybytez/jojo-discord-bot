@@ -18,21 +18,33 @@
 
 package api
 
-import "github.com/lazybytez/jojo-discord-bot/api/log"
+import (
+	"github.com/lazybytez/jojo-discord-bot/service/logger"
+)
 
-// Logger is used to obtain the Logging of a component
+// Logger provides useful methods that ease logging.
+// Note that these function will and should never change their
+// underlying receiver.
+type Logger interface {
+	Debug(format string, v ...interface{})
+	Info(format string, v ...interface{})
+	Warn(format string, v ...interface{})
+	Err(err error, format string, v ...interface{})
+}
+
+// Logger is used to obtain the Logger of a component
 //
 // On first call, this function initializes the private Component.logger
-// field. On consecutive calls, the already present Logging will be used.
-func (c *Component) Logger() log.Logging {
+// field. On consecutive calls, the already present Logger will be used.
+func (c *Component) Logger() Logger {
 	if nil == c.logger {
-		c.logger = log.New(c.Name, nil)
+		c.logger = logger.New(c.Name, nil)
 	}
 
 	return c.logger
 }
 
 // SetLogger allows to set a custom logger for the component
-func (c *Component) SetLogger(l log.Logging) {
+func (c *Component) SetLogger(l Logger) {
 	c.logger = l
 }

@@ -31,7 +31,7 @@ var C = api.Component{
 	Code: "bot_log",
 	Name: "Bot Log",
 	Description: "This component prints out some basic information in the " +
-		"log when bot is ready or added to guilds.",
+		"logger when bot is ready or added to guilds.",
 
 	State: &api.State{
 		DefaultEnabled: true,

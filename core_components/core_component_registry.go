@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package components
+package core_components
 
 import (
-	_ "github.com/lazybytez/jojo-discord-bot/api/components/bot_core"
-	_ "github.com/lazybytez/jojo-discord-bot/api/components/bot_log"
+	_ "github.com/lazybytez/jojo-discord-bot/api/core_components/bot_core"
+	_ "github.com/lazybytez/jojo-discord-bot/api/core_components/bot_log"
 )

@@ -61,7 +61,7 @@ func (suite *DatabaseTestSuite) SetupTest() {
 	loggerMock := &logmock.LoggerMock{}
 	suite.logger = loggerMock
 
-	suite.em = &GormEntityManager{
+	suite.em = &GormDatabaseAccessor{
 		dbMock,
 		loggerMock,
 		entityManagers{},
@@ -69,15 +69,15 @@ func (suite *DatabaseTestSuite) SetupTest() {
 }
 
 func (suite *DatabaseTestSuite) TestGetEntityManager() {
-	entityManagerDummy := GormEntityManager{
+	entityManagerDummy := GormDatabaseAccessor{
 		nil,
 		&logmock.LoggerMock{},
 		entityManagers{},
 	}
 
-	entityManager = entityManagerDummy
+	databaseAccessor = entityManagerDummy
 
-	assert.EqualValues(suite.T(), &entityManager, GetEntityManager())
+	assert.EqualValues(suite.T(), &databaseAccessor, GetEntityManager())
 }
 
 type TestEntity struct {

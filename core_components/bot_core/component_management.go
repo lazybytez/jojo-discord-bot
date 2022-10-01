@@ -18,11 +18,11 @@
 
 package bot_core
 
-// registerAvailableComponents ensures that all available components
+// registerAvailableComponents ensures that all available core_components
 // are registered in the database.
 //
-// Note that this function only adds new components, we do not care
-// about orphaned components.
+// Note that this function only adds new core_components, we do not care
+// about orphaned core_components.
 func registerAvailableComponents() {
 
 }

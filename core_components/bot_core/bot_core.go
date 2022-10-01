@@ -50,11 +50,11 @@ func LoadComponent(_ *discordgo.Session) error {
 	_, _ = C.HandlerManager().Register("update_registered_guilds", handleGuildUpdateOnUpdate)
 
 	// We need to handle the JOJO command special as it needs access to the component list.
-	// This is only possible after the API has been properly initialized and the components.Components
+	// This is only possible after the API has been properly initialized and the core_components.Components
 	// list has been accessed once.
 	//
 	// Therefore, we configure and register the command when this core component is
-	// loaded, as at this point the API should know the components too.
+	// loaded, as at this point the API should know the core_components too.
 	initAndRegisterJojoCommand()
 
 	return nil

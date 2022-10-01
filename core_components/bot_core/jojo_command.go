@@ -21,8 +21,8 @@ package bot_core
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/api/components/bot_core/command/module"
-	"github.com/lazybytez/jojo-discord-bot/api/components/bot_core/command/sync_commands"
+	"github.com/lazybytez/jojo-discord-bot/core_components/bot_core/command/module"
+	"github.com/lazybytez/jojo-discord-bot/core_components/bot_core/command/sync_commands"
 )
 
 // jojoCommand holds the command configuration for the jojo command.

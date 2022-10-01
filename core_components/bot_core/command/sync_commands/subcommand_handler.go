@@ -44,7 +44,7 @@ func init() {
 // HandleSyncCommandSubCommand handles the execution of the
 // "sync_commands" subcommand.
 //
-// The command allows to trigger a re-sync of the commands registered for
+// The command allows to trigger re-sync of the commands registered for
 // in case a bot administrator thinks there is an inconsistency.
 func HandleSyncCommandSubCommand(
 	s *discordgo.Session,
