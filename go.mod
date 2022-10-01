@@ -12,7 +12,7 @@ require (
 	github.com/stretchr/testify v1.8.0
 	gorm.io/driver/postgres v1.3.10
 	gorm.io/driver/sqlite v1.3.6
-	gorm.io/gorm v1.23.8
+	gorm.io/gorm v1.23.10
 )
 
 require (
