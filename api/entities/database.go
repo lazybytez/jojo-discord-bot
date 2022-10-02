@@ -16,14 +16,5 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package api
+package entities
 
-import "github.com/lazybytez/jojo-discord-bot/api/database"
-
-// EntityManager returns the currently active database.EntityManager.
-// The currently active database.EntityManager is shared across components.
-//
-// The database.EntityManager allows to interact with the database of the application.
-func (c *Component) EntityManager() *database.GormEntityManager {
-	return database.GetEntityManager()
-}

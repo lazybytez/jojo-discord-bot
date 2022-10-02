@@ -16,24 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package util
+package services
 
-import (
-	"reflect"
-	"strings"
-)
-
-// ExtractTypeName extracts the type name of the struct/interface of an variable.
-//
-// This means, something like: *entities.Guild
-// Results in: Guild
-func ExtractTypeName(t interface{}) string {
-	typeName := strings.TrimPrefix(reflect.TypeOf(t).String(), "*")
-
-	_, after, ok := strings.Cut(typeName, ".")
-	if !ok {
-		return typeName
-	}
-
-	return after
+// Logger provides useful methods that ease logging.
+type Logger interface {
+	Debug(format string, v ...interface{})
+	Info(format string, v ...interface{})
+	Warn(format string, v ...interface{})
+	Err(err error, format string, v ...interface{})
 }

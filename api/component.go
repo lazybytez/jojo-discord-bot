@@ -20,8 +20,7 @@ package api
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api/database"
-	"github.com/lazybytez/jojo-discord-bot/api/log"
+	"github.com/lazybytez/jojo-discord-bot/services"
 	"strings"
 )
 
@@ -39,7 +38,7 @@ type State struct {
 	Loaded bool
 
 	// DefaultEnabled is the default status to set for the component
-	// in the database when the bot joins a new guild.
+	// in the entities when the bot joins a new guild.
 	DefaultEnabled bool
 }
 
@@ -64,7 +63,8 @@ type Component struct {
 	// These are private and only managed by the API system.
 	// Their initialization happens through call to the methods
 	// used to get them (Example: logger -> Component.Logger()).
-	logger              log.Logging
+	// See ServiceManager interface on how to obtain them.
+	logger              services.Logger
 	handlerManager      ComponentHandlerManager
 	slashCommandManager *SlashCommandManager
 	discord             *discordgo.Session
@@ -78,14 +78,27 @@ type RegistrableComponent interface {
 }
 
 // ServiceManager is a simple interface that defines the methods
-// that provide the APIs features, like Logging
+// that provide the APIs features, like Logger.
+//
+// Although it is most of the time not best practice, the API returns
+// interfaces. We decided to use this design as interfaces are great to offer
+// an API where internal things or complete subsystems can be swapped
+// without breaking components. They act as contracts in this application.
+// This allows us to maintain a separate logger implementation in the `services/logger`
+// that is compatible with this API. So, when using the API package, think of using
+// contracts.
+//
+// tl;dr: everything from the services package is low level and should not be used
+// directly when possible (although it is not prohibited). The api package is the consumer of
+// the services package and implements interfaces. These interfaces are provided to components.
+// Because of that, we decided to return interfaces instead of structs in the API.
 type ServiceManager interface {
-	// Logger is used to obtain the Logging of a component
+	// Logger is used to obtain the Logger of a component
 	//
 	// On first call, this function initializes the private Component.logger
-	// field. On consecutive calls, the already present Logging will be used.
-	// field. On consecutive calls, the already present Logging will be used.
-	Logger() log.Logger
+	// field. On consecutive calls, the already present Logger will be used.
+	// field. On consecutive calls, the already present Logger will be used.
+	Logger() services.Logger
 	// HandlerManager returns the management interface for event handlers.
 	//
 	// It allows the registration, decoration and general
@@ -100,11 +113,13 @@ type ServiceManager interface {
 	// On first call, this function initializes the private Component.slashCommandManager
 	// field. On consecutive calls, the already present CommonSlashCommandManager will be used.
 	SlashCommandManager() CommonSlashCommandManager
-	// EntityManager returns the currently active database.EntityManager.
-	// The currently active database.EntityManager is shared across components.
+	// DatabaseAccess returns the currently active DatabaseAccess.
+	// The currently active DatabaseAccess is shared across all components.
 	//
-	// The database.EntityManager allows to interact with the database of the application.
-	EntityManager() *database.GormEntityManager
+	// The DatabaseAccess allows to interact with the entities of the application.
+	// Prefer using the EntityManager instead, as DatabaseAccess is considered
+	// a low-level api.
+	DatabaseAccess() *EntityManager
 }
 
 // LoadComponent is used by the component registration system that

@@ -21,11 +21,11 @@ package api
 import (
 	"errors"
 	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api/log"
 	"github.com/lazybytez/jojo-discord-bot/api/util"
+	"github.com/lazybytez/jojo-discord-bot/services/logger"
 )
 
-// slashCommandLogPrefix is the prefix used by the log management during
+// slashCommandLogPrefix is the prefix used by the logger management during
 // lifecycle events that cannot be assigned to a specific component.
 const slashCommandLogPrefix = "slash_command_manager"
 
@@ -39,14 +39,14 @@ var (
 	unregisterCommandHandler func()
 
 	// slashCommandManagerLogger is the logger used by the slash command management
-	// when there os no component a log message could be assigned to
-	slashCommandManagerLogger *log.Logger
+	// when there os no component a logger message could be assigned to
+	slashCommandManagerLogger *logger.Logger
 )
 
 // init slash command sub-system
 func init() {
 	componentCommandMap = make(map[string]*Command)
-	slashCommandManagerLogger = log.New(slashCommandLogPrefix, nil)
+	slashCommandManagerLogger = logger.New(slashCommandLogPrefix, nil)
 }
 
 // Command is a struct that acts as a container for

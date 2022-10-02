@@ -20,7 +20,6 @@ package internal
 
 import (
 	"fmt"
-	dbAPI "github.com/lazybytez/jojo-discord-bot/api/database"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -36,16 +35,16 @@ var database *gorm.DB
 func initGorm() {
 	var dial *gorm.Dialector
 
-	coreLogger.Info("Setting up database connection...")
+	coreLogger.Info("Setting up entities connection...")
 	switch Config.sqlMode {
 	case ModeSQLite:
-		coreLogger.Info("Using SQLite as database driver!")
+		coreLogger.Info("Using SQLite as entities driver!")
 		dial = getSQLiteDialector()
 	case ModePostgres:
-		coreLogger.Info("Using PostgreSQL as database driver!")
+		coreLogger.Info("Using PostgreSQL as entities driver!")
 		dial = getPostgresDialector()
 	default:
-		ExitFatal(fmt.Sprintf("The database mode \"%v\" is not valid!", Config.sqlMode))
+		ExitFatal(fmt.Sprintf("The entities mode \"%v\" is not valid!", Config.sqlMode))
 	}
 
 	coreLogger.Info("Open GORM instance...")
@@ -54,12 +53,7 @@ func initGorm() {
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if nil != err {
-		ExitFatal(fmt.Sprintf("Failed to initialize database subsystem! Error: \"%v\"", err.Error()))
-	}
-
-	err = dbAPI.Init(database)
-	if nil != err {
-		ExitGracefully(err.Error())
+		ExitFatal(fmt.Sprintf("Failed to initialize entities subsystem! Error: \"%v\"", err.Error()))
 	}
 
 	coreLogger.Info("Database subsystem has been initialized successfully!")

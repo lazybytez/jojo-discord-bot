@@ -16,10 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package database
+package entities
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"gorm.io/gorm"
 	"strings"
 	"time"
 )
@@ -28,50 +29,46 @@ import (
 // cannot be managed by server owners, as they are important core components
 const CoreComponentPrefix = "bot_"
 
+// RegisteredComponent represents a single component that is or was known
+// to the system.
+//
+// Single purpose of this struct is to provide a entities
+// table with which relations can be build to ensure integrity
+// of the GuildComponentStatus and GlobalComponentStatus tables.
+type RegisteredComponent struct {
+	gorm.Model
+	Code           string `gorm:"uniqueIndex"`
+	Name           string
+	Description    string
+	DefaultEnabled bool
+}
+
 // RegisteredComponentEntityManager is the RegisteredComponent specific entity manager
-// that allows easy access to global component status in the database.
+// that allows easy access to global component status in the entities.
 type RegisteredComponentEntityManager struct {
-	em                  *GormEntityManager
+	*EntityManager
+
 	cache               *cache.Cache[string, RegisteredComponent]
 	availableComponents []string
 }
 
-// RegisteredComponentDBAccess is the interface that defines the capabilities
-// of the RegisteredComponentEntityManager
-type RegisteredComponentDBAccess interface {
-	// Get tries to get a RegisteredComponent from the
-	// cache. If no cache entry is present, a request to the database will be made.
-	// If no RegisteredComponent can be found, the function returns a new empty
-	// RegisteredComponent.
-	Get(registeredComponentCode uint) (*RegisteredComponent, error)
-	// GetAvailable returns all components that have been registered
-	// during application bootstrap.
-	GetAvailable() []*RegisteredComponent
-	// Update adds or updates a cached item in the RegisteredComponentEntityManager cache.
-	Update(registeredComponentId uint, registeredComponent *RegisteredComponent) error
-	// MarkAsAvailable marks the passed component as available, by putting
-	// the codes into an array.
-	// Note that duplicates will be filtered.
-	MarkAsAvailable(code string)
-}
-
 // RegisteredComponent returns the RegisteredComponentEntityManager that is currently active,
-// which can be used to do RegisteredComponent specific database actions.
-func (em *GormEntityManager) RegisteredComponent() *RegisteredComponentEntityManager {
-	if nil == em.entityManagers.registeredComponentEntityManager {
+// which can be used to do RegisteredComponent specific entities actions.
+func (em *EntityManager) RegisteredComponent() *RegisteredComponentEntityManager {
+	if nil == em.registeredComponentEntityManager {
 		rgem := &RegisteredComponentEntityManager{
 			em,
 			cache.New[string, RegisteredComponent](10 * time.Minute),
 			make([]string, 0),
 		}
-		em.entityManagers.registeredComponentEntityManager = rgem
+		em.registeredComponentEntityManager = rgem
 	}
 
-	return em.entityManagers.registeredComponentEntityManager
+	return em.registeredComponentEntityManager
 }
 
 // Get tries to get a RegisteredComponent from the
-// cache. If no cache entry is present, a request to the database will be made.
+// cache. If no cache entry is present, a request to the entities will be made.
 // If no RegisteredComponent can be found, the function returns a new empty
 // RegisteredComponent.
 func (rgem *RegisteredComponentEntityManager) Get(registeredComponentCode string) (*RegisteredComponent, error) {
@@ -82,12 +79,12 @@ func (rgem *RegisteredComponentEntityManager) Get(registeredComponentCode string
 	}
 
 	regComp := &RegisteredComponent{}
-	err := rgem.em.GetFirstEntity(regComp, "code = ?", registeredComponentCode)
+	err := rgem.database.GetFirstEntity(regComp, "code = ?", registeredComponentCode)
 	if nil != err {
 		return regComp, err
 	}
 
-	rgem.Update(registeredComponentCode, regComp)
+	cache.Update(rgem.cache, regComp.Code, regComp)
 
 	return regComp, err
 }
@@ -109,9 +106,45 @@ func (rgem *RegisteredComponentEntityManager) GetAvailable() []*RegisteredCompon
 	return availableComponents
 }
 
-// Update adds or updates a cached item in the RegisteredComponent cache.
-func (rgem *RegisteredComponentEntityManager) Update(code string, component *RegisteredComponent) {
-	cache.Update(rgem.cache, code, component)
+// Create saves the passed RegisteredComponent in the database.
+// Use Update or Save to update an already existing RegisteredComponent.
+func (rgem *RegisteredComponentEntityManager) Create(regComp *RegisteredComponent) error {
+	err := rgem.database.Create(regComp)
+	if nil != err {
+		return err
+	}
+
+	// Ensure entity is in cache when just updated
+	cache.Update(rgem.cache, regComp.Code, regComp)
+
+	return nil
+}
+
+// Save updates the passed RegisteredComponent in the database.
+// This does a generic update, use Update to do a precise and more performant update
+// of the entity when only updating a single field!
+func (rgem *RegisteredComponentEntityManager) Save(regComp *RegisteredComponent) error {
+	err := rgem.database.Save(regComp)
+	if nil != err {
+		return err
+	}
+
+	// Ensure entity is in cache when just updated
+	cache.Update(rgem.cache, regComp.Code, regComp)
+
+	return nil
+}
+
+// Update updates the defined field on the entity and saves it in the database.
+func (rgem *RegisteredComponentEntityManager) Update(regComp *RegisteredComponent, column string, value interface{}) error {
+	err := rgem.database.UpdateEntity(regComp, column, value)
+	if nil != err {
+		return err
+	}
+
+	cache.Update(rgem.cache, regComp.Code, regComp)
+
+	return nil
 }
 
 // MarkAsAvailable marks the passed component as available, by putting
@@ -125,16 +158,6 @@ func (rgem *RegisteredComponentEntityManager) MarkAsAvailable(code string) {
 	}
 
 	rgem.availableComponents = append(rgem.availableComponents, code)
-}
-
-// CoreComponentChecker is an interface providing functionality to
-// check if a registered component is a core component.
-type CoreComponentChecker interface {
-	// IsCoreComponent checks whether the passed RegisteredComponent is a core
-	// component or not.
-	//
-	// Core components are components which are prefixed with the CoreComponentPrefix.
-	IsCoreComponent() bool
 }
 
 // IsCoreComponent checks whether the passed RegisteredComponent is a core

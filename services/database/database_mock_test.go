@@ -19,6 +19,7 @@
 package database
 
 import (
+	"github.com/lazybytez/jojo-discord-bot/api/entities"
 	"github.com/stretchr/testify/mock"
 	"gorm.io/gorm"
 )
@@ -88,52 +89,52 @@ func (e *EntityManagerMock) WorkOn(entityContainer interface{}) *gorm.DB {
 	}
 }
 
-func (e *EntityManagerMock) Guilds() *GuildEntityManager {
+func (e *EntityManagerMock) Guilds() *entities.GuildEntityManager {
 	call := e.Called()
 
 	guildEntityManager := call.Get(0)
 
 	switch typed := guildEntityManager.(type) {
-	case *GuildEntityManager:
+	case *entities.GuildEntityManager:
 		return typed
 	default:
 		return nil
 	}
 }
 
-func (e *EntityManagerMock) GlobalComponentStatus() *GlobalComponentStatusEntityManager {
+func (e *EntityManagerMock) GlobalComponentStatus() *entities.GlobalComponentStatusEntityManager {
 	call := e.Called()
 
 	gcsemEntityManager := call.Get(0)
 
 	switch typed := gcsemEntityManager.(type) {
-	case *GlobalComponentStatusEntityManager:
+	case *entities.GlobalComponentStatusEntityManager:
 		return typed
 	default:
 		return nil
 	}
 }
 
-func (e *EntityManagerMock) RegisteredComponent() *RegisteredComponentEntityManager {
+func (e *EntityManagerMock) RegisteredComponent() *entities.RegisteredComponentEntityManager {
 	call := e.Called()
 
 	rcemEntityManager := call.Get(0)
 
 	switch typed := rcemEntityManager.(type) {
-	case *RegisteredComponentEntityManager:
+	case *entities.RegisteredComponentEntityManager:
 		return typed
 	default:
 		return nil
 	}
 }
 
-func (e *EntityManagerMock) GuildComponentStatus() *GuildComponentStatusEntityManager {
+func (e *EntityManagerMock) GuildComponentStatus() *entities.GuildComponentStatusEntityManager {
 	call := e.Called()
 
 	gcemEntityManager := call.Get(0)
 
 	switch typed := gcemEntityManager.(type) {
-	case *GuildComponentStatusEntityManager:
+	case *entities.GuildComponentStatusEntityManager:
 		return typed
 	default:
 		return nil

@@ -16,10 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package database
+package entities
 
 import (
 	"fmt"
+	"github.com/lazybytez/jojo-discord-bot/services/database"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"testing"
@@ -27,11 +28,11 @@ import (
 
 type EntitiesTestSuite struct {
 	suite.Suite
-	em *EntityManagerMock
+	em *database.EntityManagerMock
 }
 
 func (suite *EntitiesTestSuite) SetupTest() {
-	suite.em = &EntityManagerMock{}
+	suite.em = &database.EntityManagerMock{}
 }
 
 func (suite *EntitiesTestSuite) TestRegisterDefaultEntitiesWithSuccess() {

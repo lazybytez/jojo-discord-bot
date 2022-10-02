@@ -20,7 +20,7 @@ package module
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api/database"
+	"github.com/lazybytez/jojo-discord-bot/api/entities"
 	"github.com/lazybytez/jojo-discord-bot/api/slash_commands"
 )
 
@@ -60,7 +60,7 @@ func handleModuleShow(
 // response templates embed with the status of the requested component.
 func populateComponentStatusEmbedFields(
 	resp *discordgo.InteractionResponseData,
-	comp *database.RegisteredComponent,
+	comp *entities.RegisteredComponent,
 	guildSpecificStatusOutput string,
 	globalStatusOutput string,
 ) {

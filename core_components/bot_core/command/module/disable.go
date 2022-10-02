@@ -21,7 +21,7 @@ package module
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api/database"
+	"github.com/lazybytez/jojo-discord-bot/api/entities"
 	"github.com/lazybytez/jojo-discord-bot/api/slash_commands"
 )
 
@@ -62,13 +62,13 @@ func handleModuleDisable(
 }
 
 func disableComponentForGuild(
-	guild *database.Guild,
-	regComp *database.RegisteredComponent,
+	guild *entities.Guild,
+	regComp *entities.RegisteredComponent,
 ) bool {
 	em := C.EntityManager()
 	guildSpecificStatus, err := em.GuildComponentStatus().Get(guild.ID, regComp.ID)
 	if nil != err {
-		// No database entry = disabled
+		// No entities entry = disabled
 		return false
 	}
 
@@ -93,7 +93,7 @@ func disableComponentForGuild(
 // used to response to a successful module disable command.
 func generateModuleDisableSuccessfulEmbedField(
 	resp *discordgo.InteractionResponseData,
-	comp *database.RegisteredComponent,
+	comp *entities.RegisteredComponent,
 ) {
 	resp.Embeds[0].Fields = []*discordgo.MessageEmbedField{
 		{

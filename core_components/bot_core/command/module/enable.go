@@ -21,7 +21,7 @@ package module
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api/database"
+	"github.com/lazybytez/jojo-discord-bot/api/entities"
 	"github.com/lazybytez/jojo-discord-bot/api/slash_commands"
 )
 
@@ -67,8 +67,8 @@ func handleModuleEnable(
 func enableComponentForGuild(
 	s *discordgo.Session,
 	i *discordgo.InteractionCreate,
-	guild *database.Guild,
-	regComp *database.RegisteredComponent,
+	guild *entities.Guild,
+	regComp *entities.RegisteredComponent,
 	resp *discordgo.InteractionResponseData,
 ) bool {
 	em := C.EntityManager()
@@ -115,7 +115,7 @@ func enableComponentForGuild(
 // used to response to a successful module enable command.
 func generateModuleEnableSuccessfulEmbedField(
 	resp *discordgo.InteractionResponseData,
-	comp *database.RegisteredComponent,
+	comp *entities.RegisteredComponent,
 ) {
 	resp.Embeds[0].Fields = []*discordgo.MessageEmbedField{
 		{

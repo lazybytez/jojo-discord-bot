@@ -16,52 +16,44 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package database
+package entities
 
 import (
 	"fmt"
 	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"gorm.io/gorm"
 	"time"
 )
 
 const GuildComponentStatusEnabledDisplay = ":white_check_mark:"
 const GuildComponentStatusDisabledDisplay = ":x:"
 
+// GuildComponentStatus holds the status of a component on a specific server
+type GuildComponentStatus struct {
+	gorm.Model
+	GuildID     uint                `gorm:"index:idx_guild_component_status_guild_id;index:idx_guild_component_status_guild_id_component_id;"`
+	Guild       Guild               `gorm:"constraint:OnDelete:CASCADE;"`
+	ComponentID uint                `gorm:"index:idx_guild_component_status_component_id;index:idx_guild_component_status_guild_id_component_id;"`
+	Component   RegisteredComponent `gorm:"constraint:OnDelete:CASCADE;"`
+	Enabled     bool
+}
+
 // GuildComponentStatusEntityManager is the GuildCom specific entity manager
-// that allows easy access to guilds in the database.
+// that allows easy access to guilds in the entities.
 type GuildComponentStatusEntityManager struct {
-	em    *GormEntityManager
+	*EntityManager
 	cache *cache.Cache[string, GuildComponentStatus]
 }
 
-// GuildComponentStatusDBAccess is the interface that defines the capabilities
-// of the GuildComponentStatusEntityManager
-type GuildComponentStatusDBAccess interface {
-	// Get tries to get a GuildComponentStatus from the
-	// cache. If no cache entry is present, a request to the database will be made.
-	// If no GuildComponentStatus can be found, the function returns a new empty
-	// GuildComponentStatus.
-	Get(guildId uint, componentId uint) (*Guild, error)
-	// GetDisplay returns the status of a component in a form
-	// that can be directly displayed in Discord.
-	GetDisplay(guildId uint, componentId uint) (string, error)
-	// Update adds or updates a cached item in the GuildComponentStatus cache.
-	Update(guildId string, guild *Guild) error
-
-	// getComponentStatusCacheKey concatenates the passed guild and component ids to create
-	// a new unique cache key for the component status
-	getComponentStatusCacheKey(guildId uint, componentId uint) string
-}
-
 // GuildComponentStatus returns the GuildComponentStatusEntityManager that is currently active,
-// which can be used to do GuildComponentStatus specific database actions.
-func (em *GormEntityManager) GuildComponentStatus() *GuildComponentStatusEntityManager {
-	if nil == em.entityManagers.guildComponentStatusEntityManager {
+// which can be used to do GuildComponentStatus specific entities actions.
+func (em *EntityManager) GuildComponentStatus() *GuildComponentStatusEntityManager {
+	if nil == em.guildComponentStatusEntityManager {
 		gem := &GuildComponentStatusEntityManager{
 			em,
 			cache.New[string, GuildComponentStatus](10 * time.Minute),
 		}
-		em.entityManagers.guildComponentStatusEntityManager = gem
+		em.guildComponentStatusEntityManager = gem
 
 		err := gem.cache.EnableAutoCleanup(10 * time.Minute)
 		if nil != err {
@@ -70,11 +62,11 @@ func (em *GormEntityManager) GuildComponentStatus() *GuildComponentStatusEntityM
 		}
 	}
 
-	return em.entityManagers.guildComponentStatusEntityManager
+	return em.guildComponentStatusEntityManager
 }
 
 // Get tries to get a GuildComponentStatus from the
-// cache. If no cache entry is present, a request to the database will be made.
+// cache. If no cache entry is present, a request to the entities will be made.
 // If no GuildComponentStatus can be found, the function returns a new empty
 // GuildComponentStatus.
 func (gcsem *GuildComponentStatusEntityManager) Get(guildId uint, componentId uint) (*GuildComponentStatus, error) {
@@ -87,12 +79,12 @@ func (gcsem *GuildComponentStatusEntityManager) Get(guildId uint, componentId ui
 
 	regComp := &GuildComponentStatus{}
 	queryStr := ColumnGuild + " = ? AND " + ColumnComponent + " = ?"
-	err := gcsem.em.GetFirstEntity(regComp, queryStr, guildId, componentId)
+	err := gcsem.database.GetFirstEntity(regComp, queryStr, guildId, componentId)
 	if nil != err {
 		return regComp, err
 	}
 
-	gcsem.Update(guildId, componentId, regComp)
+	cache.Update(gcsem.cache, gcsem.getComponentStatusCacheKey(regComp.GuildID, regComp.ComponentID), regComp)
 
 	return regComp, nil
 }
@@ -112,9 +104,55 @@ func (gcsem *GuildComponentStatusEntityManager) GetDisplay(guildId uint, compone
 	return GuildComponentStatusDisabledDisplay, nil
 }
 
-// Update adds or updates a cached item in the GuildComponentStatus cache.
-func (gcsem *GuildComponentStatusEntityManager) Update(guildId uint, componentId uint, component *GuildComponentStatus) {
-	cache.Update(gcsem.cache, gcsem.getComponentStatusCacheKey(guildId, componentId), component)
+// Create saves the passed Guild in the database.
+// Use Update or Save to update an already existing Guild.
+func (gcsem *GuildComponentStatusEntityManager) Create(guildComponentStatus *GuildComponentStatus) error {
+	err := gcsem.database.Create(guildComponentStatus)
+	if nil != err {
+		return err
+	}
+
+	// Ensure entity is in cache when just updated
+	cache.Update(
+		gcsem.cache,
+		gcsem.getComponentStatusCacheKey(guildComponentStatus.GuildID, guildComponentStatus.ComponentID),
+		guildComponentStatus)
+
+	return nil
+}
+
+// Save updates the passed Guild in the database.
+// This does a generic update, use Update to do a precise and more performant update
+// of the entity when only updating a single field!
+func (gcsem *GuildComponentStatusEntityManager) Save(guildComponentStatus *GuildComponentStatus) error {
+	err := gcsem.database.Save(guildComponentStatus)
+	if nil != err {
+		return err
+	}
+
+	// Ensure entity is in cache when just updated
+	cache.Update(
+		gcsem.cache,
+		gcsem.getComponentStatusCacheKey(guildComponentStatus.GuildID, guildComponentStatus.ComponentID),
+		guildComponentStatus)
+
+	return nil
+}
+
+// Update updates the defined field on the entity and saves it in the database.
+func (gcsem *GuildComponentStatusEntityManager) Update(
+	component *GuildComponentStatus,
+	column string,
+	value interface{},
+) error {
+	err := gcsem.database.UpdateEntity(component, column, value)
+	if nil != err {
+		return err
+	}
+
+	cache.Update(gcsem.cache, gcsem.getComponentStatusCacheKey(component.GuildID, component.ComponentID), component)
+
+	return nil
 }
 
 // getComponentStatusCacheKey concatenates the passed guild and component ids to create

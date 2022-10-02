@@ -98,7 +98,7 @@ func IsComponentEnabled(comp *Component, guildId string) bool {
 
 	regComp, err := em.RegisteredComponent().Get(comp.Code)
 	if nil != err {
-		comp.Logger().Warn("Missing component with name \"%v\" in database!", comp.Name)
+		comp.Logger().Warn("Missing component with name \"%v\" in entities!", comp.Name)
 	}
 
 	globalStatus, _ := em.GlobalComponentStatus().Get(regComp.ID)
@@ -107,13 +107,13 @@ func IsComponentEnabled(comp *Component, guildId string) bool {
 	}
 
 	if "" == guildId {
-		comp.Logger().Warn("Missing guild with ID \"%v\" in database!", guildId)
+		comp.Logger().Warn("Missing guild with ID \"%v\" in entities!", guildId)
 
 		return false
 	}
 	guild, err := em.Guilds().Get(guildId)
 	if nil != err {
-		comp.Logger().Warn("Missing guild with ID \"%v\" in database!", comp.Name)
+		comp.Logger().Warn("Missing guild with ID \"%v\" in entities!", comp.Name)
 	}
 
 	guildStatus, _ := em.GuildComponentStatus().Get(guild.ID, regComp.ID)

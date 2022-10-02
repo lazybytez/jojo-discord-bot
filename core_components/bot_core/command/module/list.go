@@ -22,7 +22,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api/database"
+	"github.com/lazybytez/jojo-discord-bot/api/entities"
 	"github.com/lazybytez/jojo-discord-bot/api/slash_commands"
 )
 
@@ -39,7 +39,7 @@ func handleModuleList(
 }
 
 // createComponentStatusListResponse creates an interaction response containing
-// an embed that list all core_components and their status.
+// an embed that list all components and their status.
 // Additionally, a legend is added, that describes the meaning of the different states.
 func createComponentStatusListResponse(compNamesAndStatus string) *discordgo.InteractionResponseData {
 	resp := slash_commands.GenerateInteractionResponseTemplate(
@@ -54,9 +54,9 @@ func createComponentStatusListResponse(compNamesAndStatus string) *discordgo.Int
 		},
 		{
 			Name: "Legend",
-			Value: database.GlobalComponentStatusEnabledDisplay + " - Enabled\n" +
-				database.GuildComponentStatusDisabledDisplay + " - Disabled\n" +
-				database.GlobalComponentStatusDisabledDisplay + " - Globally disabled (Maintenance)",
+			Value: entities.GlobalComponentStatusEnabledDisplay + " - Enabled\n" +
+				entities.GuildComponentStatusDisabledDisplay + " - Disabled\n" +
+				entities.GlobalComponentStatusDisabledDisplay + " - Globally disabled (Maintenance)",
 			Inline: false,
 		},
 	}

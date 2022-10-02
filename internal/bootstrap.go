@@ -20,7 +20,8 @@ package internal
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/api/log"
+	databaseService "github.com/lazybytez/jojo-discord-bot/services/database"
+	"github.com/lazybytez/jojo-discord-bot/services/logger"
 	"os"
 	"os/signal"
 	"syscall"
@@ -28,19 +29,19 @@ import (
 
 const coreLoggerPrefix = "core"
 
-// coreLogger is used for all log entries generated
+// coreLogger is used for all logger entries generated
 // by the internal package. It is the logger for all
 // general purpose and teardown tasks.
-var coreLogger = log.New(coreLoggerPrefix, nil)
+var coreLogger = logger.New(coreLoggerPrefix, nil)
 
 // Bootstrap handles the start of the application.
 // It is responsible to execute the startup sequence
 // and get the application up and running properly.
 func Bootstrap() {
 	initEnv()
-
 	initGorm()
 	createSession(Config.token)
+	api.Init(databaseService.New(database))
 
 	RegisterComponents()
 	LoadComponents(discord)

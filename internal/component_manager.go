@@ -22,23 +22,23 @@ import "C"
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
-	apiDatabase "github.com/lazybytez/jojo-discord-bot/api/database"
-	"github.com/lazybytez/jojo-discord-bot/api/log"
+	apiDatabase "github.com/lazybytez/jojo-discord-bot/api/entities"
+	"github.com/lazybytez/jojo-discord-bot/services/logger"
 )
 
 // logComponentRegistry is the custom component name used
-// to identify log messages from the component management system.
+// to identify logger messages from the component management system.
 const logComponentRegistry = "component_manager"
 
 // componentRegistryLogger is the logger used by the component
 // registration routines. They do not use the coreLogger
-var componentRegistryLogger = log.New(logComponentRegistry, nil)
+var componentRegistryLogger = logger.New(logComponentRegistry, nil)
 
-// RegisterComponents registers all available components in the database
-// and fills the available components in the database API, to provide
+// RegisterComponents registers all available components in the entities
+// and fills the available components in the entities API, to provide
 // a unified API to get component information.
 func RegisterComponents() {
-	componentRegistryLogger.Info("Registering components in database...")
+	componentRegistryLogger.Info("Registering core_components in entities...")
 	em := apiDatabase.GetEntityManager()
 	for _, component := range api.Components {
 		registeredComponent, err := em.RegisteredComponent().Get(component.Code)
@@ -52,7 +52,7 @@ func RegisterComponents() {
 			err := em.Create(registeredComponent)
 			if nil != err {
 				componentRegistryLogger.Warn(
-					"Failed to register component with code \"%v\" in database!",
+					"Failed to register component with code \"%v\" in entities!",
 					registeredComponent.Code)
 			}
 
@@ -81,7 +81,7 @@ func RegisterComponents() {
 			err := em.Save(registeredComponent)
 			if nil != err {
 				componentRegistryLogger.Warn(
-					"Failed to update registered component for component with code \"%v\" in database!",
+					"Failed to update registered component for component with code \"%v\" in entities!",
 					registeredComponent.Code)
 			}
 		}
@@ -95,7 +95,7 @@ func RegisterComponents() {
 // all components listed in the Components array.
 //
 // When it is not possible to register a component,
-// an error will be printed into the log.
+// an error will be printed into the logger.
 // The application will continue to run as nothing happened.
 func LoadComponents(discord *discordgo.Session) {
 	componentRegistryLogger.Info("Starting component load sequence...")

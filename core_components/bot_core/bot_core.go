@@ -27,7 +27,7 @@ var C = api.Component{
 	// Metadata
 	Code:         "bot_core",
 	Name:         "Bot Core",
-	Description:  "This component handles core routines and database management.",
+	Description:  "This component handles core routines and entities management.",
 	LoadPriority: 1000,
 
 	State: &api.State{
@@ -50,18 +50,18 @@ func LoadComponent(_ *discordgo.Session) error {
 	_, _ = C.HandlerManager().Register("update_registered_guilds", handleGuildUpdateOnUpdate)
 
 	// We need to handle the JOJO command special as it needs access to the component list.
-	// This is only possible after the API has been properly initialized and the core_components.Components
+	// This is only possible after the API has been properly initialized and the components.Components
 	// list has been accessed once.
 	//
 	// Therefore, we configure and register the command when this core component is
-	// loaded, as at this point the API should know the core_components too.
+	// loaded, as at this point the API should know the components too.
 	initAndRegisterJojoCommand()
 
 	return nil
 }
 
 // initializeComponentManagement initializes the component management
-// by populating the database with necessary data and pre-warming the cache.
+// by populating the entities with necessary data and pre-warming the cache.
 func initializeComponentManagement() {
 	registerAvailableComponents()
 	ensureGlobalComponentStatusExists()

@@ -20,14 +20,14 @@ package bot_core
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api/database"
+	"github.com/lazybytez/jojo-discord-bot/api/entities"
 	"strconv"
 )
 
 // handleGuildRegisterOnJoin is triggered when the bot joins a guild.
 //
 // It ensures that every guild that isn't already known is registered
-// in the database. It also keeps the name of the guild updated.
+// in the entities. It also keeps the name of the guild updated.
 func handleGuildRegisterOnJoin(_ *discordgo.Session, g *discordgo.GuildCreate) {
 	guildId, err := strconv.ParseUint(g.ID, 10, 64)
 	if nil != err {
@@ -37,7 +37,7 @@ func handleGuildRegisterOnJoin(_ *discordgo.Session, g *discordgo.GuildCreate) {
 	}
 	em := C.EntityManager()
 
-	var guild *database.Guild
+	var guild *entities.Guild
 	guild, err = em.Guilds().Get(g.ID)
 	if nil != err {
 		guild.GuildID = guildId
@@ -45,16 +45,16 @@ func handleGuildRegisterOnJoin(_ *discordgo.Session, g *discordgo.GuildCreate) {
 
 		err = em.Create(&guild)
 		if nil != err {
-			C.Logger().Warn("Failed to create guild with ID \"%v\" in database!", g.ID)
+			C.Logger().Warn("Failed to create guild with ID \"%v\" in entities!", g.ID)
 		}
 
 		return
 	}
 
 	if guild.Name != g.Name {
-		err = em.UpdateEntity(&guild, database.ColumnName, g.Name)
+		err = em.UpdateEntity(&guild, entities.ColumnName, g.Name)
 		if nil != err {
-			C.Logger().Warn("Failed to update guild with ID \"%v\" in database!", g.ID)
+			C.Logger().Warn("Failed to update guild with ID \"%v\" in entities!", g.ID)
 		}
 	}
 }
@@ -66,12 +66,12 @@ func handleCommandSyncOnGuildJoin(session *discordgo.Session, g *discordgo.Guild
 }
 
 // handleGuildUpdateOnUpdate cares about updating the stored guild name
-// in the database.
+// in the entities.
 func handleGuildUpdateOnUpdate(_ *discordgo.Session, g *discordgo.GuildUpdate) {
 	em := C.EntityManager()
 	guild, err := em.Guilds().Get(g.ID)
 	if err != nil {
-		C.Logger().Warn("Could not update guild with ID \"%v\" named \"%v\" as it is missing in database!",
+		C.Logger().Warn("Could not update guild with ID \"%v\" named \"%v\" as it is missing in entities!",
 			g.ID,
 			g.Name)
 		return
@@ -81,12 +81,12 @@ func handleGuildUpdateOnUpdate(_ *discordgo.Session, g *discordgo.GuildUpdate) {
 }
 
 // updateGuildOnNameChange updates the name of the passed Guild
-// in the database, if the name changed.
-func updateGuildOnNameChange(em database.EntityManager, guild *database.Guild, g *discordgo.GuildUpdate) {
+// in the entities, if the name changed.
+func updateGuildOnNameChange(em entities.EntityManager, guild *entities.Guild, g *discordgo.GuildUpdate) {
 	if guild.Name != g.Name {
-		err := em.UpdateEntity(&guild, database.ColumnName, g.Name)
+		err := em.UpdateEntity(&guild, entities.ColumnName, g.Name)
 		if nil != err {
-			C.Logger().Warn("Failed to update guild with ID \"%v\" in database!", g.ID)
+			C.Logger().Warn("Failed to update guild with ID \"%v\" in entities!", g.ID)
 		}
 	}
 }

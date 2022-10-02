@@ -22,25 +22,25 @@ import (
 	"gorm.io/gorm"
 )
 
-// GormDatabaseAccessor is a container struct that holds the
-// gorm.DB instance to use for database interaction.
-type GormDatabaseAccessor struct {
+// GormDatabaseAccess is a container struct that holds the
+// gorm.DB instance to use for entities interaction.
+type GormDatabaseAccess struct {
 	database *gorm.DB
 }
 
-// New creates a new GormDatabaseAccessor instance for the database API
+// New creates a new GormDatabaseAccess instance for the entities API
 // and register default entity types that are managed by
 // the bot core.
-func New(db *gorm.DB) *GormDatabaseAccessor {
-	return &GormDatabaseAccessor{
+func New(db *gorm.DB) *GormDatabaseAccess {
+	return &GormDatabaseAccess{
 		db,
 	}
 }
 
 // RegisterEntity registers a new entity (struct) and runs its automated
-// migration to ensure the database schema is up-to-date.
-func (em *GormDatabaseAccessor) RegisterEntity(entityType interface{}) error {
-	err := em.database.AutoMigrate(entityType)
+// migration to ensure the entities schema is up-to-date.
+func (gda *GormDatabaseAccess) RegisterEntity(entityType interface{}) error {
+	err := gda.database.AutoMigrate(entityType)
 	if nil != err {
 		return err
 	}
@@ -52,42 +52,42 @@ func (em *GormDatabaseAccessor) RegisterEntity(entityType interface{}) error {
 // found entity matching the passed conditions.
 //
 // Returns an error if no record could be found.
-func (em *GormDatabaseAccessor) GetFirstEntity(entityContainer interface{}, conditions ...interface{}) error {
-	return em.database.First(entityContainer, conditions...).Error
+func (gda *GormDatabaseAccess) GetFirstEntity(entityContainer interface{}, conditions ...interface{}) error {
+	return gda.database.First(entityContainer, conditions...).Error
 }
 
 // GetLastEntity fills the passed entity container with the last
 // found entity matching the passed conditions.
 //
 // Returns false if no entries could be found.
-func (em *GormDatabaseAccessor) GetLastEntity(entityContainer interface{}, conditions ...interface{}) error {
-	return em.database.Last(entityContainer, conditions...).Error
+func (gda *GormDatabaseAccess) GetLastEntity(entityContainer interface{}, conditions ...interface{}) error {
+	return gda.database.Last(entityContainer, conditions...).Error
 }
 
 // GetEntities fills the passed entities slice with the entities
 // that have been found for the specified condition.
-func (em *GormDatabaseAccessor) GetEntities(entities interface{}, conditions ...interface{}) error {
-	return em.database.Find(entities, conditions...).Error
+func (gda *GormDatabaseAccess) GetEntities(entities interface{}, conditions ...interface{}) error {
+	return gda.database.Find(entities, conditions...).Error
 }
 
-// Create creates the passed entity in the database
-func (em *GormDatabaseAccessor) Create(entity interface{}) error {
-	return em.database.Create(entity).Error
+// Create creates the passed entity in the entities
+func (gda *GormDatabaseAccess) Create(entity interface{}) error {
+	return gda.database.Create(entity).Error
 }
 
-// Save upserts the passed entity in the database
-func (em *GormDatabaseAccessor) Save(entity interface{}) error {
-	return em.database.Save(entity).Error
+// Save upserts the passed entity in the entities
+func (gda *GormDatabaseAccess) Save(entity interface{}) error {
+	return gda.database.Save(entity).Error
 }
 
-// UpdateEntity can be used to update the passed entity in the database
-func (em *GormDatabaseAccessor) UpdateEntity(entityContainer interface{}, column string, value interface{}) error {
-	return em.database.Model(entityContainer).Update(column, value).Error
+// UpdateEntity can be used to update the passed entity in the entities
+func (gda *GormDatabaseAccess) UpdateEntity(entityContainer interface{}, column string, value interface{}) error {
+	return gda.database.Model(entityContainer).Update(column, value).Error
 }
 
-// DeleteEntity deletes the passed entity from the database.
-func (em *GormDatabaseAccessor) DeleteEntity(entityContainer interface{}) error {
-	return em.database.Delete(entityContainer).Error
+// DeleteEntity deletes the passed entity from the entities.
+func (gda *GormDatabaseAccess) DeleteEntity(entityContainer interface{}) error {
+	return gda.database.Delete(entityContainer).Error
 }
 
 // WorkOn returns a gorm.DB pointer that allows to do a custom search or actions on entities.
@@ -95,6 +95,11 @@ func (em *GormDatabaseAccessor) DeleteEntity(entityContainer interface{}) error 
 // The returned gorm.DB instance is created by using gorm.DB.Model() and is therefore
 // already prepared to get started with applying filters.
 // This function is the only interface point to get direct access to gorm.DB
-func (em *GormDatabaseAccessor) WorkOn(entityContainer interface{}) *gorm.DB {
-	return em.database.Model(entityContainer)
+func (gda *GormDatabaseAccess) WorkOn(entityContainer interface{}) *gorm.DB {
+	return gda.database.Model(entityContainer)
+}
+
+// DB returns the gorm.DB instance used by the entities api.
+func (gda *GormDatabaseAccess) DB() *gorm.DB {
+	return gda.database
 }

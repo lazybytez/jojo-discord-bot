@@ -16,24 +16,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package util
+package api
 
-import (
-	"reflect"
-	"strings"
-)
-
-// ExtractTypeName extracts the type name of the struct/interface of an variable.
+// Init initializes the api.
 //
-// This means, something like: *entities.Guild
-// Results in: Guild
-func ExtractTypeName(t interface{}) string {
-	typeName := strings.TrimPrefix(reflect.TypeOf(t).String(), "*")
+// This covers initializing the following parts:
+//   - entities api
+//   - entity management
+func Init(dba DatabaseAccess) {
+	entityManager = dba
 
-	_, after, ok := strings.Cut(typeName, ".")
-	if !ok {
-		return typeName
-	}
-
-	return after
+	entities.In
 }

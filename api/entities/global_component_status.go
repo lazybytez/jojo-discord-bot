@@ -16,48 +16,42 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package database
+package entities
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"gorm.io/gorm"
 	"time"
 )
 
 const GlobalComponentStatusEnabledDisplay = ":white_check_mark:"
 const GlobalComponentStatusDisabledDisplay = ":no_entry:"
 
+// GlobalComponentStatus holds the status of a component in the global context.
+// This allows disabling a bugging component globally if necessary.
+type GlobalComponentStatus struct {
+	gorm.Model
+	ComponentID uint                `gorm:"index:idx_global_component_status_component_id;"`
+	Component   RegisteredComponent `gorm:"constraint:OnDelete:CASCADE;"`
+	Enabled     bool
+}
+
 // GlobalComponentStatusEntityManager is the GlobalComponentStatus specific entity manager
-// that allows easy access to global component status in the database.
+// that allows easy access to global component status in the entities.
 type GlobalComponentStatusEntityManager struct {
-	em    *GormEntityManager
+	*EntityManager
 	cache *cache.Cache[uint, GlobalComponentStatus]
 }
 
-// GlobalComponentStatusDBAccess is the interface that defines the capabilities
-// of the GlobalComponentStatusEntityManager
-type GlobalComponentStatusDBAccess interface {
-	// Get tries to get a GlobalComponentStatus from the
-	// cache. If no cache entry is present, a request to the database will be made.
-	// If no GlobalComponentStatus can be found, the function returns a new empty
-	// GlobalComponentStatus.
-	Get(globalComponentStatusId uint) (*GlobalComponentStatus, error)
-	// GetDisplayString returns the string that indicates whether a component is
-	// enabled or disabled globally. The string can directly being used to print
-	// out messages in Discord.
-	GetDisplayString(globalComponentStatusId uint) (string, error)
-	// Update adds or updates a cached item in the GlobalComponentStatusDBAccess cache.
-	Update(globalComponentStatusId string, globalComponentStatus *GlobalComponentStatus) error
-}
-
 // GlobalComponentStatus returns the GlobalComponentStatusEntityManager that is currently active,
-// which can be used to do GlobalComponentStatus specific database actions.
-func (em *GormEntityManager) GlobalComponentStatus() *GlobalComponentStatusEntityManager {
-	if nil == em.entityManagers.globalComponentStatusEntityManager {
+// which can be used to do GlobalComponentStatus specific entities actions.
+func (em *EntityManager) GlobalComponentStatus() *GlobalComponentStatusEntityManager {
+	if nil == em.globalComponentStatusEntityManager {
 		gem := &GlobalComponentStatusEntityManager{
 			em,
 			cache.New[uint, GlobalComponentStatus](10 * time.Minute),
 		}
-		em.entityManagers.globalComponentStatusEntityManager = gem
+		em.globalComponentStatusEntityManager = gem
 
 		err := gem.cache.EnableAutoCleanup(10 * time.Minute)
 		if nil != err {
@@ -66,7 +60,7 @@ func (em *GormEntityManager) GlobalComponentStatus() *GlobalComponentStatusEntit
 		}
 	}
 
-	return em.entityManagers.globalComponentStatusEntityManager
+	return em.globalComponentStatusEntityManager
 }
 
 // GetDisplayString returns the string that indicates whether a component is
@@ -86,7 +80,7 @@ func (gem *GlobalComponentStatusEntityManager) GetDisplayString(globalComponentS
 }
 
 // Get tries to get a GlobalComponentStatus from the
-// cache. If no cache entry is present, a request to the database will be made.
+// cache. If no cache entry is present, a request to the entities will be made.
 // If no GlobalComponentStatus can be found, the function returns a new empty
 // GlobalComponentStatus.
 func (gem *GlobalComponentStatusEntityManager) Get(globalComponentStatusId uint) (*GlobalComponentStatus, error) {
@@ -97,20 +91,58 @@ func (gem *GlobalComponentStatusEntityManager) Get(globalComponentStatusId uint)
 	}
 
 	globalCompStatus := &GlobalComponentStatus{}
-	err := gem.em.GetFirstEntity(globalCompStatus, ColumnComponent+" = ?", globalComponentStatusId)
+	err := gem.database.GetFirstEntity(globalCompStatus, ColumnComponent+" = ?", globalComponentStatusId)
 	if nil != err {
 		return globalCompStatus, err
 	}
 
-	gem.Update(globalComponentStatusId, globalCompStatus)
+	cache.Update(gem.cache, globalCompStatus.ID, globalCompStatus)
 
 	return globalCompStatus, err
 }
 
-// Update adds or updates a cached item in the GlobalComponentStatus cache.
+// Create saves the passed GlobalComponentStatus in the database.
+// Use Update or Save to update an already existing GlobalComponentStatus.
+func (gem *GlobalComponentStatusEntityManager) Create(globalComponentStatus *GlobalComponentStatus) error {
+	err := gem.database.Create(globalComponentStatus)
+	if nil != err {
+		return err
+	}
+
+	// Ensure entity is in cache when just updated
+	cache.Update(gem.cache, globalComponentStatus.ID, globalComponentStatus)
+
+	return nil
+}
+
+// Save updates the passed GlobalComponentStatus in the database.
+// This does a generic update, use Update to do a precise and more performant update
+// of the entity when only updating a single field!
+func (gem *GlobalComponentStatusEntityManager) Save(globalComponentStatus *GlobalComponentStatus) error {
+	err := gem.database.Save(globalComponentStatus)
+	if nil != err {
+		return err
+	}
+
+	// Ensure entity is in cache when just updated
+	cache.Update(gem.cache, globalComponentStatus.ID, globalComponentStatus)
+
+	return nil
+}
+
+// Update updates the defined field on the entity and saves it in the database.
 func (gem *GlobalComponentStatusEntityManager) Update(
-	globalComponentStatusId uint,
 	globalComponentStatus *GlobalComponentStatus,
-) {
-	cache.Update(gem.cache, globalComponentStatusId, globalComponentStatus)
+	column string,
+	value interface{},
+) error {
+	err := gem.database.UpdateEntity(globalComponentStatus, column, value)
+	if nil != err {
+		return err
+	}
+
+	// Ensure entity is in cache when just updated
+	cache.Update(gem.cache, globalComponentStatus.ID, globalComponentStatus)
+
+	return nil
 }
