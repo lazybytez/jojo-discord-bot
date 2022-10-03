@@ -20,6 +20,7 @@ package bot_core
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/entities"
 	"strconv"
 )
@@ -43,7 +44,7 @@ func handleGuildRegisterOnJoin(_ *discordgo.Session, g *discordgo.GuildCreate) {
 		guild.GuildID = guildId
 		guild.Name = g.Name
 
-		err = em.Create(&guild)
+		err = em.Guilds().Create(guild)
 		if nil != err {
 			C.Logger().Warn("Failed to create guild with ID \"%v\" in entities!", g.ID)
 		}
@@ -52,7 +53,7 @@ func handleGuildRegisterOnJoin(_ *discordgo.Session, g *discordgo.GuildCreate) {
 	}
 
 	if guild.Name != g.Name {
-		err = em.UpdateEntity(&guild, entities.ColumnName, g.Name)
+		err = em.Guilds().Update(guild, entities.ColumnName, g.Name)
 		if nil != err {
 			C.Logger().Warn("Failed to update guild with ID \"%v\" in entities!", g.ID)
 		}
@@ -82,9 +83,9 @@ func handleGuildUpdateOnUpdate(_ *discordgo.Session, g *discordgo.GuildUpdate) {
 
 // updateGuildOnNameChange updates the name of the passed Guild
 // in the entities, if the name changed.
-func updateGuildOnNameChange(em entities.EntityManager, guild *entities.Guild, g *discordgo.GuildUpdate) {
+func updateGuildOnNameChange(em *api.EntityManager, guild *entities.Guild, g *discordgo.GuildUpdate) {
 	if guild.Name != g.Name {
-		err := em.UpdateEntity(&guild, entities.ColumnName, g.Name)
+		err := em.Guilds().Update(guild, entities.ColumnName, g.Name)
 		if nil != err {
 			C.Logger().Warn("Failed to update guild with ID \"%v\" in entities!", g.ID)
 		}

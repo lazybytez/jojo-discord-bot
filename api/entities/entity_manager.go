@@ -19,65 +19,24 @@
 package entities
 
 import (
-	"github.com/lazybytez/jojo-discord-bot/api/util"
 	"github.com/lazybytez/jojo-discord-bot/services"
 )
 
-// defaultEntities holds a list of all entities that should be
-// registered by default. The list is registered in the order
-// the entities are added to the list.
-var defaultEntities = []interface{}{
-	&Guild{},
-	&RegisteredComponent{},
-	&GlobalComponentStatus{},
-	&GuildComponentStatus{},
-}
-
-// EntityManager is a struct embedded by GormDatabaseAccessor
-// that holds the instances of the entity specific entity managers
-type EntityManager struct {
-	database services.DatabaseAccess
-	logger   services.Logger
-
-	guild                              *GuildEntityManager
-	globalComponentStatusEntityManager *GlobalComponentStatusEntityManager
-	registeredComponentEntityManager   *RegisteredComponentEntityManager
-	guildComponentStatusEntityManager  *GuildComponentStatusEntityManager
-}
-
-// NewEntityManager creates a new EntityManager using the given services.Logger and
-// services.DatabaseAccess instances.
-func NewEntityManager(database services.DatabaseAccess, logger services.Logger) EntityManager {
-	return EntityManager{
-		database: database,
-		logger:   logger,
-	}
-}
-
-// RegisterEntity registers a new entity (struct) and runs its automated
-// migration to ensure the entities schema is up-to-date.
-func (em *EntityManager) RegisterEntity(entityType interface{}) error {
-	err := em.database.RegisterEntity(entityType)
-	if nil != err {
-		em.logger.Err(err, "Failed to auto-migrated entity \"%v\"", util.ExtractTypeName(entityType))
-
-		return err
-	}
-
-	em.logger.Info("Auto-migrated entity \"%v\"", util.ExtractTypeName(entityType))
-
-	return nil
-}
-
-// registerDefaultEntities takes care of letting gorm
-// know about all entities in this file.
-func registerDefaultEntities(em EntityManager) error {
-	for _, entity := range defaultEntities {
-		err := em.RegisterEntity(entity)
-		if nil != err {
-			return err
-		}
-	}
-
-	return nil
+// EntityManager contains methods that allow to retrieve
+// entity specific entity managers that provide caching and dedicated functions
+// to work with specific entities.
+// The entity specific managers allow to perform CRUD operations.
+//
+// Additionally, the main entity manager allows to register (auto migrate)
+type EntityManager interface {
+	// RegisterEntity registers a new entity (struct) and runs its automated
+	// migration to ensure the entities schema is up-to-date.
+	RegisterEntity(entityType interface{}) error
+	// DB returns the current services.DatabaseAccess instance that
+	// wraps gorm.DB and allows lower level database access.
+	// Note that it is highly recommended to depend on methods of the
+	// entity specific managers instead of services.DatabaseAccess.
+	DB() services.DatabaseAccess
+	// Logger returns the services.Logger of the EntityManager.
+	Logger() services.Logger
 }

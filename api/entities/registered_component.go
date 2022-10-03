@@ -46,25 +46,19 @@ type RegisteredComponent struct {
 // RegisteredComponentEntityManager is the RegisteredComponent specific entity manager
 // that allows easy access to global component status in the entities.
 type RegisteredComponentEntityManager struct {
-	*EntityManager
+	EntityManager
 
 	cache               *cache.Cache[string, RegisteredComponent]
 	availableComponents []string
 }
 
-// RegisteredComponent returns the RegisteredComponentEntityManager that is currently active,
-// which can be used to do RegisteredComponent specific entities actions.
-func (em *EntityManager) RegisteredComponent() *RegisteredComponentEntityManager {
-	if nil == em.registeredComponentEntityManager {
-		rgem := &RegisteredComponentEntityManager{
-			em,
-			cache.New[string, RegisteredComponent](10 * time.Minute),
-			make([]string, 0),
-		}
-		em.registeredComponentEntityManager = rgem
+// NewRegisteredComponentEntityManager creates a new RegisteredComponentEntityManager.
+func NewRegisteredComponentEntityManager(entityManager EntityManager) *RegisteredComponentEntityManager {
+	return &RegisteredComponentEntityManager{
+		entityManager,
+		cache.New[string, RegisteredComponent](10 * time.Minute),
+		make([]string, 0),
 	}
-
-	return em.registeredComponentEntityManager
 }
 
 // Get tries to get a RegisteredComponent from the
@@ -79,7 +73,7 @@ func (rgem *RegisteredComponentEntityManager) Get(registeredComponentCode string
 	}
 
 	regComp := &RegisteredComponent{}
-	err := rgem.database.GetFirstEntity(regComp, "code = ?", registeredComponentCode)
+	err := rgem.DB().GetFirstEntity(regComp, "code = ?", registeredComponentCode)
 	if nil != err {
 		return regComp, err
 	}
@@ -109,7 +103,7 @@ func (rgem *RegisteredComponentEntityManager) GetAvailable() []*RegisteredCompon
 // Create saves the passed RegisteredComponent in the database.
 // Use Update or Save to update an already existing RegisteredComponent.
 func (rgem *RegisteredComponentEntityManager) Create(regComp *RegisteredComponent) error {
-	err := rgem.database.Create(regComp)
+	err := rgem.DB().Create(regComp)
 	if nil != err {
 		return err
 	}
@@ -124,7 +118,7 @@ func (rgem *RegisteredComponentEntityManager) Create(regComp *RegisteredComponen
 // This does a generic update, use Update to do a precise and more performant update
 // of the entity when only updating a single field!
 func (rgem *RegisteredComponentEntityManager) Save(regComp *RegisteredComponent) error {
-	err := rgem.database.Save(regComp)
+	err := rgem.DB().Save(regComp)
 	if nil != err {
 		return err
 	}
@@ -137,7 +131,7 @@ func (rgem *RegisteredComponentEntityManager) Save(regComp *RegisteredComponent)
 
 // Update updates the defined field on the entity and saves it in the database.
 func (rgem *RegisteredComponentEntityManager) Update(regComp *RegisteredComponent, column string, value interface{}) error {
-	err := rgem.database.UpdateEntity(regComp, column, value)
+	err := rgem.DB().UpdateEntity(regComp, column, value)
 	if nil != err {
 		return err
 	}

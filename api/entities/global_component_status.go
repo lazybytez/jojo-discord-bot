@@ -39,28 +39,47 @@ type GlobalComponentStatus struct {
 // GlobalComponentStatusEntityManager is the GlobalComponentStatus specific entity manager
 // that allows easy access to global component status in the entities.
 type GlobalComponentStatusEntityManager struct {
-	*EntityManager
+	EntityManager
+
 	cache *cache.Cache[uint, GlobalComponentStatus]
 }
 
-// GlobalComponentStatus returns the GlobalComponentStatusEntityManager that is currently active,
-// which can be used to do GlobalComponentStatus specific entities actions.
-func (em *EntityManager) GlobalComponentStatus() *GlobalComponentStatusEntityManager {
-	if nil == em.globalComponentStatusEntityManager {
-		gem := &GlobalComponentStatusEntityManager{
-			em,
-			cache.New[uint, GlobalComponentStatus](10 * time.Minute),
-		}
-		em.globalComponentStatusEntityManager = gem
-
-		err := gem.cache.EnableAutoCleanup(10 * time.Minute)
-		if nil != err {
-			em.logger.Err(err, "Failed to initialize periodic cache cleanup task "+
-				"for GlobalComponmentStatus entity manager!")
-		}
+// NewGlobalComponentStatusEntityManager creates a new GlobalComponentStatusEntityManager.
+func NewGlobalComponentStatusEntityManager(entityManager EntityManager) *GlobalComponentStatusEntityManager {
+	gem := &GlobalComponentStatusEntityManager{
+		entityManager,
+		cache.New[uint, GlobalComponentStatus](10 * time.Minute),
 	}
 
-	return em.globalComponentStatusEntityManager
+	err := gem.cache.EnableAutoCleanup(10 * time.Minute)
+	if nil != err {
+		entityManager.Logger().Err(err, "Failed to initialize periodic cache cleanup task "+
+			"for GlobalComponmentStatus entity manager!")
+	}
+
+	return gem
+}
+
+// Get tries to get a GlobalComponentStatus from the
+// cache. If no cache entry is present, a request to the entities will be made.
+// If no GlobalComponentStatus can be found, the function returns a new empty
+// GlobalComponentStatus.
+func (gem *GlobalComponentStatusEntityManager) Get(globalComponentStatusId uint) (*GlobalComponentStatus, error) {
+	comp, ok := cache.Get(gem.cache, globalComponentStatusId)
+
+	if ok {
+		return comp, nil
+	}
+
+	globalCompStatus := &GlobalComponentStatus{}
+	err := gem.DB().GetFirstEntity(globalCompStatus, ColumnComponent+" = ?", globalComponentStatusId)
+	if nil != err {
+		return globalCompStatus, err
+	}
+
+	cache.Update(gem.cache, globalCompStatus.ID, globalCompStatus)
+
+	return globalCompStatus, err
 }
 
 // GetDisplayString returns the string that indicates whether a component is
@@ -79,32 +98,10 @@ func (gem *GlobalComponentStatusEntityManager) GetDisplayString(globalComponentS
 	return GlobalComponentStatusDisabledDisplay, nil
 }
 
-// Get tries to get a GlobalComponentStatus from the
-// cache. If no cache entry is present, a request to the entities will be made.
-// If no GlobalComponentStatus can be found, the function returns a new empty
-// GlobalComponentStatus.
-func (gem *GlobalComponentStatusEntityManager) Get(globalComponentStatusId uint) (*GlobalComponentStatus, error) {
-	comp, ok := cache.Get(gem.cache, globalComponentStatusId)
-
-	if ok {
-		return comp, nil
-	}
-
-	globalCompStatus := &GlobalComponentStatus{}
-	err := gem.database.GetFirstEntity(globalCompStatus, ColumnComponent+" = ?", globalComponentStatusId)
-	if nil != err {
-		return globalCompStatus, err
-	}
-
-	cache.Update(gem.cache, globalCompStatus.ID, globalCompStatus)
-
-	return globalCompStatus, err
-}
-
 // Create saves the passed GlobalComponentStatus in the database.
 // Use Update or Save to update an already existing GlobalComponentStatus.
 func (gem *GlobalComponentStatusEntityManager) Create(globalComponentStatus *GlobalComponentStatus) error {
-	err := gem.database.Create(globalComponentStatus)
+	err := gem.DB().Create(globalComponentStatus)
 	if nil != err {
 		return err
 	}
@@ -119,7 +116,7 @@ func (gem *GlobalComponentStatusEntityManager) Create(globalComponentStatus *Glo
 // This does a generic update, use Update to do a precise and more performant update
 // of the entity when only updating a single field!
 func (gem *GlobalComponentStatusEntityManager) Save(globalComponentStatus *GlobalComponentStatus) error {
-	err := gem.database.Save(globalComponentStatus)
+	err := gem.DB().Save(globalComponentStatus)
 	if nil != err {
 		return err
 	}
@@ -136,7 +133,7 @@ func (gem *GlobalComponentStatusEntityManager) Update(
 	column string,
 	value interface{},
 ) error {
-	err := gem.database.UpdateEntity(globalComponentStatus, column, value)
+	err := gem.DB().UpdateEntity(globalComponentStatus, column, value)
 	if nil != err {
 		return err
 	}

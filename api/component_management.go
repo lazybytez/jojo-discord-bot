@@ -95,7 +95,6 @@ func IsComponentEnabled(comp *Component, guildId string) bool {
 	}
 
 	em := comp.EntityManager()
-
 	regComp, err := em.RegisteredComponent().Get(comp.Code)
 	if nil != err {
 		comp.Logger().Warn("Missing component with name \"%v\" in entities!", comp.Name)

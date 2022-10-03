@@ -79,7 +79,7 @@ func enableComponentForGuild(
 		guildSpecificStatus.Guild = *guild
 		guildSpecificStatus.Enabled = true
 
-		err = em.Create(guildSpecificStatus)
+		err = em.GuildComponentStatus().Create(guildSpecificStatus)
 		if nil != err {
 			C.Logger().Warn("Could not create guild component status for component \"%v\" on guild \"%v\"",
 				regComp.Code,
@@ -99,7 +99,7 @@ func enableComponentForGuild(
 	}
 
 	guildSpecificStatus.Enabled = true
-	err = em.Save(guildSpecificStatus)
+	err = em.GuildComponentStatus().Save(guildSpecificStatus)
 	if nil != err {
 		C.Logger().Warn("Could not update guild component status for component \"%v\" on guild \"%v\"",
 			regComp.Code,

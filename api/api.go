@@ -23,8 +23,12 @@ package api
 // This covers initializing the following parts:
 //   - entities api
 //   - entity management
-func Init(dba DatabaseAccess) {
-	entityManager = dba
+func Init(em EntityManager) error {
+	entityManager = em
+	err := entityManager.RegisterDefaultEntities()
+	if err != nil {
+		return err
+	}
 
-	entities.In
+	return nil
 }

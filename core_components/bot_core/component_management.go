@@ -45,7 +45,7 @@ func ensureGlobalComponentStatusExists() {
 			globalComponentStatus.Component = *registeredComponent
 			globalComponentStatus.Enabled = true
 
-			err := C.EntityManager().Create(globalComponentStatus)
+			err := C.EntityManager().GlobalComponentStatus().Create(globalComponentStatus)
 			if err != nil {
 				C.Logger().Warn(
 					"Failed to global component status for component \"%v\" in entities!",

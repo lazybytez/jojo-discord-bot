@@ -20,7 +20,6 @@ package internal
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api"
-	databaseService "github.com/lazybytez/jojo-discord-bot/services/database"
 	"github.com/lazybytez/jojo-discord-bot/services/logger"
 	"os"
 	"os/signal"
@@ -41,7 +40,7 @@ func Bootstrap() {
 	initEnv()
 	initGorm()
 	createSession(Config.token)
-	api.Init(databaseService.New(database))
+	initApi()
 
 	RegisterComponents()
 	LoadComponents(discord)
@@ -52,6 +51,15 @@ func Bootstrap() {
 	}
 
 	waitForTerminate()
+}
+
+// initApi prepares the API to be used by components.
+// This includes for example the initialization of the entity manager.
+func initApi() {
+	err := api.Init(CreateEntityManager())
+	if nil != err {
+		ExitFatalGracefully("Failed to initialize API!")
+	}
 }
 
 // waitForTerminate blocks the console and waits

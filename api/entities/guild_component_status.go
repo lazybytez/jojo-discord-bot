@@ -41,28 +41,25 @@ type GuildComponentStatus struct {
 // GuildComponentStatusEntityManager is the GuildCom specific entity manager
 // that allows easy access to guilds in the entities.
 type GuildComponentStatusEntityManager struct {
-	*EntityManager
+	EntityManager
+
 	cache *cache.Cache[string, GuildComponentStatus]
 }
 
-// GuildComponentStatus returns the GuildComponentStatusEntityManager that is currently active,
-// which can be used to do GuildComponentStatus specific entities actions.
-func (em *EntityManager) GuildComponentStatus() *GuildComponentStatusEntityManager {
-	if nil == em.guildComponentStatusEntityManager {
-		gem := &GuildComponentStatusEntityManager{
-			em,
-			cache.New[string, GuildComponentStatus](10 * time.Minute),
-		}
-		em.guildComponentStatusEntityManager = gem
-
-		err := gem.cache.EnableAutoCleanup(10 * time.Minute)
-		if nil != err {
-			em.logger.Err(err, "Failed to initialize periodic cache cleanup task "+
-				"for GuildComponentStatus entity manager!")
-		}
+// NewGuildComponentStatusEntityManager creates a new GuildComponentStatusEntityManager.
+func NewGuildComponentStatusEntityManager(entityManager EntityManager) *GuildComponentStatusEntityManager {
+	gem := &GuildComponentStatusEntityManager{
+		entityManager,
+		cache.New[string, GuildComponentStatus](10 * time.Minute),
 	}
 
-	return em.guildComponentStatusEntityManager
+	err := gem.cache.EnableAutoCleanup(10 * time.Minute)
+	if nil != err {
+		entityManager.Logger().Err(err, "Failed to initialize periodic cache cleanup task "+
+			"for GuildComponentStatus entity manager!")
+	}
+
+	return gem
 }
 
 // Get tries to get a GuildComponentStatus from the
@@ -79,7 +76,7 @@ func (gcsem *GuildComponentStatusEntityManager) Get(guildId uint, componentId ui
 
 	regComp := &GuildComponentStatus{}
 	queryStr := ColumnGuild + " = ? AND " + ColumnComponent + " = ?"
-	err := gcsem.database.GetFirstEntity(regComp, queryStr, guildId, componentId)
+	err := gcsem.DB().GetFirstEntity(regComp, queryStr, guildId, componentId)
 	if nil != err {
 		return regComp, err
 	}
@@ -107,7 +104,7 @@ func (gcsem *GuildComponentStatusEntityManager) GetDisplay(guildId uint, compone
 // Create saves the passed Guild in the database.
 // Use Update or Save to update an already existing Guild.
 func (gcsem *GuildComponentStatusEntityManager) Create(guildComponentStatus *GuildComponentStatus) error {
-	err := gcsem.database.Create(guildComponentStatus)
+	err := gcsem.DB().Create(guildComponentStatus)
 	if nil != err {
 		return err
 	}
@@ -125,7 +122,7 @@ func (gcsem *GuildComponentStatusEntityManager) Create(guildComponentStatus *Gui
 // This does a generic update, use Update to do a precise and more performant update
 // of the entity when only updating a single field!
 func (gcsem *GuildComponentStatusEntityManager) Save(guildComponentStatus *GuildComponentStatus) error {
-	err := gcsem.database.Save(guildComponentStatus)
+	err := gcsem.DB().Save(guildComponentStatus)
 	if nil != err {
 		return err
 	}
@@ -145,7 +142,7 @@ func (gcsem *GuildComponentStatusEntityManager) Update(
 	column string,
 	value interface{},
 ) error {
-	err := gcsem.database.UpdateEntity(component, column, value)
+	err := gcsem.DB().UpdateEntity(component, column, value)
 	if nil != err {
 		return err
 	}

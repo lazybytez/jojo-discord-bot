@@ -22,7 +22,6 @@ import "C"
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
-	apiDatabase "github.com/lazybytez/jojo-discord-bot/api/entities"
 	"github.com/lazybytez/jojo-discord-bot/services/logger"
 )
 
@@ -39,7 +38,7 @@ var componentRegistryLogger = logger.New(logComponentRegistry, nil)
 // a unified API to get component information.
 func RegisterComponents() {
 	componentRegistryLogger.Info("Registering core_components in entities...")
-	em := apiDatabase.GetEntityManager()
+	em := api.GetEntityManager()
 	for _, component := range api.Components {
 		registeredComponent, err := em.RegisteredComponent().Get(component.Code)
 
@@ -49,7 +48,7 @@ func RegisterComponents() {
 			registeredComponent.Description = component.Description
 			registeredComponent.DefaultEnabled = component.State.DefaultEnabled
 
-			err := em.Create(registeredComponent)
+			err := em.RegisteredComponent().Create(registeredComponent)
 			if nil != err {
 				componentRegistryLogger.Warn(
 					"Failed to register component with code \"%v\" in entities!",
@@ -78,7 +77,7 @@ func RegisterComponents() {
 		}
 
 		if changed {
-			err := em.Save(registeredComponent)
+			err := em.RegisteredComponent().Save(registeredComponent)
 			if nil != err {
 				componentRegistryLogger.Warn(
 					"Failed to update registered component for component with code \"%v\" in entities!",
@@ -86,7 +85,7 @@ func RegisterComponents() {
 			}
 		}
 
-		apiDatabase.GetEntityManager().RegisteredComponent().MarkAsAvailable(component.Code)
+		em.RegisteredComponent().MarkAsAvailable(component.Code)
 	}
 	componentRegistryLogger.Info("Components have been successfully registered...")
 }

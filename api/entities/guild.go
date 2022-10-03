@@ -39,27 +39,24 @@ type Guild struct {
 // GuildEntityManager is the Guild specific entity manager
 // that allows easy access to guilds in the entities.
 type GuildEntityManager struct {
-	*EntityManager
+	EntityManager
 	cache *cache.Cache[uint64, Guild]
 }
 
-// Guilds returns the GuildEntityManager that is currently active,
-// which can be used to do Guild specific entities actions.
-func (em *EntityManager) Guilds() *GuildEntityManager {
-	if nil == em.guild {
-		gem := &GuildEntityManager{
-			em,
-			cache.New[uint64, Guild](10 * time.Minute),
-		}
-		em.guild = gem
-
-		err := gem.cache.EnableAutoCleanup(10 * time.Minute)
-		if nil != err {
-			em.logger.Err(err, "Failed to initialize periodic cache cleanup task for Guild entity manager!")
-		}
+// NewGuildEntityManager creates a new GuildEntityManager with
+// the given EntityManager.
+func NewGuildEntityManager(em EntityManager) *GuildEntityManager {
+	gem := &GuildEntityManager{
+		em,
+		cache.New[uint64, Guild](10 * time.Minute),
 	}
 
-	return em.guild
+	err := gem.cache.EnableAutoCleanup(10 * time.Minute)
+	if nil != err {
+		em.Logger().Err(err, "Failed to initialize periodic cache cleanup task for Guild entity manager!")
+	}
+
+	return gem
 }
 
 // Get tries to get a Guild from the
@@ -79,7 +76,7 @@ func (gem *GuildEntityManager) Get(guildId string) (*Guild, error) {
 	}
 
 	guild := &Guild{}
-	err = gem.database.GetFirstEntity(guild, ColumnGuildId+" = ?", guildIdInt)
+	err = gem.DB().GetFirstEntity(guild, ColumnGuildId+" = ?", guildIdInt)
 	if nil != err {
 		return &Guild{}, err
 	}
@@ -92,7 +89,7 @@ func (gem *GuildEntityManager) Get(guildId string) (*Guild, error) {
 // Count returns the number of all guilds stored in the entities
 func (gem *GuildEntityManager) Count() (int64, error) {
 	var count int64 = 0
-	db := gem.database.WorkOn([]Guild{}).Count(&count)
+	db := gem.DB().WorkOn([]Guild{}).Count(&count)
 
 	return count, db.Error
 }
@@ -100,7 +97,7 @@ func (gem *GuildEntityManager) Count() (int64, error) {
 // Create saves the passed Guild in the database.
 // Use Update or Save to update an already existing Guild.
 func (gem *GuildEntityManager) Create(guild *Guild) error {
-	err := gem.database.Create(guild)
+	err := gem.DB().Create(guild)
 	if nil != err {
 		return err
 	}
@@ -115,7 +112,7 @@ func (gem *GuildEntityManager) Create(guild *Guild) error {
 // This does a generic update, use Update to do a precise and more performant update
 // of the entity when only updating a single field!
 func (gem *GuildEntityManager) Save(guild *Guild) error {
-	err := gem.database.Save(guild)
+	err := gem.DB().Save(guild)
 	if nil != err {
 		return err
 	}
@@ -128,7 +125,7 @@ func (gem *GuildEntityManager) Save(guild *Guild) error {
 
 // Update updates the defined field on the entity and saves it in the database.
 func (gem *GuildEntityManager) Update(guild *Guild, column string, value interface{}) error {
-	err := gem.database.UpdateEntity(guild, column, value)
+	err := gem.DB().UpdateEntity(guild, column, value)
 	if nil != err {
 		return err
 	}

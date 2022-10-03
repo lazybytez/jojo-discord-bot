@@ -77,7 +77,7 @@ func disableComponentForGuild(
 	}
 
 	guildSpecificStatus.Enabled = false
-	err = em.Save(guildSpecificStatus)
+	err = em.GuildComponentStatus().Save(guildSpecificStatus)
 	if nil != err {
 		C.Logger().Warn("Could not update guild component status for component \"%v\" on guild \"%v\"",
 			regComp.Code,

@@ -49,7 +49,7 @@ func handleInitialComponentStatusOnGuildJoin(_ *discordgo.Session, create *disco
 		componentStatus.Guild = *guild
 		componentStatus.Enabled = true
 
-		err = em.Create(componentStatus)
+		err = em.GuildComponentStatus().Create(componentStatus)
 		if nil != err {
 			C.Logger().Warn("Could not enable default component \"%v\" for guild \"%v\"",
 				regComp.Code,

@@ -19,6 +19,6 @@
 package core_components
 
 import (
-	_ "github.com/lazybytez/jojo-discord-bot/api/core_components/bot_core"
-	_ "github.com/lazybytez/jojo-discord-bot/api/core_components/bot_log"
+	_ "github.com/lazybytez/jojo-discord-bot/core_components/bot_core"
+	_ "github.com/lazybytez/jojo-discord-bot/core_components/bot_log"
 )

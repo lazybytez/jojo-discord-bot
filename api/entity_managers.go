@@ -20,7 +20,6 @@ package api
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api/entities"
-	"github.com/lazybytez/jojo-discord-bot/services"
 )
 
 // GuildEntityManager is an entity manager
@@ -45,6 +44,16 @@ type GuildEntityManager interface {
 	Update(guild *entities.Guild, column string, value interface{}) error
 }
 
+// Guilds returns the GuildEntityManager that is currently active,
+// which can be used to do Guild specific entities actions.
+func (em *EntityManager) Guilds() GuildEntityManager {
+	if nil == em.guild {
+		em.guild = entities.NewGuildEntityManager(&entityManager)
+	}
+
+	return em.guild
+}
+
 // RegisteredComponentEntityManager is an entity manager
 // that provides functionality for entities.RegisteredComponent CRUD operations.
 type RegisteredComponentEntityManager interface {
@@ -52,7 +61,7 @@ type RegisteredComponentEntityManager interface {
 	// cache. If no cache entry is present, a request to the entities will be made.
 	// If no RegisteredComponent can be found, the function returns a new empty
 	// RegisteredComponent.
-	Get(registeredComponentCode uint) (*entities.RegisteredComponent, error)
+	Get(registeredComponentCode string) (*entities.RegisteredComponent, error)
 	// GetAvailable returns all components that have been registered
 	// during application bootstrap.
 	GetAvailable() []*entities.RegisteredComponent
@@ -70,6 +79,16 @@ type RegisteredComponentEntityManager interface {
 	// the codes into an array.
 	// Note that duplicates will be filtered.
 	MarkAsAvailable(code string)
+}
+
+// RegisteredComponent returns the RegisteredComponentEntityManager that is currently active,
+// which can be used to do RegisteredComponent specific entities actions.
+func (em *EntityManager) RegisteredComponent() RegisteredComponentEntityManager {
+	if nil == em.registeredComponentEntityManager {
+		em.registeredComponentEntityManager = entities.NewRegisteredComponentEntityManager(&entityManager)
+	}
+
+	return em.registeredComponentEntityManager
 }
 
 // GlobalComponentStatusEntityManager is an entity manager
@@ -96,6 +115,16 @@ type GlobalComponentStatusEntityManager interface {
 	Update(globalComponentStatus *entities.GlobalComponentStatus, column string, value interface{}) error
 }
 
+// GlobalComponentStatus returns the GlobalComponentStatusEntityManager that is currently active,
+// which can be used to do GlobalComponentStatus specific entities actions.
+func (em *EntityManager) GlobalComponentStatus() GlobalComponentStatusEntityManager {
+	if nil == em.globalComponentStatusEntityManager {
+		em.globalComponentStatusEntityManager = entities.NewGlobalComponentStatusEntityManager(&entityManager)
+	}
+
+	return em.globalComponentStatusEntityManager
+}
+
 // GuildComponentStatusEntityManager is an entity manager
 // that provides functionality for entities.GuildComponentStatus CRUD operations.
 type GuildComponentStatusEntityManager interface {
@@ -103,7 +132,7 @@ type GuildComponentStatusEntityManager interface {
 	// cache. If no cache entry is present, a request to the entities will be made.
 	// If no GuildComponentStatus can be found, the function returns a new empty
 	// GuildComponentStatus.
-	Get(guildId uint, componentId uint) (*entities.Guild, error)
+	Get(guildId uint, componentId uint) (*entities.GuildComponentStatus, error)
 	// GetDisplay returns the status of a component in a form
 	// that can be directly displayed in Discord.
 	GetDisplay(guildId uint, componentId uint) (string, error)
@@ -117,52 +146,14 @@ type GuildComponentStatusEntityManager interface {
 	Save(guildComponentStatus *entities.GuildComponentStatus) error
 	// Update updates the defined field on the entity and saves it in the database.
 	Update(component *entities.GuildComponentStatus, column string, value interface{}) error
-
-	// getComponentStatusCacheKey concatenates the passed guild and component ids to create
-	// a new unique cache key for the component status
-	getComponentStatusCacheKey(guildId uint, componentId uint) string
 }
 
-// EntityManager contains methods that allow to retrieve
-// entity specific entity managers that provide caching and dedicated functions
-// to work with specific entities.
-// The entity specific managers allow to perform CRUD operations.
-//
-// Additionally, the main entity manager allows to register (auto migrate)
-type EntityManager interface {
-	// RegisterEntity registers a new entity (struct) and runs its automated
-	// migration to ensure the entities schema is up-to-date.
-	RegisterEntity(entityType interface{}) error
-	// DB returns the current services.DatabaseAccess instance that
-	// wraps gorm.DB and allows lower level database access.
-	// Note that it is highly recommended to depend on methods of the
-	// entity specific managers instead of services.DatabaseAccess.
-	DB() services.DatabaseAccess
+// GuildComponentStatus returns the GuildComponentStatusEntityManager that is currently active,
+// which can be used to do GuildComponentStatus specific entities actions.
+func (em *EntityManager) GuildComponentStatus() GuildComponentStatusEntityManager {
+	if nil == em.guildComponentStatusEntityManager {
+		em.guildComponentStatusEntityManager = entities.NewGuildComponentStatusEntityManager(&entityManager)
+	}
 
-	// RegisteredComponent returns the RegisteredComponentEntityManager that is currently active,
-	// which can be used to do RegisteredComponent specific entities actions.
-	RegisteredComponent() *RegisteredComponentEntityManager
-	// Guilds returns the GuildEntityManager that is currently active,
-	// which can be used to do Guild specific entities actions.
-	Guilds() *GuildEntityManager
-	// GlobalComponentStatus returns the GlobalComponentStatusEntityManager that is currently active,
-	// which can be used to do GlobalComponentStatus specific entities actions.
-	GlobalComponentStatus() *GlobalComponentStatusEntityManager
-	// GuildComponentStatus returns the GuildComponentStatusEntityManager that is currently active,
-	// which can be used to do GuildComponentStatus specific entities actions.
-	GuildComponentStatus() *GuildComponentStatusEntityManager
-}
-
-// entityManager is the internal database.GormDatabaseAccess instance
-// used by the entities api and provided to components
-// that need low-level access using gorm.DB.
-var entityManager EntityManager
-
-// EntityManager returns the currently active EntityManager.
-// The currently active EntityManager is shared across all components.
-//
-// The entities.DatabaseAccess allows to interact with the entities of the application
-// or access the raw gorm.DB instance, which is used for database access.
-func (c *Component) EntityManager() EntityManager {
-	return entityManager
+	return em.guildComponentStatusEntityManager
 }
