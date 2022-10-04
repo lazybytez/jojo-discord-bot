@@ -26,21 +26,21 @@ import (
 // that provides functionality for entities.Guild CRUD operations.
 type GuildEntityManager interface {
 	// Get tries to get a Guild from the
-	// cache. If no cache entry is present, a request to the database will be made.
+	// cache. If no cache entry is present, a request to the db will be made.
 	// If no Guild can be found, the function returns a new empty
 	// Guild.
 	Get(guildId string) (*entities.Guild, error)
-	// Count returns the number of all guilds stored in the database
+	// Count returns the number of all guilds stored in the db
 	Count() (int64, error)
 
-	// Create saves the passed Guild in the database.
+	// Create saves the passed Guild in the db.
 	// Use Update or Save to update an already existing Guild.
 	Create(guild *entities.Guild) error
-	// Save updates the passed Guild in the database.
+	// Save updates the passed Guild in the db.
 	// This does a generic update, use Update to do a precise and more performant update
 	// of the entity when only updating a single field!
 	Save(guild *entities.Guild) error
-	// Update updates the defined field on the entity and saves it in the database.
+	// Update updates the defined field on the entity and saves it in the db.
 	Update(guild *entities.Guild, column string, value interface{}) error
 }
 
@@ -66,14 +66,14 @@ type RegisteredComponentEntityManager interface {
 	// during application bootstrap.
 	GetAvailable() []*entities.RegisteredComponent
 
-	// Create saves the passed RegisteredComponent in the database.
+	// Create saves the passed RegisteredComponent in the db.
 	// Use Update or Save to update an already existing RegisteredComponent.
 	Create(regComp *entities.RegisteredComponent) error
-	// Save updates the passed RegisteredComponent in the database.
+	// Save updates the passed RegisteredComponent in the db.
 	// This does a generic update, use Update to do a precise and more performant update
 	// of the entity when only updating a single field!
 	Save(regComp *entities.RegisteredComponent) error
-	// Update updates the defined field on the entity and saves it in the database.
+	// Update updates the defined field on the entity and saves it in the db.
 	Update(regComp *entities.RegisteredComponent, column string, value interface{}) error
 	// MarkAsAvailable marks the passed component as available, by putting
 	// the codes into an array.
@@ -95,7 +95,7 @@ func (em *EntityManager) RegisteredComponent() RegisteredComponentEntityManager 
 // that provides functionality for entities.GlobalComponentStatus CRUD operations.
 type GlobalComponentStatusEntityManager interface {
 	// Get tries to get a GlobalComponentStatus from the
-	// cache. If no cache entry is present, a request to the database will be made.
+	// cache. If no cache entry is present, a request to the db will be made.
 	// If no GlobalComponentStatus can be found, the function returns a new empty
 	// GlobalComponentStatus.
 	Get(globalComponentStatusId uint) (*entities.GlobalComponentStatus, error)
@@ -104,14 +104,14 @@ type GlobalComponentStatusEntityManager interface {
 	// out messages in Discord.
 	GetDisplayString(globalComponentStatusId uint) (string, error)
 
-	// Create saves the passed GlobalComponentStatus in the database.
+	// Create saves the passed GlobalComponentStatus in the db.
 	// Use Update or Save to update an already existing GlobalComponentStatus.
 	Create(globalComponentStatus *entities.GlobalComponentStatus) error
-	// Save updates the passed GlobalComponentStatus in the database.
+	// Save updates the passed GlobalComponentStatus in the db.
 	// This does a generic update, use Update to do a precise and more performant update
 	// of the entity when only updating a single field!
 	Save(globalComponentStatus *entities.GlobalComponentStatus) error
-	// Update updates the defined field on the entity and saves it in the database.
+	// Update updates the defined field on the entity and saves it in the db.
 	Update(globalComponentStatus *entities.GlobalComponentStatus, column string, value interface{}) error
 }
 
@@ -137,14 +137,14 @@ type GuildComponentStatusEntityManager interface {
 	// that can be directly displayed in Discord.
 	GetDisplay(guildId uint, componentId uint) (string, error)
 
-	// Create saves the passed Guild in the database.
+	// Create saves the passed Guild in the db.
 	// Use Update or Save to update an already existing Guild.
 	Create(guildComponentStatus *entities.GuildComponentStatus) error
-	// Save updates the passed Guild in the database.
+	// Save updates the passed Guild in the db.
 	// This does a generic update, use Update to do a precise and more performant update
 	// of the entity when only updating a single field!
 	Save(guildComponentStatus *entities.GuildComponentStatus) error
-	// Update updates the defined field on the entity and saves it in the database.
+	// Update updates the defined field on the entity and saves it in the db.
 	Update(component *entities.GuildComponentStatus, column string, value interface{}) error
 }
 

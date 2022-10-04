@@ -21,9 +21,8 @@ package database
 import (
 	"fmt"
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/lazybytez/jojo-discord-bot/api/entities"
+	"github.com/lazybytez/jojo-discord-bot/services"
 	"github.com/lazybytez/jojo-discord-bot/test/logmock"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/driver/postgres"
@@ -34,10 +33,10 @@ import (
 
 type DatabaseTestSuite struct {
 	suite.Suite
-	sqlMock sqlmock.Sqlmock
-	gormDB  *gorm.DB
-	logger  *logmock.LoggerMock
-	em      EntityManager
+	sqlMock        sqlmock.Sqlmock
+	gormDB         *gorm.DB
+	logger         *logmock.LoggerMock
+	databaseAccess services.DatabaseAccess
 }
 
 func (suite *DatabaseTestSuite) SetupTest() {
@@ -62,23 +61,9 @@ func (suite *DatabaseTestSuite) SetupTest() {
 	loggerMock := &logmock.LoggerMock{}
 	suite.logger = loggerMock
 
-	suite.em = &GormDatabaseAccess{
+	suite.databaseAccess = &GormDatabaseAccess{
 		dbMock,
-		loggerMock,
-		entities.entityManagers{},
 	}
-}
-
-func (suite *DatabaseTestSuite) TestGetEntityManager() {
-	entityManagerDummy := GormDatabaseAccess{
-		nil,
-		&logmock.LoggerMock{},
-		entities.entityManagers{},
-	}
-
-	databaseAccessor = entityManagerDummy
-
-	assert.EqualValues(suite.T(), &databaseAccessor, GetEntityManager())
 }
 
 type TestEntity struct {
@@ -104,7 +89,7 @@ func (suite *DatabaseTestSuite) TestRegisterEntityWithSuccess() {
 
 	suite.logger.On("Info", mock.AnythingOfType("string"), []interface{}{"TestEntity"})
 
-	err := suite.em.RegisterEntity(testEntity)
+	err := suite.databaseAccess.RegisterEntity(testEntity)
 
 	suite.NoError(err)
 	suite.NoError(suite.sqlMock.ExpectationsWereMet())
@@ -124,7 +109,7 @@ func (suite *DatabaseTestSuite) TestRegisterEntityWithFail() {
 
 	suite.logger.On("Err", expectedErr, mock.AnythingOfType("string"), []interface{}{"TestEntity"})
 
-	err := suite.em.RegisterEntity(testEntity)
+	err := suite.databaseAccess.RegisterEntity(testEntity)
 
 	suite.Error(err)
 	suite.NoError(suite.sqlMock.ExpectationsWereMet())
@@ -144,7 +129,7 @@ func (suite *DatabaseTestSuite) TestGetFirstEntityWithSuccess() {
 
 	resultEntity := &TestEntity{}
 
-	err := suite.em.GetFirstEntity(resultEntity, "id = ?", 42)
+	err := suite.databaseAccess.GetFirstEntity(resultEntity, "id = ?", 42)
 
 	suite.NoError(err)
 	suite.NoError(suite.sqlMock.ExpectationsWereMet())
@@ -167,7 +152,7 @@ func (suite *DatabaseTestSuite) TestGetFirstEntityWithFailure() {
 
 	resultEntity := &TestEntity{}
 
-	err := suite.em.GetFirstEntity(resultEntity, "id = ?", 42)
+	err := suite.databaseAccess.GetFirstEntity(resultEntity, "id = ?", 42)
 
 	suite.Error(err)
 	suite.NoError(suite.sqlMock.ExpectationsWereMet())
@@ -190,7 +175,7 @@ func (suite *DatabaseTestSuite) TestGetLastEntityWithSuccess() {
 
 	resultEntity := &TestEntity{}
 
-	err := suite.em.GetLastEntity(resultEntity, "id = ?", 42)
+	err := suite.databaseAccess.GetLastEntity(resultEntity, "id = ?", 42)
 
 	suite.NoError(err)
 	suite.NoError(suite.sqlMock.ExpectationsWereMet())
@@ -213,7 +198,7 @@ func (suite *DatabaseTestSuite) TestGetLastEntityWithFailure() {
 
 	resultEntity := &TestEntity{}
 
-	err := suite.em.GetLastEntity(resultEntity, "id = ?", 42)
+	err := suite.databaseAccess.GetLastEntity(resultEntity, "id = ?", 42)
 
 	suite.Error(err)
 	suite.NoError(suite.sqlMock.ExpectationsWereMet())
@@ -241,7 +226,7 @@ func (suite *DatabaseTestSuite) TestGetEntitiesWithSuccess() {
 
 	resultEntities := make([]*TestEntity, 0)
 
-	err := suite.em.GetEntities(&resultEntities, "id = ? OR id = ?", 42, 64)
+	err := suite.databaseAccess.GetEntities(&resultEntities, "id = ? OR id = ?", 42, 64)
 
 	suite.NoError(err)
 	suite.NoError(suite.sqlMock.ExpectationsWereMet())
@@ -266,7 +251,7 @@ func (suite *DatabaseTestSuite) TestGetEntitiesWithFailure() {
 
 	resultEntities := make([]*TestEntity, 0)
 
-	err := suite.em.GetEntities(&resultEntities, "id = ? OR id = ?", 42, 64)
+	err := suite.databaseAccess.GetEntities(&resultEntities, "id = ? OR id = ?", 42, 64)
 
 	suite.Error(err)
 	suite.NoError(suite.sqlMock.ExpectationsWereMet())
@@ -287,7 +272,7 @@ func (suite *DatabaseTestSuite) TestCreateWithSuccess() {
 			AddRow(entity.ID))
 	suite.sqlMock.ExpectCommit()
 
-	err := suite.em.Create(entity)
+	err := suite.databaseAccess.Create(entity)
 
 	suite.NoError(err)
 	suite.NoError(suite.sqlMock.ExpectationsWereMet())
@@ -307,7 +292,7 @@ func (suite *DatabaseTestSuite) TestCreateWithFailure() {
 		WillReturnError(expectedErr)
 	suite.sqlMock.ExpectRollback()
 
-	err := suite.em.Create(entity)
+	err := suite.databaseAccess.Create(entity)
 
 	suite.Error(err)
 	suite.NoError(suite.sqlMock.ExpectationsWereMet())
@@ -325,7 +310,7 @@ func (suite *DatabaseTestSuite) TestSaveWithSuccess() {
 		WillReturnResult(sqlmock.NewResult(42, 1))
 	suite.sqlMock.ExpectCommit()
 
-	err := suite.em.Save(entity)
+	err := suite.databaseAccess.Save(entity)
 
 	suite.NoError(err)
 	suite.NoError(suite.sqlMock.ExpectationsWereMet())
@@ -345,7 +330,7 @@ func (suite *DatabaseTestSuite) TestSaveWithFailure() {
 		WillReturnError(expectedErr)
 	suite.sqlMock.ExpectRollback()
 
-	err := suite.em.Save(entity)
+	err := suite.databaseAccess.Save(entity)
 
 	suite.Error(err)
 	suite.NoError(suite.sqlMock.ExpectationsWereMet())
@@ -363,7 +348,7 @@ func (suite *DatabaseTestSuite) TestUpdateEntityWithSuccess() {
 		WillReturnResult(sqlmock.NewResult(42, 1))
 	suite.sqlMock.ExpectCommit()
 
-	err := suite.em.UpdateEntity(entity, "name", "some second test")
+	err := suite.databaseAccess.UpdateEntity(entity, "name", "some second test")
 
 	suite.NoError(err)
 	suite.NoError(suite.sqlMock.ExpectationsWereMet())
@@ -384,7 +369,7 @@ func (suite *DatabaseTestSuite) TestUpdateEntityWithFailure() {
 		WillReturnError(expectedErr)
 	suite.sqlMock.ExpectRollback()
 
-	err := suite.em.UpdateEntity(entity, "name", "some second test")
+	err := suite.databaseAccess.UpdateEntity(entity, "name", "some second test")
 
 	suite.Error(err)
 	suite.NoError(suite.sqlMock.ExpectationsWereMet())
@@ -402,7 +387,7 @@ func (suite *DatabaseTestSuite) TestDeleteEntityWithSuccess() {
 		WillReturnResult(sqlmock.NewResult(42, 1))
 	suite.sqlMock.ExpectCommit()
 
-	err := suite.em.DeleteEntity(entity)
+	err := suite.databaseAccess.DeleteEntity(entity)
 
 	suite.NoError(err)
 	suite.NoError(suite.sqlMock.ExpectationsWereMet())
@@ -422,7 +407,7 @@ func (suite *DatabaseTestSuite) TestDeleteEntityWithFailure() {
 		WillReturnError(expectedErr)
 	suite.sqlMock.ExpectRollback()
 
-	err := suite.em.DeleteEntity(entity)
+	err := suite.databaseAccess.DeleteEntity(entity)
 
 	suite.Error(err)
 	suite.NoError(suite.sqlMock.ExpectationsWereMet())
@@ -434,7 +419,7 @@ func (suite *DatabaseTestSuite) TestWorkOn() {
 		Name: "test entity",
 	}
 
-	db := suite.em.WorkOn(entity)
+	db := suite.databaseAccess.WorkOn(entity)
 
 	suite.NotNil(db)
 	suite.IsType(&gorm.DB{}, db)

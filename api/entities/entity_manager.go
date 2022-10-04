@@ -33,7 +33,7 @@ type EntityManager interface {
 	// migration to ensure the entities schema is up-to-date.
 	RegisterEntity(entityType interface{}) error
 	// DB returns the current services.DatabaseAccess instance that
-	// wraps gorm.DB and allows lower level database access.
+	// wraps gorm.DB and allows lower level db access.
 	// Note that it is highly recommended to depend on methods of the
 	// entity specific managers instead of services.DatabaseAccess.
 	DB() services.DatabaseAccess

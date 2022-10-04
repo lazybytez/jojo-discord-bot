@@ -16,11 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package entities
+package api
 
 import (
 	"fmt"
-	"github.com/lazybytez/jojo-discord-bot/services/database"
+	"github.com/lazybytez/jojo-discord-bot/test/db"
+	"github.com/lazybytez/jojo-discord-bot/test/logmock"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"testing"
@@ -28,32 +29,39 @@ import (
 
 type EntitiesTestSuite struct {
 	suite.Suite
-	em *database.EntityManagerMock
+	dba    *db.DatabaseAccessMock
+	logger *logmock.LoggerMock
+	em     EntityManager
 }
 
 func (suite *EntitiesTestSuite) SetupTest() {
-	suite.em = &database.EntityManagerMock{}
+	dba := &db.DatabaseAccessMock{}
+	logger := &logmock.LoggerMock{}
+
+	suite.dba = dba
+	suite.logger = logger
+	suite.em = NewEntityManager(suite.dba, suite.logger)
 }
 
 func (suite *EntitiesTestSuite) TestRegisterDefaultEntitiesWithSuccess() {
 	for _, entity := range defaultEntities {
-		suite.em.On("RegisterEntity", entity).Once().Return(nil)
+		suite.dba.On("RegisterEntity", entity).Once().Return(nil)
 	}
 
-	err := registerDefaultEntities(suite.em)
+	err := suite.em.RegisterDefaultEntities()
 
-	suite.em.AssertExpectations(suite.T())
+	suite.dba.AssertExpectations(suite.T())
 	suite.NoError(err)
 }
 
 func (suite *EntitiesTestSuite) TestRegisterDefaultEntitiesWithFailure() {
 	simulatedErr := fmt.Errorf("something bad happened")
 
-	suite.em.On("RegisterEntity", mock.Anything).Once().Return(simulatedErr)
+	suite.dba.On("RegisterEntity", mock.Anything).Once().Return(simulatedErr)
 
-	err := registerDefaultEntities(suite.em)
+	err := suite.em.RegisterDefaultEntities()
 
-	suite.em.AssertExpectations(suite.T())
+	suite.dba.AssertExpectations(suite.T())
 	suite.Error(err)
 }
 

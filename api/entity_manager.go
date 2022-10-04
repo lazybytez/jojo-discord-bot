@@ -102,7 +102,7 @@ func (em *EntityManager) Logger() services.Logger {
 // The currently active EntityManager is shared across all components.
 //
 // The entities.DatabaseAccess allows to interact with the entities of the application
-// or access the raw gorm.DB instance, which is used for database access.
+// or access the raw gorm.DB instance, which is used for db access.
 func (c *Component) EntityManager() *EntityManager {
 	return &entityManager
 }
@@ -111,7 +111,7 @@ func (c *Component) EntityManager() *EntityManager {
 // The currently active EntityManager is shared across all components.
 //
 // The entities.DatabaseAccess allows to interact with the entities of the application
-// or access the raw gorm.DB instance, which is used for database access.
+// or access the raw gorm.DB instance, which is used for db access.
 func GetEntityManager() *EntityManager {
 	return &entityManager
 }
