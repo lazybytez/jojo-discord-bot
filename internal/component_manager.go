@@ -26,18 +26,18 @@ import (
 )
 
 // logComponentRegistry is the custom component name used
-// to identify logger messages from the component management system.
+// to identify log messages from the component management system.
 const logComponentRegistry = "component_manager"
 
 // componentRegistryLogger is the logger used by the component
 // registration routines. They do not use the coreLogger
 var componentRegistryLogger = logger.New(logComponentRegistry, nil)
 
-// RegisterComponents registers all available components in the entities
-// and fills the available components in the entities API, to provide
+// RegisterComponents registers all available components in the database
+// and fills the available components in the database API, to provide
 // a unified API to get component information.
 func RegisterComponents() {
-	componentRegistryLogger.Info("Registering core_components in entities...")
+	componentRegistryLogger.Info("Registering core_components in database...")
 	em := api.GetEntityManager()
 	for _, component := range api.Components {
 		registeredComponent, err := em.RegisteredComponent().Get(component.Code)
@@ -51,7 +51,7 @@ func RegisterComponents() {
 			err := em.RegisteredComponent().Create(registeredComponent)
 			if nil != err {
 				componentRegistryLogger.Warn(
-					"Failed to register component with code \"%v\" in entities!",
+					"Failed to register component with code \"%v\" in database!",
 					registeredComponent.Code)
 			}
 
@@ -80,7 +80,7 @@ func RegisterComponents() {
 			err := em.RegisteredComponent().Save(registeredComponent)
 			if nil != err {
 				componentRegistryLogger.Warn(
-					"Failed to update registered component for component with code \"%v\" in entities!",
+					"Failed to update registered component for component with code \"%v\" in database!",
 					registeredComponent.Code)
 			}
 		}

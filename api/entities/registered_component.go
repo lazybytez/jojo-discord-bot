@@ -44,7 +44,7 @@ type RegisteredComponent struct {
 }
 
 // RegisteredComponentEntityManager is the RegisteredComponent specific entity manager
-// that allows easy access to global component status in the entities.
+// that allows easy access to global component status in the database.
 type RegisteredComponentEntityManager struct {
 	EntityManager
 
@@ -62,7 +62,7 @@ func NewRegisteredComponentEntityManager(entityManager EntityManager) *Registere
 }
 
 // Get tries to get a RegisteredComponent from the
-// cache. If no cache entry is present, a request to the entities will be made.
+// cache. If no cache entry is present, a request to the database will be made.
 // If no RegisteredComponent can be found, the function returns a new empty
 // RegisteredComponent.
 func (rgem *RegisteredComponentEntityManager) Get(registeredComponentCode string) (*RegisteredComponent, error) {

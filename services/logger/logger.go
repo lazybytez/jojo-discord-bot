@@ -24,7 +24,7 @@ import (
 )
 
 // componentLogPrefix is used by the logger to prefix
-// logger messages with the component name.
+// log messages with the component name.
 const componentLogPrefix = "component"
 
 // Logger is a type that is used to hold metadata
@@ -50,28 +50,28 @@ func New(prefix string, loggerImpl *zerolog.Logger) *Logger {
 
 // Debug logs a message with level debug.
 // This function appends the name of the Component from the receiver
-// to the logger message.
+// to the log message.
 func (l *Logger) Debug(format string, v ...interface{}) {
 	l.loggerImpl.Debug().Str(componentLogPrefix, l.prefix).Msgf(format, v...)
 }
 
 // Info logs a message with level info.
 // This function appends the name of the Component from the receiver
-// to the logger message.
+// to the log message.
 func (l *Logger) Info(format string, v ...interface{}) {
 	l.loggerImpl.Info().Str(componentLogPrefix, l.prefix).Msgf(format, v...)
 }
 
 // Warn logs a message with level warnings.
 // This function appends the name of the Component from the receiver
-// to the logger message.
+// to the log message.
 func (l *Logger) Warn(format string, v ...interface{}) {
 	l.loggerImpl.Warn().Str(componentLogPrefix, l.prefix).Msgf(format, v...)
 }
 
 // Err logs a message with level error.
 // This function appends the name of the Component from the receiver
-// to the logger message.
+// to the log message.
 //
 // The supplied error will be applied to the logger message.
 func (l *Logger) Err(err error, format string, v ...interface{}) {

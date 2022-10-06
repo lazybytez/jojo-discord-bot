@@ -25,7 +25,7 @@ import (
 	"github.com/lazybytez/jojo-discord-bot/services/logger"
 )
 
-// slashCommandLogPrefix is the prefix used by the logger management during
+// slashCommandLogPrefix is the prefix used by the log management during
 // lifecycle events that cannot be assigned to a specific component.
 const slashCommandLogPrefix = "slash_command_manager"
 
@@ -39,7 +39,7 @@ var (
 	unregisterCommandHandler func()
 
 	// slashCommandManagerLogger is the logger used by the slash command management
-	// when there os no component a logger message could be assigned to
+	// when there is no component a log message could be assigned to
 	slashCommandManagerLogger *logger.Logger
 )
 

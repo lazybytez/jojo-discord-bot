@@ -21,7 +21,7 @@ package api
 // Init initializes the api.
 //
 // This covers initializing the following parts:
-//   - entities api
+//   - database api
 //   - entity management
 func Init(em EntityManager) error {
 	entityManager = em

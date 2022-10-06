@@ -23,14 +23,12 @@ import (
 )
 
 // GormDatabaseAccess is a container struct that holds the
-// gorm.DB instance to use for entities interaction.
+// gorm.DB instance to use for database interaction.
 type GormDatabaseAccess struct {
 	database *gorm.DB
 }
 
-// New creates a new GormDatabaseAccess instance for the entities API
-// and register default entity types that are managed by
-// the bot core.
+// New creates a new GormDatabaseAccess instance for the database API
 func New(db *gorm.DB) *GormDatabaseAccess {
 	return &GormDatabaseAccess{
 		db,
@@ -38,7 +36,7 @@ func New(db *gorm.DB) *GormDatabaseAccess {
 }
 
 // RegisterEntity registers a new entity (struct) and runs its automated
-// migration to ensure the entities schema is up-to-date.
+// migration to ensure the database schema is up-to-date.
 func (gda *GormDatabaseAccess) RegisterEntity(entityType interface{}) error {
 	err := gda.database.AutoMigrate(entityType)
 	if nil != err {

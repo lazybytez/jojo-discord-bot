@@ -27,7 +27,7 @@ var C = api.Component{
 	// Metadata
 	Code:         "bot_core",
 	Name:         "Bot Core",
-	Description:  "This component handles core routines and entities management.",
+	Description:  "This component handles core routines and entity management.",
 	LoadPriority: 1000,
 
 	State: &api.State{
@@ -61,9 +61,8 @@ func LoadComponent(_ *discordgo.Session) error {
 }
 
 // initializeComponentManagement initializes the component management
-// by populating the entities with necessary data and pre-warming the cache.
+// by populating the database with necessary data and pre-warming the cache.
 func initializeComponentManagement() {
-	registerAvailableComponents()
 	ensureGlobalComponentStatusExists()
 }
 

@@ -97,7 +97,6 @@ type ServiceManager interface {
 	//
 	// On first call, this function initializes the private Component.logger
 	// field. On consecutive calls, the already present Logger will be used.
-	// field. On consecutive calls, the already present Logger will be used.
 	Logger() services.Logger
 	// HandlerManager returns the management interface for event handlers.
 	//

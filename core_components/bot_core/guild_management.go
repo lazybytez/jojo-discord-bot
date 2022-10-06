@@ -28,7 +28,7 @@ import (
 // handleGuildRegisterOnJoin is triggered when the bot joins a guild.
 //
 // It ensures that every guild that isn't already known is registered
-// in the entities. It also keeps the name of the guild updated.
+// in the database. It also keeps the name of the guild updated.
 func handleGuildRegisterOnJoin(_ *discordgo.Session, g *discordgo.GuildCreate) {
 	guildId, err := strconv.ParseUint(g.ID, 10, 64)
 	if nil != err {
@@ -46,7 +46,7 @@ func handleGuildRegisterOnJoin(_ *discordgo.Session, g *discordgo.GuildCreate) {
 
 		err = em.Guilds().Create(guild)
 		if nil != err {
-			C.Logger().Warn("Failed to create guild with ID \"%v\" in entities!", g.ID)
+			C.Logger().Warn("Failed to create guild with ID \"%v\" in database!", g.ID)
 		}
 
 		return
@@ -55,7 +55,7 @@ func handleGuildRegisterOnJoin(_ *discordgo.Session, g *discordgo.GuildCreate) {
 	if guild.Name != g.Name {
 		err = em.Guilds().Update(guild, entities.ColumnName, g.Name)
 		if nil != err {
-			C.Logger().Warn("Failed to update guild with ID \"%v\" in entities!", g.ID)
+			C.Logger().Warn("Failed to update guild with ID \"%v\" in database!", g.ID)
 		}
 	}
 }
@@ -67,12 +67,12 @@ func handleCommandSyncOnGuildJoin(session *discordgo.Session, g *discordgo.Guild
 }
 
 // handleGuildUpdateOnUpdate cares about updating the stored guild name
-// in the entities.
+// in the database.
 func handleGuildUpdateOnUpdate(_ *discordgo.Session, g *discordgo.GuildUpdate) {
 	em := C.EntityManager()
 	guild, err := em.Guilds().Get(g.ID)
 	if err != nil {
-		C.Logger().Warn("Could not update guild with ID \"%v\" named \"%v\" as it is missing in entities!",
+		C.Logger().Warn("Could not update guild with ID \"%v\" named \"%v\" as it is missing in database!",
 			g.ID,
 			g.Name)
 		return
@@ -82,12 +82,12 @@ func handleGuildUpdateOnUpdate(_ *discordgo.Session, g *discordgo.GuildUpdate) {
 }
 
 // updateGuildOnNameChange updates the name of the passed Guild
-// in the entities, if the name changed.
+// in the database, if the name changed.
 func updateGuildOnNameChange(em *api.EntityManager, guild *entities.Guild, g *discordgo.GuildUpdate) {
 	if guild.Name != g.Name {
 		err := em.Guilds().Update(guild, entities.ColumnName, g.Name)
 		if nil != err {
-			C.Logger().Warn("Failed to update guild with ID \"%v\" in entities!", g.ID)
+			C.Logger().Warn("Failed to update guild with ID \"%v\" in database!", g.ID)
 		}
 	}
 }

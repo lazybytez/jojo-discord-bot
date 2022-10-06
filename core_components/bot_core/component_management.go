@@ -18,17 +18,8 @@
 
 package bot_core
 
-// registerAvailableComponents ensures that all available components
-// are registered in the entities.
-//
-// Note that this function only adds new components, we do not care
-// about orphaned components.
-func registerAvailableComponents() {
-
-}
-
 // ensureGlobalComponentStatusExists ensures that for every component
-// a entities entry in the global status table exists.
+// a database entry in the global status table exists.
 //
 // By default, this is created with an enabled status, as the global status
 // is only meant for maintenance purposes.
@@ -48,7 +39,7 @@ func ensureGlobalComponentStatusExists() {
 			err := C.EntityManager().GlobalComponentStatus().Create(globalComponentStatus)
 			if err != nil {
 				C.Logger().Warn(
-					"Failed to global component status for component \"%v\" in entities!",
+					"Failed to global component status for component \"%v\" in database!",
 					registeredComponent.Code)
 			}
 		}
