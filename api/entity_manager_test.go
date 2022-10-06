@@ -24,17 +24,18 @@ import (
 	"github.com/lazybytez/jojo-discord-bot/test/logmock"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"reflect"
 	"testing"
 )
 
-type EntitiesTestSuite struct {
+type EntityManagerTestSuite struct {
 	suite.Suite
 	dba    *db.DatabaseAccessMock
 	logger *logmock.LoggerMock
 	em     EntityManager
 }
 
-func (suite *EntitiesTestSuite) SetupTest() {
+func (suite *EntityManagerTestSuite) SetupTest() {
 	dba := &db.DatabaseAccessMock{}
 	logger := &logmock.LoggerMock{}
 
@@ -43,9 +44,12 @@ func (suite *EntitiesTestSuite) SetupTest() {
 	suite.em = NewEntityManager(suite.dba, suite.logger)
 }
 
-func (suite *EntitiesTestSuite) TestRegisterDefaultEntitiesWithSuccess() {
+func (suite *EntityManagerTestSuite) TestRegisterDefaultEntitiesWithSuccess() {
 	for _, entity := range defaultEntities {
 		suite.dba.On("RegisterEntity", entity).Once().Return(nil)
+		suite.logger.On("Info",
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType(reflect.TypeOf([]interface{}{}).Name()))
 	}
 
 	err := suite.em.RegisterDefaultEntities()
@@ -54,10 +58,14 @@ func (suite *EntitiesTestSuite) TestRegisterDefaultEntitiesWithSuccess() {
 	suite.NoError(err)
 }
 
-func (suite *EntitiesTestSuite) TestRegisterDefaultEntitiesWithFailure() {
+func (suite *EntityManagerTestSuite) TestRegisterDefaultEntitiesWithFailure() {
 	simulatedErr := fmt.Errorf("something bad happened")
 
 	suite.dba.On("RegisterEntity", mock.Anything).Once().Return(simulatedErr)
+	suite.logger.On("Err",
+		mock.AnythingOfType(reflect.TypeOf(&simulatedErr).Name()),
+		mock.AnythingOfType("string"),
+		mock.AnythingOfType(reflect.TypeOf([]interface{}{}).Name()))
 
 	err := suite.em.RegisterDefaultEntities()
 
@@ -65,6 +73,6 @@ func (suite *EntitiesTestSuite) TestRegisterDefaultEntitiesWithFailure() {
 	suite.Error(err)
 }
 
-func TestEntities(t *testing.T) {
-	suite.Run(t, new(EntitiesTestSuite))
+func TestEntityManager(t *testing.T) {
+	suite.Run(t, new(EntityManagerTestSuite))
 }

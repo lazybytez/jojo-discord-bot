@@ -73,7 +73,7 @@ func (l *Logger) Warn(format string, v ...interface{}) {
 // This function appends the name of the Component from the receiver
 // to the log message.
 //
-// The supplied error will be applied to the logger message.
+// The supplied error will be applied to the log message.
 func (l *Logger) Err(err error, format string, v ...interface{}) {
 	l.loggerImpl.Error().Err(err).Str(componentLogPrefix, l.prefix).Msgf(format, v...)
 }
