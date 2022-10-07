@@ -20,7 +20,7 @@ jobs:
     if: (github.actor!= 'renovate[bot]') && (contains(github.head_ref, 'renovate/github_actions/') == false)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Run commitlint
