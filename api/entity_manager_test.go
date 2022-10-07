@@ -73,6 +73,36 @@ func (suite *EntityManagerTestSuite) TestRegisterDefaultEntitiesWithFailure() {
 	suite.Error(err)
 }
 
+func (suite *EntityManagerTestSuite) TestLogger() {
+	logger := suite.em.Logger()
+
+	suite.Equal(suite.logger, logger)
+}
+
+func (suite *EntityManagerTestSuite) TestDB() {
+	dba := suite.em.DB()
+
+	suite.Equal(suite.dba, dba)
+}
+
+func (suite *EntityManagerTestSuite) TestGetEntityManagerWithComponent() {
+	testComp := Component{}
+
+	entityManager = suite.em
+
+	em := testComp.EntityManager()
+
+	suite.Equal(&suite.em, em)
+}
+
+func (suite *EntityManagerTestSuite) TestGetEntityManagerWithGlobalFunction() {
+	entityManager = suite.em
+
+	em := GetEntityManager()
+
+	suite.Equal(&suite.em, em)
+}
+
 func TestEntityManager(t *testing.T) {
 	suite.Run(t, new(EntityManagerTestSuite))
 }
