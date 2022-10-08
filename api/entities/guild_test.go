@@ -264,6 +264,6 @@ func (suite *GuildEntityManagerTestSuite) TestUpdateWithError() {
 	suite.Nil(cachedGuild)
 }
 
-func TestNewGuildEntityManager(t *testing.T) {
+func TestGuildEntityManager(t *testing.T) {
 	suite.Run(t, new(GuildEntityManagerTestSuite))
 }

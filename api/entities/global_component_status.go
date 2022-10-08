@@ -64,20 +64,20 @@ func NewGlobalComponentStatusEntityManager(entityManager EntityManager) *GlobalC
 // cache. If no cache entry is present, a request to the entities will be made.
 // If no GlobalComponentStatus can be found, the function returns a new empty
 // GlobalComponentStatus.
-func (gem *GlobalComponentStatusEntityManager) Get(globalComponentStatusId uint) (*GlobalComponentStatus, error) {
-	comp, ok := cache.Get(gem.cache, globalComponentStatusId)
+func (gem *GlobalComponentStatusEntityManager) Get(registeredComponentStatusId uint) (*GlobalComponentStatus, error) {
+	comp, ok := cache.Get(gem.cache, registeredComponentStatusId)
 
 	if ok {
 		return comp, nil
 	}
 
 	globalCompStatus := &GlobalComponentStatus{}
-	err := gem.DB().GetFirstEntity(globalCompStatus, ColumnComponent+" = ?", globalComponentStatusId)
+	err := gem.DB().GetFirstEntity(globalCompStatus, ColumnComponent+" = ?", registeredComponentStatusId)
 	if nil != err {
 		return globalCompStatus, err
 	}
 
-	cache.Update(gem.cache, globalCompStatus.ID, globalCompStatus)
+	cache.Update(gem.cache, globalCompStatus.ComponentID, globalCompStatus)
 
 	return globalCompStatus, err
 }
@@ -107,7 +107,7 @@ func (gem *GlobalComponentStatusEntityManager) Create(globalComponentStatus *Glo
 	}
 
 	// Ensure entity is in cache when just updated
-	cache.Update(gem.cache, globalComponentStatus.ID, globalComponentStatus)
+	cache.Update(gem.cache, globalComponentStatus.ComponentID, globalComponentStatus)
 
 	return nil
 }
@@ -122,7 +122,7 @@ func (gem *GlobalComponentStatusEntityManager) Save(globalComponentStatus *Globa
 	}
 
 	// Ensure entity is in cache when just updated
-	cache.Update(gem.cache, globalComponentStatus.ID, globalComponentStatus)
+	cache.Update(gem.cache, globalComponentStatus.ComponentID, globalComponentStatus)
 
 	return nil
 }
@@ -139,7 +139,7 @@ func (gem *GlobalComponentStatusEntityManager) Update(
 	}
 
 	// Ensure entity is in cache when just updated
-	cache.Update(gem.cache, globalComponentStatus.ID, globalComponentStatus)
+	cache.Update(gem.cache, globalComponentStatus.ComponentID, globalComponentStatus)
 
 	return nil
 }

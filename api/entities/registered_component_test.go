@@ -263,6 +263,6 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestUpdateWithError() {
 	suite.Nil(cachedRegisteredComponent)
 }
 
-func TestNewRegisteredComponentEntityManager(t *testing.T) {
+func TestRegisteredComponentEntityManager(t *testing.T) {
 	suite.Run(t, new(RegisteredComponentEntityManagerTestSuite))
 }
