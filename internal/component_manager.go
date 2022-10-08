@@ -94,7 +94,7 @@ func RegisterComponents() {
 // all components listed in the Components array.
 //
 // When it is not possible to register a component,
-// an error will be printed into the logger.
+// an error will be printed in the log.
 // The application will continue to run as nothing happened.
 func LoadComponents(discord *discordgo.Session) {
 	componentRegistryLogger.Info("Starting component load sequence...")

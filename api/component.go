@@ -38,7 +38,7 @@ type State struct {
 	Loaded bool
 
 	// DefaultEnabled is the default status to set for the component
-	// in the entities when the bot joins a new guild.
+	// in the database when the bot joins a new guild.
 	DefaultEnabled bool
 }
 

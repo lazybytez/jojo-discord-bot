@@ -23,7 +23,7 @@ import (
 )
 
 // handleInitialComponentStatusOnGuildJoin ensures that components that are enabled by default
-// are written to the entities and - if newly written enabled by default.
+// are written to the database and - if newly written enabled by default .
 func handleInitialComponentStatusOnGuildJoin(_ *discordgo.Session, create *discordgo.GuildCreate) {
 	em := C.EntityManager()
 	guild, err := em.Guilds().Get(create.ID)
