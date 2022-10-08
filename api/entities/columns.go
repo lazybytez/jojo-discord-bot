@@ -16,17 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package main
+package entities
 
-import (
-	_ "github.com/lazybytez/jojo-discord-bot/components"
-	_ "github.com/lazybytez/jojo-discord-bot/core_components"
-
-	"github.com/lazybytez/jojo-discord-bot/internal"
-)
-
-// Entrypoint of Go
-// Call real internal.Bootstrap function of internal package
-func main() {
-	internal.Bootstrap()
-}
+const ColumnComponent = "component_id"
+const ColumnEnabled = "enabled"
+const ColumnGuild = "guild_id"
+const ColumnGuildId = "guild_id"
+const ColumnName = "name"
+const ColumnCode = "code"

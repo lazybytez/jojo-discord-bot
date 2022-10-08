@@ -20,7 +20,7 @@ package internal
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/api/log"
+	"github.com/lazybytez/jojo-discord-bot/services/logger"
 	"os"
 	"os/signal"
 	"syscall"
@@ -28,19 +28,19 @@ import (
 
 const coreLoggerPrefix = "core"
 
-// coreLogger is used for all log entries generated
+// coreLogger is used for all logger entries generated
 // by the internal package. It is the logger for all
 // general purpose and teardown tasks.
-var coreLogger = log.New(coreLoggerPrefix, nil)
+var coreLogger = logger.New(coreLoggerPrefix, nil)
 
 // Bootstrap handles the start of the application.
 // It is responsible to execute the startup sequence
 // and get the application up and running properly.
 func Bootstrap() {
 	initEnv()
-
 	initGorm()
 	createSession(Config.token)
+	initApi()
 
 	RegisterComponents()
 	LoadComponents(discord)
@@ -51,6 +51,15 @@ func Bootstrap() {
 	}
 
 	waitForTerminate()
+}
+
+// initApi prepares the API to be used by components.
+// This includes for example the initialization of the entity manager.
+func initApi() {
+	err := api.Init(CreateEntityManager())
+	if nil != err {
+		ExitFatalGracefully("Failed to initialize API!")
+	}
 }
 
 // waitForTerminate blocks the console and waits

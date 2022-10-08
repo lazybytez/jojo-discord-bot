@@ -20,7 +20,9 @@ package internal
 
 import (
 	"fmt"
-	dbAPI "github.com/lazybytez/jojo-discord-bot/api/database"
+	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/services/database"
+	serviceLogger "github.com/lazybytez/jojo-discord-bot/services/logger"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -30,7 +32,9 @@ import (
 const ModeSQLite = "SQLite"
 const ModePostgres = "Postgres"
 
-var database *gorm.DB
+const DatabaseLoggerPrefix = "database"
+
+var gormDB *gorm.DB
 
 // initGorm initializes GORM to allow the use of databases in the application
 func initGorm() {
@@ -50,24 +54,26 @@ func initGorm() {
 
 	coreLogger.Info("Open GORM instance...")
 	var err error
-	database, err = gorm.Open(*dial, &gorm.Config{
+	gormDB, err = gorm.Open(*dial, &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if nil != err {
 		ExitFatal(fmt.Sprintf("Failed to initialize database subsystem! Error: \"%v\"", err.Error()))
 	}
 
-	err = dbAPI.Init(database)
-	if nil != err {
-		ExitGracefully(err.Error())
-	}
-
 	coreLogger.Info("Database subsystem has been initialized successfully!")
 }
 
-// getSQLiteDialector creates a SQLite database and returns the gorm.Dialector instance
+// CreateEntityManager creates a new api.EntityManager with the default gorm.DB instance
+func CreateEntityManager() api.EntityManager {
+	em := api.NewEntityManager(database.New(gormDB), serviceLogger.New(DatabaseLoggerPrefix, nil))
+
+	return em
+}
+
+// getSQLiteDialector creates a SQLite gormDB and returns the gorm.Dialector instance
 //
-// The database is created either:
+// The gormDB is created either:
 //  1. when DB_DSN is present under the specified path
 //  2. when DB_DSN is empty under the current working directory
 func getSQLiteDialector() *gorm.Dialector {
@@ -80,7 +86,7 @@ func getSQLiteDialector() *gorm.Dialector {
 	return &sqlDialector
 }
 
-// getPostgresDialector creates a database connection and returns the gorm.Dialector instance
+// getPostgresDialector creates a gormDB connection and returns the gorm.Dialector instance
 //
 // The defined DB_DSN will be used to establish the connection.
 // If the DSN is empty, the application will crash!

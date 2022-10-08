@@ -16,17 +16,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package main
+package api
 
 import (
-	_ "github.com/lazybytez/jojo-discord-bot/components"
-	_ "github.com/lazybytez/jojo-discord-bot/core_components"
-
-	"github.com/lazybytez/jojo-discord-bot/internal"
+	"github.com/lazybytez/jojo-discord-bot/services"
+	"github.com/lazybytez/jojo-discord-bot/services/logger"
 )
 
-// Entrypoint of Go
-// Call real internal.Bootstrap function of internal package
-func main() {
-	internal.Bootstrap()
+// Logger is used to obtain the Logger of a component
+//
+// On first call, this function initializes the private Component.logger
+// field. On consecutive calls, the already present Logger will be used.
+func (c *Component) Logger() services.Logger {
+	if nil == c.logger {
+		c.logger = logger.New(c.Name, nil)
+	}
+
+	return c.logger
+}
+
+// SetLogger allows to set a custom logger for the component
+func (c *Component) SetLogger(l services.Logger) {
+	c.logger = l
 }

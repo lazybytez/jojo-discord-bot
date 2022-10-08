@@ -25,7 +25,7 @@ import (
 
 // ExtractTypeName extracts the type name of the struct/interface of an variable.
 //
-// This means, something like: *database.Guild
+// This means, something like: *entities.Guild
 // Results in: Guild
 func ExtractTypeName(t interface{}) string {
 	typeName := strings.TrimPrefix(reflect.TypeOf(t).String(), "*")

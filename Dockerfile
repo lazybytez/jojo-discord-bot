@@ -1,7 +1,7 @@
 # First build application
 FROM golang:1.19-alpine
 
-RUN mkdir /app
+RUN mkdir -p /app
 WORKDIR /app
 
 # Install necessary dependencies
@@ -20,7 +20,7 @@ FROM alpine:latest
 
 RUN apk add --no-cache iputils setpriv dumb-init && rm -rf /root/.cache
 
-RUN mkdir /app
+RUN mkdir -p /app
 COPY --from=0 /app/jojo-discord-bot /app/jojo-discord-bot
 COPY ./scripts/entrypoint.sh /usr/bin/entrypoint.sh
 RUN chmod 755 /app/jojo-discord-bot

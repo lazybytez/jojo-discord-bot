@@ -16,17 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package main
+package module
 
 import (
-	_ "github.com/lazybytez/jojo-discord-bot/components"
-	_ "github.com/lazybytez/jojo-discord-bot/core_components"
-
-	"github.com/lazybytez/jojo-discord-bot/internal"
+	"github.com/bwmarrin/discordgo"
+	"github.com/lazybytez/jojo-discord-bot/api/entities"
 )
 
-// Entrypoint of Go
-// Call real internal.Bootstrap function of internal package
-func main() {
-	internal.Bootstrap()
+// findComponent tries to find a specific component by its code.
+func findComponent(option *discordgo.ApplicationCommandInteractionDataOption) *entities.RegisteredComponent {
+	for _, c := range C.EntityManager().RegisteredComponent().GetAvailable() {
+		if c.Code == option.Options[0].Value {
+			return c
+		}
+	}
+
+	return nil
 }

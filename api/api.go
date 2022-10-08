@@ -16,17 +16,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package main
+package api
 
-import (
-	_ "github.com/lazybytez/jojo-discord-bot/components"
-	_ "github.com/lazybytez/jojo-discord-bot/core_components"
+// Init initializes the api.
+//
+// This covers initializing the following parts:
+//   - database api
+//   - entity management
+func Init(em EntityManager) error {
+	entityManager = em
+	err := entityManager.RegisterDefaultEntities()
+	if err != nil {
+		return err
+	}
 
-	"github.com/lazybytez/jojo-discord-bot/internal"
-)
-
-// Entrypoint of Go
-// Call real internal.Bootstrap function of internal package
-func main() {
-	internal.Bootstrap()
+	return nil
 }

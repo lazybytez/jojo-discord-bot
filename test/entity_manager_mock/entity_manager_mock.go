@@ -16,17 +16,41 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package main
+package entity_manager_mock
 
 import (
-	_ "github.com/lazybytez/jojo-discord-bot/components"
-	_ "github.com/lazybytez/jojo-discord-bot/core_components"
-
-	"github.com/lazybytez/jojo-discord-bot/internal"
+	"github.com/lazybytez/jojo-discord-bot/services"
+	"github.com/stretchr/testify/mock"
 )
 
-// Entrypoint of Go
-// Call real internal.Bootstrap function of internal package
-func main() {
-	internal.Bootstrap()
+type EntityManagerMock struct {
+	mock.Mock
+}
+
+func (em *EntityManagerMock) RegisterEntity(entityType interface{}) error {
+	call := em.Called(entityType)
+
+	return call.Error(0)
+}
+
+func (em *EntityManagerMock) DB() services.DatabaseAccess {
+	call := em.Called()
+
+	switch v := call.Get(0).(type) {
+	case services.DatabaseAccess:
+		return v
+	default:
+		return nil
+	}
+}
+
+func (em *EntityManagerMock) Logger() services.Logger {
+	call := em.Called()
+
+	switch v := call.Get(0).(type) {
+	case services.Logger:
+		return v
+	default:
+		return nil
+	}
 }
