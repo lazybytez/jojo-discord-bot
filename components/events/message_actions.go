@@ -23,30 +23,26 @@ import (
 	"github.com/lazybytez/jojo-discord-bot/api"
 )
 
-// C is the instance of the component.
-// Can be used to register the component or get information about it.
-var C = api.Component{
-	// Metadata
-	Code:        "events",
-	Name:        "Events",
-	Description: "This module manages events.",
-
-	State: &api.State{
-		DefaultEnabled: true,
-	},
+var messageActionEventCreate = &api.MessageAction{
+	CustomID: "event_create",
+	Handler:  handlePing,
 }
 
-// init initializes the component with its metadata
-func init() {
-	api.RegisterComponent(&C, LoadComponent)
+var messageActionEventEdit = &api.MessageAction{
+	CustomID: "event_create",
+	Handler:  handlePing,
 }
 
-// LoadComponent loads the Component
-func LoadComponent(_ *discordgo.Session) error {
-	_ = C.SlashCommandManager().Register(eventsCommand)
-	_ = C.SlashCommandManager().RegisterMessageAction(messageActionEventCreate)
-	_ = C.SlashCommandManager().RegisterMessageAction(messageActionEventEdit)
-	_ = C.SlashCommandManager().RegisterMessageAction(messageActionEventDelete)
+var messageActionEventDelete = &api.MessageAction{
+	CustomID: "event_create",
+	Handler:  handlePing,
+}
 
-	return nil
+func handlePing(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "Pong!",
+		},
+	})
 }
