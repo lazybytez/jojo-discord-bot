@@ -71,6 +71,15 @@ type TestEntity struct {
 	Name string
 }
 
+func (suite *DatabaseTestSuite) TestNew() {
+	fakeGormDB := &gorm.DB{}
+
+	db := New(fakeGormDB)
+
+	suite.NotNil(db)
+	suite.Equal(fakeGormDB, db.database)
+}
+
 func (suite *DatabaseTestSuite) TestRegisterEntityWithSuccess() {
 	testEntity := &TestEntity{
 		ID:   42,
