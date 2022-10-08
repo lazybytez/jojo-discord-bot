@@ -35,6 +35,10 @@ var (
 	// as value and the name of the discordgo.ApplicationCommand as key.
 	componentCommandMap map[string]*Command
 
+	// messageActionMap is a map that holds the to-be-executed MessageAction
+	// as value and the CustomID of a message component as the key.
+	messageActionMap map[string]*MessageAction
+
 	// unregisterCommandHandler holds the function that can be used to unregister
 	// the command Handler registered by InitCommandHandling
 	unregisterCommandHandler func()
@@ -47,16 +51,27 @@ var (
 // init slash command sub-system
 func init() {
 	componentCommandMap = make(map[string]*Command)
+	messageActionMap = make(map[string]*MessageAction)
 	slashCommandManagerLogger = logger.New(slashCommandLogPrefix, nil)
 }
 
 // Command is a struct that acts as a container for
 // discordgo.ApplicationCommand and the assigned command Handler.
 //
-// Create an instance of the struct and pass to Register a command
+// Create an instance of the struct and pass to Register a Command
 type Command struct {
 	Cmd      *discordgo.ApplicationCommand
 	Category Category
+	Handler  func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	c        *Component
+}
+
+// MessageAction is a struct that acts as a container for
+// a string indicator and the assigned message interaction Handler.
+//
+// Create an instance of the struct and pass to Register a MessageAction
+type MessageAction struct {
+	CustomID string
 	Handler  func(s *discordgo.Session, i *discordgo.InteractionCreate)
 	c        *Component
 }
@@ -72,12 +87,18 @@ type SlashCommandManager struct {
 // how slash commands should be created and registered
 // in the application
 type CommonSlashCommandManager interface {
-	// Register allows to register a command
+	// Register allows to register a Command
 	//
 	// It requires a Command to be passed.
 	// The Command holds the common discordgo.ApplicationCommand
 	// and the function that should handle the command.
 	Register(cmd *Command) error
+	// RegisterMessageAction allows to register a MessageAction
+	//
+	// It requires a MessageAction to be passed.
+	// The MessageAction holds a string named CustomID,
+	// and it's assigned function it should handle when called.
+	RegisterMessageAction(msgAction *MessageAction) error
 	// SyncApplicationComponentCommands ensures that the available discordgo.ApplicationCommand
 	// are synced for the given component with the given guild.
 	//
@@ -102,8 +123,15 @@ func InitCommandHandling(session *discordgo.Session) error {
 	}
 
 	unregisterCommandHandler = session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if command, ok := componentCommandMap[i.ApplicationCommandData().Name]; ok {
-			command.Handler(s, i)
+		switch i.Type {
+		case discordgo.InteractionApplicationCommand:
+			if command, ok := componentCommandMap[i.ApplicationCommandData().Name]; ok {
+				command.Handler(s, i)
+			}
+		case discordgo.InteractionMessageComponent:
+			if command, ok := messageActionMap[i.MessageComponentData().CustomID]; ok {
+				command.Handler(s, i)
+			}
 		}
 	})
 
@@ -164,7 +192,6 @@ func (c *SlashCommandManager) Register(cmd *Command) error {
 	cmd.c = c.owner
 
 	err := c.validateCommand(cmd)
-
 	if nil != err {
 		return err
 	}
@@ -191,16 +218,46 @@ func (c *SlashCommandManager) Register(cmd *Command) error {
 	return nil
 }
 
-// validateCommand validates the passed command to ensure it is valid
-// and can be registered properly.
+// RegisterMessageAction allows to register a MessageAction
+//
+// It requires a MessageAction to be passed.
+// The MessageAction holds a string named CustomID,
+// and it's assigned function it should handle when called.
+func (c *SlashCommandManager) RegisterMessageAction(msgAction *MessageAction) error {
+	msgAction.c = c.owner
+
+	err := c.validateMessageAction(msgAction)
+	if nil != err {
+		return err
+	}
+
+	if _, ok := messageActionMap[msgAction.CustomID]; ok {
+		err = errors.New("cannot register a CustomID twice")
+
+		c.owner.Logger().Err(
+			err,
+			"Failed to register the message action \"%v\" for component \"%v\": %v!",
+			msgAction.CustomID,
+			c.owner.Name,
+			err.Error())
+
+		return err
+	}
+
+	messageActionMap[msgAction.CustomID] = msgAction
+
+	return nil
+}
+
+// validateCommand validates the passed Command
+// to ensure it is valid and can be registered properly.
 func (c *SlashCommandManager) validateCommand(cmd *Command) error {
 	if nil == cmd.Cmd {
 		err := errors.New("the discordgo.ApplicationCommand of the passed command is nil")
 
 		c.owner.Logger().Err(
 			err,
-			"Failed to register the slash-Cmd \"%v\" for component \"%v\": %v!",
-			cmd.Cmd.Name,
+			"Failed to register a slash-Cmd for component \"%v\": %v!",
 			c.owner.Name,
 			err.Error())
 
@@ -220,14 +277,33 @@ func (c *SlashCommandManager) validateCommand(cmd *Command) error {
 		return err
 	}
 
-	if nil == cmd.Handler {
-		err := errors.New("the Handler of the passed command is nil")
+	return nil
+}
+
+// validateMessageAction validates the passed MessageAction
+// to ensure it is valid and can be registered properly.
+func (c *SlashCommandManager) validateMessageAction(msgAction *MessageAction) error {
+	if "" == msgAction.CustomID {
+		err := errors.New("the CustomID of the passed command is empty")
 
 		c.owner.Logger().Err(
 			err,
-			"Failed to register the slash-Cmd \"%v\" for component \"%v\"!",
-			cmd.Cmd.Name,
-			c.owner.Name)
+			"Failed to register the message action for component \"%v\": %v!",
+			c.owner.Name,
+			err.Error())
+
+		return err
+	}
+
+	if nil == msgAction.Handler {
+		err := errors.New("the Handler of the passed message action is nil")
+
+		c.owner.Logger().Err(
+			err,
+			"Failed to register the message action \"%v\" for component \"%v\": %v!",
+			msgAction.CustomID,
+			c.owner.Name,
+			err.Error())
 
 		return err
 	}
