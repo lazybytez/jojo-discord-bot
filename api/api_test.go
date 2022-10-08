@@ -20,7 +20,7 @@ package api
 
 import (
 	"fmt"
-	"github.com/lazybytez/jojo-discord-bot/test/db"
+	"github.com/lazybytez/jojo-discord-bot/test/dbmock"
 	"github.com/lazybytez/jojo-discord-bot/test/logmock"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -33,7 +33,7 @@ type APITestSuite struct {
 }
 
 func (suite *APITestSuite) TestInit() {
-	databaseMock := &db.DatabaseAccessMock{}
+	databaseMock := &dbmock.DatabaseAccessMock{}
 	loggerMock := &logmock.LoggerMock{}
 
 	testEntityManager := EntityManager{
@@ -53,7 +53,7 @@ func (suite *APITestSuite) TestInit() {
 }
 
 func (suite *APITestSuite) TestInitWithFailure() {
-	databaseMock := &db.DatabaseAccessMock{}
+	databaseMock := &dbmock.DatabaseAccessMock{}
 	loggerMock := &logmock.LoggerMock{}
 
 	testError := fmt.Errorf("something really bad happened")

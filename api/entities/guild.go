@@ -69,10 +69,10 @@ func (gem *GuildEntityManager) Get(guildId string) (*Guild, error) {
 		return &Guild{}, err
 	}
 
-	comp, ok := cache.Get(gem.cache, guildIdInt)
+	cachedGuild, ok := cache.Get(gem.cache, guildIdInt)
 
 	if ok {
-		return comp, nil
+		return cachedGuild, nil
 	}
 
 	guild := &Guild{}

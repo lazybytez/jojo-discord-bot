@@ -20,7 +20,7 @@ package api
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api/entities"
-	"github.com/lazybytez/jojo-discord-bot/test/db"
+	"github.com/lazybytez/jojo-discord-bot/test/dbmock"
 	"github.com/lazybytez/jojo-discord-bot/test/logmock"
 	"github.com/stretchr/testify/suite"
 	"testing"
@@ -28,13 +28,13 @@ import (
 
 type EntityManagersTestSuite struct {
 	suite.Suite
-	dba    *db.DatabaseAccessMock
+	dba    *dbmock.DatabaseAccessMock
 	logger *logmock.LoggerMock
 	em     EntityManager
 }
 
 func (suite *EntityManagersTestSuite) SetupTest() {
-	dba := &db.DatabaseAccessMock{}
+	dba := &dbmock.DatabaseAccessMock{}
 	logger := &logmock.LoggerMock{}
 
 	suite.dba = dba
