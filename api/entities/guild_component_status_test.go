@@ -52,6 +52,17 @@ func (suite *GuildComponentStatusEntityManagerTestSuite) SetupTest() {
 	}
 }
 
+func (suite *GuildComponentStatusEntityManagerTestSuite) TestGetCacheKey() {
+	guildId := uint(65835858358583)
+	componentId := uint(48688742646283)
+
+	expectedCacheKey := "65835858358583_48688742646283"
+
+	result := suite.gem.getComponentStatusCacheKey(guildId, componentId)
+
+	suite.Equal(expectedCacheKey, result)
+}
+
 func (suite *GuildComponentStatusEntityManagerTestSuite) TestNewGuildComponentStatusEntityManager() {
 	testEntityManager := entity_manager_mock.EntityManagerMock{}
 
