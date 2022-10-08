@@ -48,7 +48,7 @@ type GuildEntityManager interface {
 // which can be used to do Guild specific entities actions.
 func (em *EntityManager) Guilds() GuildEntityManager {
 	if nil == em.guild {
-		em.guild = entities.NewGuildEntityManager(&entityManager)
+		em.guild = entities.NewGuildEntityManager(em)
 	}
 
 	return em.guild
@@ -85,7 +85,7 @@ type RegisteredComponentEntityManager interface {
 // which can be used to do RegisteredComponent specific entities actions.
 func (em *EntityManager) RegisteredComponent() RegisteredComponentEntityManager {
 	if nil == em.registeredComponentEntityManager {
-		em.registeredComponentEntityManager = entities.NewRegisteredComponentEntityManager(&entityManager)
+		em.registeredComponentEntityManager = entities.NewRegisteredComponentEntityManager(em)
 	}
 
 	return em.registeredComponentEntityManager
@@ -119,7 +119,7 @@ type GlobalComponentStatusEntityManager interface {
 // which can be used to do GlobalComponentStatus specific entities actions.
 func (em *EntityManager) GlobalComponentStatus() GlobalComponentStatusEntityManager {
 	if nil == em.globalComponentStatusEntityManager {
-		em.globalComponentStatusEntityManager = entities.NewGlobalComponentStatusEntityManager(&entityManager)
+		em.globalComponentStatusEntityManager = entities.NewGlobalComponentStatusEntityManager(em)
 	}
 
 	return em.globalComponentStatusEntityManager
@@ -152,7 +152,7 @@ type GuildComponentStatusEntityManager interface {
 // which can be used to do GuildComponentStatus specific entities actions.
 func (em *EntityManager) GuildComponentStatus() GuildComponentStatusEntityManager {
 	if nil == em.guildComponentStatusEntityManager {
-		em.guildComponentStatusEntityManager = entities.NewGuildComponentStatusEntityManager(&entityManager)
+		em.guildComponentStatusEntityManager = entities.NewGuildComponentStatusEntityManager(em)
 	}
 
 	return em.guildComponentStatusEntityManager
