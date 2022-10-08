@@ -23,6 +23,9 @@ import (
 	"github.com/lazybytez/jojo-discord-bot/api"
 )
 
+// All embeds sent by this component will have the specified embedColor
+var embedColor = 0xF9E2AF
+
 // C is the instance of the component.
 // Can be used to register the component or get information about it.
 var C = api.Component{
@@ -44,7 +47,11 @@ func init() {
 // LoadComponent loads the Component
 func LoadComponent(_ *discordgo.Session) error {
 	_ = C.SlashCommandManager().Register(eventsCommand)
+
 	_ = C.SlashCommandManager().RegisterMessageAction(messageActionEventCreate)
+	_ = C.SlashCommandManager().RegisterMessageAction(messageActionEventCreateModal)
+	_ = C.SlashCommandManager().RegisterMessageAction(messageActionEventCreateModalAfter)
+
 	_ = C.SlashCommandManager().RegisterMessageAction(messageActionEventEdit)
 	_ = C.SlashCommandManager().RegisterMessageAction(messageActionEventDelete)
 

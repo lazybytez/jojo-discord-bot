@@ -24,8 +24,6 @@ import (
 	"github.com/lazybytez/jojo-discord-bot/api/slash_commands"
 )
 
-var embedColor = 0xF9E2AF
-
 var eventsCommand = &api.Command{
 	Cmd: &discordgo.ApplicationCommand{
 		Name:        "events",
@@ -61,7 +59,7 @@ func handleEventsCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 func handleList(s *discordgo.Session, i *discordgo.InteractionCreate, _ *discordgo.ApplicationCommandInteractionDataOption) {
 	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Type: discordgo.InteractionResponseDeferredMessageUpdate,
 		Data: buildListEmbed(s),
 	})
 }
@@ -120,7 +118,7 @@ func buildManageEmbed(s *discordgo.Session) *discordgo.InteractionResponseData {
 				},
 				discordgo.Button{
 					Emoji: discordgo.ComponentEmoji{
-						Name: "🗑️",
+						Name: "🗑",
 					},
 					Label:    "Delete",
 					Style:    discordgo.DangerButton,
@@ -135,8 +133,3 @@ func buildManageEmbed(s *discordgo.Session) *discordgo.InteractionResponseData {
 
 	return resp
 }
-
-/*func handleEventButtons(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	C.Logger().Info("Executed interaction")
-}
-*/
