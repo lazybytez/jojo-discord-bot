@@ -18,6 +18,32 @@
 
 package build
 
+import (
+	"github.com/stretchr/testify/suite"
+	"testing"
+)
+
 type VersionTestSuite struct {
-	suite.Sui
+	suite.Suite
+}
+
+func (suite *VersionTestSuite) TestComputeVersionStringWithEdgeVersionAndSHA() {
+	Version = "edge"
+	CommitSHA = "12345543321"
+
+	result := ComputeVersionString()
+
+	suite.Equal("edge<12345543321>", result)
+}
+
+func (suite *VersionTestSuite) TestComputeVersionStringWithTaggedVersion() {
+	Version = "v1.5.3"
+
+	result := ComputeVersionString()
+
+	suite.Equal("v1.5.3", result)
+}
+
+func TestVersion(t *testing.T) {
+	suite.Run(t, new(VersionTestSuite))
 }
