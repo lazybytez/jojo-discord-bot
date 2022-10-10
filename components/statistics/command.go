@@ -24,6 +24,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/dustin/go-humanize"
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/build"
 	"io"
 	"os"
 	"runtime"
@@ -134,6 +135,7 @@ func buildStatOutput() string {
 	appendStatLine(w, "Threads: **%s**\n", humanize.Comma(int64(runtime.NumGoroutine())))
 	appendStatLine(w, "Connected Servers: **%v**\n", countMsg)
 	appendStatLine(w, "Cluster ID: **%s**\n", cluster)
+	appendStatLine(w, "Version: **%s**\n", build.ComputeVersionString())
 
 	err = w.Flush()
 	if err != nil {

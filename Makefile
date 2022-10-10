@@ -38,9 +38,10 @@ run:
 	go run .
 
 # Builds an executable for production usage
+# Build will be tagged as edge and include commit SHA
 .PHONY: build
 build:
-	go build .
+	go build -ldflags "-X github.com/lazybytez/jojo-discord-bot/build.Version=edge -X github.com/lazybytez/jojo-discord-bot/build.CommitSHA=`git rev-parse --short HEAD`" .
 
 # === Quality Assurance ===
 # =========================

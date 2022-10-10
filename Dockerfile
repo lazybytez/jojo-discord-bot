@@ -1,6 +1,12 @@
 # First build application
 FROM golang:1.19-alpine
 
+ARG app_version="edge"
+ARG build_commit_sha=""
+
+ENV APP_VERSION=$app_version
+ENV BUILD_COMMIT_SHA=$build_commit_sha
+
 RUN mkdir -p /app
 WORKDIR /app
 
@@ -13,7 +19,7 @@ RUN go mod download && go mod verify
 
 # Copy source and start build
 COPY . .
-RUN go build -v -o /app ./...
+RUN go build -ldflags "-X github.com/lazybytez/jojo-discord-bot/build.Version=${APP_VERSION} -X github.com/lazybytez/jojo-discord-bot/build.CommitSHA=${BUILD_COMMIT_SHA}" -v -o /app ./...
 
 # Throw away last step and put binary in basic alpine image
 FROM alpine:latest

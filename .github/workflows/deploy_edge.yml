@@ -1,17 +1,17 @@
 # Continues deployment workflow to automatically
 # build Docker image on tag 
-name: CD
+name: Deploy Edge
 
 on:
   push:
     branches:
       - 'develop'
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
-  publish:
+  edge:
     runs-on: ubuntu-latest
+    environment:
+      name: Staging
     env:
       IS_CI: true
     steps:
@@ -37,12 +37,14 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ghcr.io/lazybytez/jojo-discord-bot
+          images: |
+            ghcr.io/lazybytez/jojo-discord-bot
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
             type=edge,branch=develop
+
+      - name: Retrieve commit SHA
+        id: commit_sha
+        run: echo "::set-output name=short::$(git rev-parse --short HEAD)"
 
       - name: Build and publish images
         uses: docker/build-push-action@v3
@@ -53,3 +55,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            app_version=edge
+            build_commit_sha=${{ steps.commit_sha.outputs.short }}
