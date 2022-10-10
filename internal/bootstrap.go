@@ -37,14 +37,22 @@ var coreLogger = logger.New(coreLoggerPrefix, nil)
 // It is responsible to execute the startup sequence
 // and get the application up and running properly.
 func Bootstrap() {
+	// Init config & db
 	initEnv()
 	initGorm()
-	createSession(Config.token)
-	initApi()
 
+	// Create DiscordGo session
+	createSession(Config.token)
+
+	// Init APIs
+	initApi()
+	initWebApi()
+
+	// Load components
 	RegisterComponents()
 	LoadComponents(discord)
 
+	// Start bot and finish API initialization
 	startBot()
 	if err := api.InitCommandHandling(discord); nil != err {
 		ExitGracefully(err.Error())

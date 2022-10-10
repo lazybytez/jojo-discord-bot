@@ -19,6 +19,7 @@
 package internal
 
 import (
+	"fmt"
 	"github.com/joho/godotenv"
 	"os"
 	"path"
@@ -26,9 +27,14 @@ import (
 
 const envFile = ".env"
 
-const token = "TOKEN"
-const sqlMode = "DB_MODE"
-const sqlDsn = "DB_DSN"
+// Available environment variables
+const (
+	token      = "TOKEN"
+	sqlMode    = "DB_MODE"
+	sqlDsn     = "DB_DSN"
+	webApiMode = "WEBAPI_MODE"
+	webApiHost = ":8080"
+)
 
 // JojoBotConfig represents the entire environment variable based configuration
 // of the application. Globally available values are public,
@@ -38,9 +44,11 @@ const sqlDsn = "DB_DSN"
 // When new configuration options get added to the application, they should be appended
 // to the structure.
 type JojoBotConfig struct {
-	token   string
-	sqlMode string
-	sqlDsn  string
+	token      string
+	sqlMode    string
+	sqlDsn     string
+	webApiMode string
+	webApiHost string
 }
 
 // Config holds the currently loaded configuration
@@ -51,6 +59,28 @@ type JojoBotConfig struct {
 //
 // The variable is initialized during the init function.
 var Config JojoBotConfig
+
+// getEnvOrDefault tries to get an environment variable from the environment.
+// If value could not be found, the passed default value will be used.
+func getEnvOrDefault(key string, defaultValue string) string {
+	val := os.Getenv(key)
+	if "" == val {
+		return defaultValue
+	}
+
+	return val
+}
+
+// getEnvOrDefault tries to get an environment variable from the environment.
+// If value could not be found, the application will exit with a fatal crash.
+func getEnvOrFail(key string) string {
+	val := os.Getenv(key)
+	if "" == val {
+		ExitFatal(fmt.Sprintf("The required environment variable \"%s\" has not been configured!", key))
+	}
+
+	return val
+}
 
 // initEnv initializes environment with local .env file
 // This will load the environment variables defined in the specified
@@ -66,29 +96,15 @@ func initEnv() {
 
 	err = godotenv.Load(envFilePath)
 	if nil == err {
-		coreLogger.Info("Sucessfully loaded env file!")
+		coreLogger.Info("Successfully loaded env file!")
 	}
 
 	Config = JojoBotConfig{
-		token:   os.Getenv(token),
-		sqlMode: os.Getenv(sqlMode),
-		sqlDsn:  os.Getenv(sqlDsn),
+		token:      getEnvOrFail(token),
+		sqlMode:    getEnvOrFail(sqlMode),
+		sqlDsn:     getEnvOrDefault(sqlDsn, ""),
+		webApiMode: getEnvOrDefault(webApiMode, DefaultWebApiMode),
+		webApiHost: getEnvOrDefault(webApiHost, DefaultWebApiHost),
 	}
-	coreLogger.Info("Sucessfully loaded environment configuration!")
-
-	cleanUpSensitiveValues()
-}
-
-// cleanUpSensitiveValues throws out sensitive values from the
-// environment configuration to prevent other packages from using those
-// without reloading them. This reduces the attack surface from accidentally
-// printing out the env to a user of the application.
-//
-// Note that variables loaded using godotenv.Load could be loaded again at any time
-func cleanUpSensitiveValues() {
-	err := os.Setenv(token, "")
-
-	if nil != err {
-		ExitFatal("Failed to cleanup sensitive environment values!")
-	}
+	coreLogger.Info("Successfully loaded environment configuration!")
 }

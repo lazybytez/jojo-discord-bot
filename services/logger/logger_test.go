@@ -126,7 +126,7 @@ func (suite *LogTestSuite) TestDebug() {
 
 		logEntry := tst.LastEntry()
 		logEntry.ExpLevel(zerolog.DebugLevel)
-		logEntry.ExpStr(componentLogPrefix, table.prefix)
+		logEntry.ExpStr(ComponentLogPrefix, table.prefix)
 		logEntry.ExpMsg(fmt.Sprintf(table.msg, table.values...))
 	}
 }
@@ -184,7 +184,7 @@ func (suite *LogTestSuite) TestInfo() {
 
 		logEntry := tst.LastEntry()
 		logEntry.ExpLevel(zerolog.InfoLevel)
-		logEntry.ExpStr(componentLogPrefix, table.prefix)
+		logEntry.ExpStr(ComponentLogPrefix, table.prefix)
 		logEntry.ExpMsg(fmt.Sprintf(table.msg, table.values...))
 	}
 }
@@ -242,7 +242,7 @@ func (suite *LogTestSuite) TestWarn() {
 
 		logEntry := tst.LastEntry()
 		logEntry.ExpLevel(zerolog.WarnLevel)
-		logEntry.ExpStr(componentLogPrefix, table.prefix)
+		logEntry.ExpStr(ComponentLogPrefix, table.prefix)
 		logEntry.ExpMsg(fmt.Sprintf(table.msg, table.values...))
 	}
 }
@@ -307,7 +307,7 @@ func (suite *LogTestSuite) TestErr() {
 
 		logEntry := tst.LastEntry()
 		logEntry.ExpLevel(zerolog.ErrorLevel)
-		logEntry.ExpStr(componentLogPrefix, table.prefix)
+		logEntry.ExpStr(ComponentLogPrefix, table.prefix)
 		logEntry.ExpMsg(fmt.Sprintf(table.msg, table.values...))
 	}
 }
