@@ -1,0 +1,40 @@
+# This is a workflow for automatically generating 
+# multiple SDK, based on gin-swagger docs  
+name: Generate SKD
+
+# TODO: Replace on push with on tag creation
+on:
+  push:
+    branches:
+      - 'feature/openapi-generator'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      IS_CI: true
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install swag
+        run: go install github.com/swaggo/swag/cmd/swag
+
+      - name: Build Go project
+        run: go build .
+
+      - name: Generate Client Library with the OpenAPITools Generator
+        uses: openapi-generators/openapitools-generator-action@v1
+        with: 
+          openapi-file: docs/swagger.json
+          generator: typescript-axios
+      
+      - name: Push code into external sdk repository
+        run: |
+          cd typescript-axios-client
+          ls -la

@@ -1,32 +1,39 @@
-/*
- * JOJO Discord Bot - An advanced multi-purpose discord bot
- * Copyright (C) 2022 Lazy Bytez (Elias Knodel, Pascal Zarrad)
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package main
 
 import (
-	_ "github.com/lazybytez/jojo-discord-bot/components"
-	_ "github.com/lazybytez/jojo-discord-bot/core_components"
-
-	"github.com/lazybytez/jojo-discord-bot/internal"
+	"github.com/gin-gonic/gin"
+	docs "github.com/lazybytez/jojo-discord-bot/docs"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"net/http"
 )
 
-// Entrypoint of Go
-// Call real internal.Bootstrap function of internal package
+// @BasePath /api/v1
+
+// PingExample godoc
+// @Summary ping example
+// @Schemes
+// @Description do ping
+// @Tags        example
+// @Accept      json
+// @Produce     json
+// @Success     200 {string} Helloworld
+// @Router      /example/helloworld [get]
+func Helloworld(g *gin.Context) {
+	g.JSON(http.StatusOK, "helloworld")
+}
+
 func main() {
-	internal.Bootstrap()
+	r := gin.Default()
+	docs.SwaggerInfo.BasePath = "/api/v1"
+	v1 := r.Group("/api/v1")
+	{
+		eg := v1.Group("/example")
+		{
+			eg.GET("/helloworld", Helloworld)
+		}
+	}
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	r.Run(":8080")
+
 }
