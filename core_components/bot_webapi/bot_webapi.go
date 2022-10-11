@@ -16,25 +16,36 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package webapi
+package bot_webapi
 
 import (
-	"fmt"
-	"github.com/gin-gonic/gin"
+	"github.com/bwmarrin/discordgo"
+	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/webapi"
 )
 
-// routerGroup is the base gin.RouterGroup
-// used to create API endpoints.
-var routerGroup *gin.RouterGroup
+var C = api.Component{
+	// Metadata
+	Code:         "bot_webapi",
+	Name:         "Bot WebAPI",
+	Description:  "This component handles setup of the web api for the bots core api endpoints.",
+	LoadPriority: 999,
 
-// Init initializes the webapi and makes
-// it ready to be used.
-func Init(apiRouterGroup *gin.RouterGroup) error {
-	if nil != routerGroup {
-		return fmt.Errorf("cannot initialize the web api twice")
-	}
+	State: &api.State{
+		DefaultEnabled: true,
+	},
+}
 
-	routerGroup = apiRouterGroup
+func init() {
+	api.RegisterComponent(&C, LoadComponent)
+}
+
+// LoadComponent loads the bot core component
+// and handles migration of core entities
+// and registration of important core event handlers.
+func LoadComponent(_ *discordgo.Session) error {
+	eg := webapi.Router().Group("/components")
+	eg.GET("/", ComponentsGet)
 
 	return nil
 }

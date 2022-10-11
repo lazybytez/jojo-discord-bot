@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/webapi"
 	"net/http"
 	"time"
 )
@@ -77,12 +78,6 @@ func initWebApi() {
 	enrichMiddlewares(engine)
 
 	v1ApiRouter = engine.Group(RouteApiV1)
-	{
-		eg := v1ApiRouter.Group("/components")
-		{
-			eg.GET("/", Helloworld)
-		}
-	}
 
 	httpServer = &http.Server{
 		Addr:    ":8080",
@@ -100,6 +95,11 @@ func initWebApi() {
 
 		ExitFatal(fmt.Sprintf("The api webserver quit unexpectedly: %v", err))
 	}()
+
+	err := webapi.Init(v1ApiRouter)
+	if nil != err {
+		ExitFatal(fmt.Sprintf("Failed to initialize the api framework for the web api: %v", err))
+	}
 }
 
 // shutdownApiWebserver tries to gracefully shut down

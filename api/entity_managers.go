@@ -98,7 +98,7 @@ type GlobalComponentStatusEntityManager interface {
 	// cache. If no cache entry is present, a request to the db will be made.
 	// If no GlobalComponentStatus can be found, the function returns a new empty
 	// GlobalComponentStatus.
-	Get(globalComponentStatusId uint) (*entities.GlobalComponentStatus, error)
+	Get(registeredComponentStatusId uint) (*entities.GlobalComponentStatus, error)
 	// GetDisplayString returns the string that indicates whether a component is
 	// enabled or disabled globally. The string can directly being used to print
 	// out messages in Discord.

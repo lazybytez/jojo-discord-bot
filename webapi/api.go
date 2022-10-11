@@ -16,34 +16,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package statistics
+package webapi
 
 import (
-	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api"
+	"fmt"
+	"github.com/gin-gonic/gin"
 )
 
-// C is the instance of the statistics component
-var C = api.Component{
-	// Metadata
-	Code:        "statistics",
-	Name:        "Statistics Component",
-	Description: "This Component returns statistics about the bot and the runtime.",
+// routerGroup is the base gin.RouterGroup
+// used to create API endpoints.
+var routerGroup *gin.RouterGroup
 
-	State: &api.State{
-		DefaultEnabled: true,
-	},
-}
+// Init initializes the webapi and makes
+// it ready to be used.
+func Init(apiRouterGroup *gin.RouterGroup) error {
+	if nil != routerGroup {
+		return fmt.Errorf("cannot initialize the web api twice")
+	}
 
-// init initializes the component with its metadata
-func init() {
-	api.RegisterComponent(&C, LoadComponent)
-}
-
-// LoadComponent loads the two registered slash commands
-func LoadComponent(_ *discordgo.Session) error {
-	_ = C.SlashCommandManager().Register(statsCommand)
-	_ = C.SlashCommandManager().Register(infoCommand)
+	routerGroup = apiRouterGroup
 
 	return nil
+}
+
+// Router returns the root gin.RouterGroup that should
+// be used to register new router groups and routes.
+//
+// This function should be used by components to create API endpoints.
+func Router() *gin.RouterGroup {
+	return routerGroup
 }
