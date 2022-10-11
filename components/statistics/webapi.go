@@ -19,33 +19,38 @@
 package statistics
 
 import (
-	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/gin-gonic/gin"
+	"github.com/lazybytez/jojo-discord-bot/build"
+	"github.com/lazybytez/jojo-discord-bot/webapi"
+	"net/http"
 )
 
-// C is the instance of the statistics component
-var C = api.Component{
-	// Metadata
-	Code:        "statistics",
-	Name:        "Statistics Component",
-	Description: "This Component returns statistics about the bot and the runtime.",
-
-	State: &api.State{
-		DefaultEnabled: true,
-	},
+// StatsDTO is a DTO used to store statistics that can be
+// output in the web api.
+type StatsDTO struct {
+	GuildCount        int64
+	SlashCommandCount int
+	Version           string
 }
 
-// init initializes the component with its metadata
-func init() {
-	api.RegisterComponent(&C, LoadComponent)
+func StatsGet(g *gin.Context) {
+	guildCount, err := C.EntityManager().Guilds().Count()
+	if nil != err {
+		guildCount = -1
+	}
+
+	statsDto := StatsDTO{
+		GuildCount:        guildCount,
+		SlashCommandCount: C.SlashCommandManager().GetCommandCount(),
+		Version:           build.ComputeVersionString(),
+	}
+
+	g.JSON(http.StatusOK, statsDto)
 }
 
-// LoadComponent loads the two registered slash commands
-func LoadComponent(_ *discordgo.Session) error {
-	_ = C.SlashCommandManager().Register(statsCommand)
-	_ = C.SlashCommandManager().Register(infoCommand)
-
-	registerRoutes()
-
-	return nil
+// registerRoutes registers the web api routes
+// provided by the statistics component.
+func registerRoutes() {
+	eg := webapi.Router().Group("/stats")
+	eg.GET("/", StatsGet)
 }
