@@ -16,10 +16,36 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package core_components
+package bot_webapi
 
 import (
-	_ "github.com/lazybytez/jojo-discord-bot/core_components/bot_core"
-	_ "github.com/lazybytez/jojo-discord-bot/core_components/bot_log"
-	_ "github.com/lazybytez/jojo-discord-bot/core_components/bot_webapi"
+	"github.com/bwmarrin/discordgo"
+	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/webapi"
 )
+
+var C = api.Component{
+	// Metadata
+	Code:         "bot_webapi",
+	Name:         "Bot WebAPI",
+	Description:  "This component handles setup of the web api for the bots core api endpoints.",
+	LoadPriority: 999,
+
+	State: &api.State{
+		DefaultEnabled: true,
+	},
+}
+
+func init() {
+	api.RegisterComponent(&C, LoadComponent)
+}
+
+// LoadComponent loads the bot core component
+// and handles migration of core entities
+// and registration of important core event handlers.
+func LoadComponent(_ *discordgo.Session) error {
+	eg := webapi.Router().Group("/components")
+	eg.GET("/", ComponentsGet)
+
+	return nil
+}

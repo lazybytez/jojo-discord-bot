@@ -26,6 +26,7 @@ import (
 // C is the instance of the statistics component
 var C = api.Component{
 	// Metadata
+	Code:        "statistics",
 	Name:        "Statistics Component",
 	Description: "This Component returns statistics about the bot and the runtime.",
 
@@ -43,6 +44,8 @@ func init() {
 func LoadComponent(_ *discordgo.Session) error {
 	_ = C.SlashCommandManager().Register(statsCommand)
 	_ = C.SlashCommandManager().Register(infoCommand)
+
+	registerRoutes()
 
 	return nil
 }

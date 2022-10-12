@@ -23,9 +23,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// componentLogPrefix is used by the logger to prefix
+// ComponentLogPrefix is used by the logger to prefix
 // log messages with the component name.
-const componentLogPrefix = "component"
+const ComponentLogPrefix = "component"
 
 // Logger is a type that is used to hold metadata
 // that should be used in the loggers methods.
@@ -52,21 +52,21 @@ func New(prefix string, loggerImpl *zerolog.Logger) *Logger {
 // This function appends the name of the Component from the receiver
 // to the log message.
 func (l *Logger) Debug(format string, v ...interface{}) {
-	l.loggerImpl.Debug().Str(componentLogPrefix, l.prefix).Msgf(format, v...)
+	l.loggerImpl.Debug().Str(ComponentLogPrefix, l.prefix).Msgf(format, v...)
 }
 
 // Info logs a message with level info.
 // This function appends the name of the Component from the receiver
 // to the log message.
 func (l *Logger) Info(format string, v ...interface{}) {
-	l.loggerImpl.Info().Str(componentLogPrefix, l.prefix).Msgf(format, v...)
+	l.loggerImpl.Info().Str(ComponentLogPrefix, l.prefix).Msgf(format, v...)
 }
 
 // Warn logs a message with level warnings.
 // This function appends the name of the Component from the receiver
 // to the log message.
 func (l *Logger) Warn(format string, v ...interface{}) {
-	l.loggerImpl.Warn().Str(componentLogPrefix, l.prefix).Msgf(format, v...)
+	l.loggerImpl.Warn().Str(ComponentLogPrefix, l.prefix).Msgf(format, v...)
 }
 
 // Err logs a message with level error.
@@ -75,5 +75,12 @@ func (l *Logger) Warn(format string, v ...interface{}) {
 //
 // The supplied error will be applied to the log message.
 func (l *Logger) Err(err error, format string, v ...interface{}) {
-	l.loggerImpl.Error().Err(err).Str(componentLogPrefix, l.prefix).Msgf(format, v...)
+	l.loggerImpl.Error().Err(err).Str(ComponentLogPrefix, l.prefix).Msgf(format, v...)
+}
+
+// Logger returns the real zerolog.Logger used by this logger
+// implementation. Except for internal usage (e.g. internal or api packages),
+// the wrapper functions should be used.
+func (l *Logger) Logger() *zerolog.Logger {
+	return l.loggerImpl
 }

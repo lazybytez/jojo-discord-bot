@@ -16,10 +16,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package core_components
+package webapi
 
 import (
-	_ "github.com/lazybytez/jojo-discord-bot/core_components/bot_core"
-	_ "github.com/lazybytez/jojo-discord-bot/core_components/bot_log"
-	_ "github.com/lazybytez/jojo-discord-bot/core_components/bot_webapi"
+	"fmt"
+	"github.com/gin-gonic/gin"
 )
+
+// routerGroup is the base gin.RouterGroup
+// used to create API endpoints.
+var routerGroup *gin.RouterGroup
+
+// Init initializes the webapi and makes
+// it ready to be used.
+func Init(apiRouterGroup *gin.RouterGroup) error {
+	if nil != routerGroup {
+		return fmt.Errorf("cannot initialize the web api twice")
+	}
+
+	routerGroup = apiRouterGroup
+
+	return nil
+}
+
+// Router returns the root gin.RouterGroup that should
+// be used to register new router groups and routes.
+//
+// This function should be used by components to create API endpoints.
+func Router() *gin.RouterGroup {
+	return routerGroup
+}
