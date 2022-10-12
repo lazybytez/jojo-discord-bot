@@ -44,7 +44,7 @@ const RouteApiV1 = "/v1"
 // webserver.
 var engine *gin.Engine
 
-// version1ApiRouter is the gin.RouterGroup that holds
+// v1ApiRouter is the gin.RouterGroup that holds
 // the entire first version of the applications API.
 var v1ApiRouter *gin.RouterGroup
 

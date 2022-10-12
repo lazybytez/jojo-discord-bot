@@ -33,7 +33,7 @@ const (
 	sqlMode    = "DB_MODE"
 	sqlDsn     = "DB_DSN"
 	webApiMode = "WEBAPI_MODE"
-	webApiHost = ":8080"
+	webApiHost = "WEBAPI_HOST"
 )
 
 // JojoBotConfig represents the entire environment variable based configuration
