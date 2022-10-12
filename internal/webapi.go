@@ -38,7 +38,7 @@ const (
 // RouteApiV1 is the path to the route group
 // used for the first version of the applications
 // web api.
-const RouteApiV1 = "/api/v1"
+const RouteApiV1 = "/v1"
 
 // engine is the gin.Engine that runs the API
 // webserver.

@@ -30,11 +30,11 @@ import (
 // and the entities.RegisteredComponent types. This type represents
 // a component with only API relevant data.
 type ComponentDTO struct {
-	Code          string
-	Name          string
-	Description   string
-	GlobalEnabled bool
-	GuildEnabled  bool
+	Code          string `json:"code"`
+	Name          string `json:"name"`
+	Description   string `json:"description"`
+	GlobalEnabled bool   `json:"global_enabled"`
+	GuildEnabled  bool   `json:"guild_enabled"`
 }
 
 // ComponentDTOFromComponent creates a new ComponentDTO.
@@ -81,8 +81,6 @@ func ComponentsGet(g *gin.Context) {
 		componentDTOs[i], err = ComponentDTOFromComponent(comp, "")
 		if nil != err {
 			C.Logger().Err(err, "Failed to convert component with code \"%s\" to ComponentDTO!", comp.Code)
-
-			err = nil
 		}
 	}
 

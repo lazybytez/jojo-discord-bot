@@ -28,9 +28,9 @@ import (
 // StatsDTO is a DTO used to store statistics that can be
 // output in the web api.
 type StatsDTO struct {
-	GuildCount        int64
-	SlashCommandCount int
-	Version           string
+	GuildCount        int64  `json:"guild_count"`
+	SlashCommandCount int    `json:"slash_command_count"`
+	Version           string `json:"version"`
 }
 
 func StatsGet(g *gin.Context) {
