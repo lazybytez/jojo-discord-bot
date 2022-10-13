@@ -88,7 +88,7 @@ func addSwaggerRedirect(originalHandler gin.HandlerFunc) gin.HandlerFunc {
 // that can be used to find information about the web api.
 func initSwagger() {
 	configuredBasePath := Config.webApiBasePath
-	if strings.HasSuffix(configuredBasePath, "/") && strings.HasPrefix(configuredBasePath, RouteApiV1) {
+	if strings.HasSuffix(configuredBasePath, "/") && strings.HasPrefix(RouteApiV1, "/") {
 		configuredBasePath = strings.TrimSuffix(configuredBasePath, "/")
 	}
 	basePath := fmt.Sprintf("%s%s", configuredBasePath, RouteApiV1)
