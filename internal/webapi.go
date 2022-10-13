@@ -23,22 +23,33 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/docs"
 	"github.com/lazybytez/jojo-discord-bot/webapi"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"net/http"
+	"strings"
 	"time"
 )
 
 const (
 	DefaultWebApiMode       = gin.ReleaseMode
 	DefaultWebApiHost       = ":8080"
+	DefaultWebApiBasePath   = "/"
 	GracefulShutdownTimeout = 10 * time.Second
 )
 
-// RouteApiV1 is the path to the route group
-// used for the first version of the applications
-// web api.
-const RouteApiV1 = "/v1"
+// @BasePath /api/v1
+
+// The root routes that are available on the running bot.
+const (
+	RouteApiV1        = "/v1"
+	RouteSwagger      = "/swagger"
+	RouteSwaggerIndex = "/swagger/index.html"
+)
+
+// SwaggerTitle is the title used for the Swagger page
+const SwaggerTitle = "JoJo Bot | API"
 
 // engine is the gin.Engine that runs the API
 // webserver.
@@ -52,14 +63,44 @@ var v1ApiRouter *gin.RouterGroup
 // of the application.
 var httpServer *http.Server
 
-func Helloworld(g *gin.Context) {
-	g.JSON(http.StatusOK, api.Components)
-}
-
 // enrichMiddlewares enriches the passed gin.Engine with
 // the default middleware for the application.
 func enrichMiddlewares(e *gin.Engine) {
 	e.Use(WebApiLogger(), gin.Recovery())
+}
+
+// addSwaggerRedirect adds a middleware that redirects calls to "/swagger"
+// to "/swagger/index.html".
+// This way it is easier to access the swagger.
+func addSwaggerRedirect(originalHandler gin.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if strings.HasSuffix(strings.TrimSuffix(c.Request.RequestURI, "/"), RouteSwagger) {
+			c.Redirect(http.StatusMovedPermanently, RouteSwaggerIndex)
+
+			return
+		}
+
+		originalHandler(c)
+	}
+}
+
+// initSwagger cares about initializing the Swagger
+// that can be used to find information about the web api.
+func initSwagger() {
+	configuredBasePath := Config.webApiBasePath
+	if strings.HasSuffix(configuredBasePath, "/") && strings.HasPrefix(configuredBasePath, RouteApiV1) {
+		configuredBasePath = strings.TrimSuffix(configuredBasePath, "/")
+	}
+	basePath := fmt.Sprintf("%s%s", configuredBasePath, RouteApiV1)
+
+	// base path for us is configured base path + current api version.
+	docs.SwaggerInfo.BasePath = basePath
+	swaggerHandler := ginSwagger.WrapHandler(swaggerFiles.Handler, func(config *ginSwagger.Config) {
+		config.Title = SwaggerTitle
+	})
+
+	routeGroup := engine.Group(RouteSwagger)
+	routeGroup.GET("/*any", addSwaggerRedirect(swaggerHandler))
 }
 
 // initWebApi initializes the web api.
@@ -96,6 +137,7 @@ func initWebApi() {
 		ExitFatal(fmt.Sprintf("The api webserver quit unexpectedly: %v", err))
 	}()
 
+	initSwagger()
 	err := webapi.Init(v1ApiRouter)
 	if nil != err {
 		ExitFatal(fmt.Sprintf("Failed to initialize the api framework for the web api: %v", err))

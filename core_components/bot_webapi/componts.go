@@ -73,6 +73,15 @@ func ComponentDTOFromComponent(c *api.Component, guildId string) (ComponentDTO, 
 	}, nil
 }
 
+// ComponentsGet endpoint
+// @Summary Endpoint that returns all available components
+// @Schemes
+// @Description This endpoint collects all available components and returns them.
+// @Tags core
+// @Accept json
+// @Produce json
+// @Success 200 {string} Helloworld
+// @Router /v1/components [get]
 func ComponentsGet(g *gin.Context) {
 	componentDTOs := make([]ComponentDTO, len(api.Components))
 	var err error
