@@ -29,13 +29,17 @@ import (
 // This type is used, because the bot both has the general api.Component
 // and the entities.RegisteredComponent types. This type represents
 // a component with only API relevant data.
+//
+// @description Component holds the metadata of a component like its name and
+// @description and description. Additionally, it holds the current global
+// @description and guild status.
 type ComponentDTO struct {
 	Code          string `json:"code"`
 	Name          string `json:"name"`
 	Description   string `json:"description"`
 	GlobalEnabled bool   `json:"global_enabled"`
 	GuildEnabled  bool   `json:"guild_enabled"`
-}
+} //@name Component
 
 // ComponentDTOFromComponent creates a new ComponentDTO.
 // The general data is taken from the passed api.Component.
@@ -74,14 +78,17 @@ func ComponentDTOFromComponent(c *api.Component, guildId string) (ComponentDTO, 
 }
 
 // ComponentsGet endpoint
-// @Summary Endpoint that returns all available components
-// @Schemes
+
+// @Summary     Endpoint that returns all available components
 // @Description This endpoint collects all available components and returns them.
-// @Tags core
-// @Accept json
-// @Produce json
-// @Success 200 {string} Helloworld
-// @Router /v1/components [get]
+// @Description The result on a success contains all relevant information, which includes name and description of components.
+// @Description Additionally, the endpoint also returns the status of the components.
+// @Description
+// @Description The guild status is currently not populated and always false!
+// @Tags        Component System
+// @Produce     json
+// @Success     200 {array} ComponentDTO "Returns an array of components with all their available data."
+// @Router      /components [get]
 func ComponentsGet(g *gin.Context) {
 	componentDTOs := make([]ComponentDTO, len(api.Components))
 	var err error
