@@ -26,7 +26,6 @@ import (
 	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/build"
 	"io"
-	"os"
 	"runtime"
 	"strconv"
 	"text/tabwriter"
@@ -102,7 +101,7 @@ func buildInfoOutput() string {
 
 	w.Init(buf, 0, 4, 0, ' ', 0)
 
-	appendStatLine(w, "Slash Commands: **%v**\n", C.SlashCommandManager().GetCommandCount())
+	appendStatLine(w, "Slash Commands: **%v**\n", collectSlashCommandCount())
 
 	err := w.Flush()
 	if err != nil {
@@ -117,14 +116,10 @@ func buildStatOutput() string {
 	w := &tabwriter.Writer{}
 	buf := &bytes.Buffer{}
 
-	count, err := C.EntityManager().Guilds().Count()
+	count := collectGuildCount()
 	countMsg := strconv.FormatInt(count, 10)
-	if nil != err {
+	if count == -1 {
 		countMsg = "Error"
-	}
-	cluster, err := os.Hostname()
-	if nil != err {
-		cluster = "Error"
 	}
 
 	w.Init(buf, 0, 4, 0, ' ', 0)
@@ -134,10 +129,10 @@ func buildStatOutput() string {
 	appendStatLine(w, "Garbage collected: **%s**\n", humanize.Bytes(m.TotalAlloc))
 	appendStatLine(w, "Threads: **%s**\n", humanize.Comma(int64(runtime.NumGoroutine())))
 	appendStatLine(w, "Connected Servers: **%v**\n", countMsg)
-	appendStatLine(w, "Cluster ID: **%s**\n", cluster)
+	appendStatLine(w, "Cluster ID: **%s**\n", collectClusterId())
 	appendStatLine(w, "Version: **%s**\n", build.ComputeVersionString())
 
-	err = w.Flush()
+	err := w.Flush()
 	if err != nil {
 		C.Logger().Err(err, "Could not flush statistics embed text write buffer.")
 	}

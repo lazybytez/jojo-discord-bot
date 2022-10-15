@@ -46,14 +46,9 @@ type StatsDTO struct {
 // @Success     200 {object} StatsDTO "Returns the current statistics of the bot (e. g. current version)."
 // @Router      /stats [get]
 func StatsGet(g *gin.Context) {
-	guildCount, err := C.EntityManager().Guilds().Count()
-	if nil != err {
-		guildCount = -1
-	}
-
 	statsDto := StatsDTO{
-		GuildCount:        guildCount,
-		SlashCommandCount: C.SlashCommandManager().GetCommandCount(),
+		GuildCount:        collectGuildCount(),
+		SlashCommandCount: collectSlashCommandCount(),
 		Version:           build.ComputeVersionString(),
 	}
 
