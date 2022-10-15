@@ -27,5 +27,8 @@ jojo-discord-bot
 # Go workspace file
 go.work
 
+# Auto generated docs
+docs/
+
 # Development test database
 jojo.db
