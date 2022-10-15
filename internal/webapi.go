@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/lazybytez/jojo-discord-bot/build"
 	"github.com/lazybytez/jojo-discord-bot/docs"
 	"github.com/lazybytez/jojo-discord-bot/webapi"
 	swaggerFiles "github.com/swaggo/files"
@@ -34,12 +35,12 @@ import (
 
 const (
 	DefaultWebApiMode       = gin.ReleaseMode
-	DefaultWebApiHost       = ":8080"
+	DefaultWebApiBind       = ":8080"
+	DefaultWebApiHost       = "localhost:8080"
 	DefaultWebApiBasePath   = "/"
+	DefaultWebApiSchemes    = "https,http"
 	GracefulShutdownTimeout = 10 * time.Second
 )
-
-// @BasePath /api/v1
 
 // The root routes that are available on the running bot.
 const (
@@ -49,7 +50,10 @@ const (
 )
 
 // SwaggerTitle is the title used for the Swagger page
-const SwaggerTitle = "JoJo Bot | API"
+const (
+	SwaggerTitle       = "JoJo Bot API"
+	SwaggerDescription = "Documentation of the JoJo Discord Bot web API that allows to get information about the bot and control it from the web."
+)
 
 // engine is the gin.Engine that runs the API
 // webserver.
@@ -84,6 +88,18 @@ func addSwaggerRedirect(originalHandler gin.HandlerFunc) gin.HandlerFunc {
 	}
 }
 
+// configureGeneralSwaggerMeta configures some general options
+// like the API base path or the current version.
+func configureGeneralSwaggerMeta(basePath string) {
+	docs.SwaggerInfo.Title = SwaggerTitle
+	docs.SwaggerInfo.Description = SwaggerDescription
+	docs.SwaggerInfo.Version = build.ComputeVersionString()
+
+	docs.SwaggerInfo.Host = Config.webApiHost
+	docs.SwaggerInfo.BasePath = basePath
+	docs.SwaggerInfo.Schemes = strings.Split(Config.webApiSchemes, ",")
+}
+
 // initSwagger cares about initializing the Swagger
 // that can be used to find information about the web api.
 func initSwagger() {
@@ -91,10 +107,10 @@ func initSwagger() {
 	if strings.HasSuffix(configuredBasePath, "/") && strings.HasPrefix(RouteApiV1, "/") {
 		configuredBasePath = strings.TrimSuffix(configuredBasePath, "/")
 	}
+	// base path for us is configured base path + current api version.
 	basePath := fmt.Sprintf("%s%s", configuredBasePath, RouteApiV1)
 
-	// base path for us is configured base path + current api version.
-	docs.SwaggerInfo.BasePath = basePath
+	configureGeneralSwaggerMeta(basePath)
 	swaggerHandler := ginSwagger.WrapHandler(swaggerFiles.Handler, func(config *ginSwagger.Config) {
 		config.Title = SwaggerTitle
 	})
@@ -125,7 +141,7 @@ func initWebApi() {
 		Handler: engine,
 	}
 
-	webApiLogger.Info("Starting api webserver on \"%s\" in mode %s...", Config.webApiHost, Config.webApiMode)
+	webApiLogger.Info("Starting api webserver on \"%s\" in mode %s...", Config.webApiBind, Config.webApiMode)
 	go func() {
 		err := httpServer.ListenAndServe()
 		if nil == err || errors.Is(err, http.ErrServerClosed) {

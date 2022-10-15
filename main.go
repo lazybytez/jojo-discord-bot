@@ -27,6 +27,14 @@ import (
 
 // Entrypoint of Go
 // Call real internal.Bootstrap function of internal package
+//
+// OpenAPI / Swagger data
+// @contact.name   Lazy Bytez
+// @contact.url https://lazybytez.de/
+// @contact.email  contact@lazybytez.de
+
+// @license.name GNU Affero General Public License v3.0
+// @license.url   https://www.gnu.org/licenses/agpl-3.0.html
 func main() {
 	internal.Bootstrap()
 }
