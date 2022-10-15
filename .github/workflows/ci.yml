@@ -23,6 +23,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Install dependencies
+        run: make install
+
       - name: Run Go linters
         uses: golangci/golangci-lint-action@v3
         with:
@@ -40,8 +43,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Build Go project
-        run: go build .
+      - name: Install dependencies
+        run: make install
+
+      - name: Build project
+        run: make build
 
       - name: Run Go tests
         run: go test -race -covermode=atomic -coverpkg=all -coverprofile=coverage.out ./...
