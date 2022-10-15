@@ -62,8 +62,7 @@ lint:
 # Install CLI for documentation generation
 .PHONY: openapi/dependencies
 openapi/dependencies:
-	go get -u github.com/swaggo/swag/cmd/swag
-	go install github.com/swaggo/swag/cmd/swag
+	go install github.com/swaggo/swag/cmd/swag@latest
 
 # Generate OpenAPI documentation
 .PHONY: openapi/generate
