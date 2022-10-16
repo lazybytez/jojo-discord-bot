@@ -29,11 +29,14 @@ const envFile = ".env"
 
 // Available environment variables
 const (
-	token      = "TOKEN"
-	sqlMode    = "DB_MODE"
-	sqlDsn     = "DB_DSN"
-	webApiMode = "WEBAPI_MODE"
-	webApiHost = "WEBAPI_HOST"
+	token          = "TOKEN"
+	sqlMode        = "DB_MODE"
+	sqlDsn         = "DB_DSN"
+	webApiMode     = "WEBAPI_MODE"
+	webApiBind     = "WEBAPI_BIND"
+	webApiHost     = "WEBAPI_HOST"
+	webApiBasePath = "WEBAPI_BASE_PATH"
+	webApiSchemes  = "WEBAPI_SCHEMES"
 )
 
 // JojoBotConfig represents the entire environment variable based configuration
@@ -44,11 +47,14 @@ const (
 // When new configuration options get added to the application, they should be appended
 // to the structure.
 type JojoBotConfig struct {
-	token      string
-	sqlMode    string
-	sqlDsn     string
-	webApiMode string
-	webApiHost string
+	token          string
+	sqlMode        string
+	sqlDsn         string
+	webApiMode     string
+	webApiBind     string
+	webApiHost     string
+	webApiBasePath string
+	webApiSchemes  string
 }
 
 // Config holds the currently loaded configuration
@@ -100,11 +106,14 @@ func initEnv() {
 	}
 
 	Config = JojoBotConfig{
-		token:      getEnvOrFail(token),
-		sqlMode:    getEnvOrFail(sqlMode),
-		sqlDsn:     getEnvOrDefault(sqlDsn, ""),
-		webApiMode: getEnvOrDefault(webApiMode, DefaultWebApiMode),
-		webApiHost: getEnvOrDefault(webApiHost, DefaultWebApiHost),
+		token:          getEnvOrFail(token),
+		sqlMode:        getEnvOrFail(sqlMode),
+		sqlDsn:         getEnvOrDefault(sqlDsn, ""),
+		webApiMode:     getEnvOrDefault(webApiMode, DefaultWebApiMode),
+		webApiBind:     getEnvOrDefault(webApiBind, DefaultWebApiBind),
+		webApiHost:     getEnvOrDefault(webApiHost, DefaultWebApiHost),
+		webApiBasePath: getEnvOrDefault(webApiBasePath, DefaultWebApiBasePath),
+		webApiSchemes:  getEnvOrDefault(webApiSchemes, DefaultWebApiSchemes),
 	}
 	coreLogger.Info("Successfully loaded environment configuration!")
 }

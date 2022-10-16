@@ -19,6 +19,7 @@ RUN go mod download && go mod verify
 
 # Copy source and start build
 COPY . .
+RUN go install github.com/swaggo/swag/cmd/swag@latest && swag init
 RUN go build -ldflags "-X github.com/lazybytez/jojo-discord-bot/build.Version=${APP_VERSION} -X github.com/lazybytez/jojo-discord-bot/build.CommitSHA=${BUILD_COMMIT_SHA}" -v -o /app ./...
 
 # Throw away last step and put binary in basic alpine image

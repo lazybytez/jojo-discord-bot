@@ -13,8 +13,10 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 # Get current directory
 CURRENT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+
 # === Project Setup ===
 # =====================
 # Copy the example env file
@@ -24,7 +26,7 @@ env:
 
 # Install go dependencies
 .PHONY: install
-install:
+install: openapi/dependencies openapi/generate
 	go get
 
 .PHONY: setup
@@ -34,13 +36,13 @@ setup: env install
 # =======================
 # Runs the code for development and test usage
 .PHONY: run
-run:
+run: openapi/generate
 	go run .
 
 # Builds an executable for production usage
 # Build will be tagged as edge and include commit SHA
 .PHONY: build
-build:
+build: openapi/generate
 	go build -ldflags "-X github.com/lazybytez/jojo-discord-bot/build.Version=edge -X github.com/lazybytez/jojo-discord-bot/build.CommitSHA=`git rev-parse --short HEAD`" .
 
 # === Quality Assurance ===
@@ -54,3 +56,15 @@ test:
 .PHONY: lint
 lint:
 	docker run --rm -v $(CURRENT_DIR):/app -w /app golangci/golangci-lint:v1.49.0 golangci-lint run -v
+
+# === OpenAPI ===
+# =========================
+# Install CLI for documentation generation
+.PHONY: openapi/dependencies
+openapi/dependencies:
+	go install github.com/swaggo/swag/cmd/swag@latest
+
+# Generate OpenAPI documentation
+.PHONY: openapi/generate
+openapi/generate:
+	swag init

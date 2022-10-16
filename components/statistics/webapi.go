@@ -27,21 +27,28 @@ import (
 
 // StatsDTO is a DTO used to store statistics that can be
 // output in the web api.
+//
+// @Description Statistics holds statistics about the bot like the current version.
 type StatsDTO struct {
 	GuildCount        int64  `json:"guild_count"`
 	SlashCommandCount int    `json:"slash_command_count"`
 	Version           string `json:"version"`
-}
+} //@Name Statistics
 
+// StatsGet endpoint
+//
+// @Summary     Get general statistics about the bot
+// @Description This endpoint collects publicly available statistics and returns them.
+// @Description The result contains general information like the current count of guilds or version.
+// @Description Note that some statistics might be cached and only updated every few minutes.
+// @Tags        General
+// @Produce     json
+// @Success     200 {object} StatsDTO "Returns the current statistics of the bot (e. g. current version)."
+// @Router      /stats [get]
 func StatsGet(g *gin.Context) {
-	guildCount, err := C.EntityManager().Guilds().Count()
-	if nil != err {
-		guildCount = -1
-	}
-
 	statsDto := StatsDTO{
-		GuildCount:        guildCount,
-		SlashCommandCount: C.SlashCommandManager().GetCommandCount(),
+		GuildCount:        collectGuildCount(),
+		SlashCommandCount: collectSlashCommandCount(),
 		Version:           build.ComputeVersionString(),
 	}
 
