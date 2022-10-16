@@ -27,12 +27,13 @@ import (
 
 // Entrypoint of Go
 // Call real internal.Bootstrap function of internal package
-//
 // OpenAPI / Swagger data
+// @title         JoJo Bot API
+// @description   Documentation of the JoJo Discord Bot web API that allows to get information about the bot and control it from the web.
+// @version       1.0
 // @contact.name  Lazy Bytez
 // @contact.url   https://lazybytez.de/
 // @contact.email contact@lazybytez.de
-
 // @license.name GNU Affero General Public License v3.0
 // @license.url  https://www.gnu.org/licenses/agpl-3.0.html
 func main() {

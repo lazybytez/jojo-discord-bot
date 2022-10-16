@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/lazybytez/jojo-discord-bot/build"
 	"github.com/lazybytez/jojo-discord-bot/docs"
 	"github.com/lazybytez/jojo-discord-bot/webapi"
 	swaggerFiles "github.com/swaggo/files"
@@ -47,12 +46,6 @@ const (
 	RouteApiV1        = "/v1"
 	RouteSwagger      = "/swagger"
 	RouteSwaggerIndex = "/swagger/index.html"
-)
-
-// SwaggerTitle is the title used for the Swagger page
-const (
-	SwaggerTitle       = "JoJo Bot API"
-	SwaggerDescription = "Documentation of the JoJo Discord Bot web API that allows to get information about the bot and control it from the web."
 )
 
 // engine is the gin.Engine that runs the API
@@ -91,10 +84,6 @@ func addSwaggerRedirect(originalHandler gin.HandlerFunc) gin.HandlerFunc {
 // configureGeneralSwaggerMeta configures some general options
 // like the API base path or the current version.
 func configureGeneralSwaggerMeta(basePath string) {
-	docs.SwaggerInfo.Title = SwaggerTitle
-	docs.SwaggerInfo.Description = SwaggerDescription
-	docs.SwaggerInfo.Version = build.ComputeVersionString()
-
 	docs.SwaggerInfo.Host = Config.webApiHost
 	docs.SwaggerInfo.BasePath = basePath
 	docs.SwaggerInfo.Schemes = strings.Split(Config.webApiSchemes, ",")
@@ -111,9 +100,7 @@ func initSwagger() {
 	basePath := fmt.Sprintf("%s%s", configuredBasePath, RouteApiV1)
 
 	configureGeneralSwaggerMeta(basePath)
-	swaggerHandler := ginSwagger.WrapHandler(swaggerFiles.Handler, func(config *ginSwagger.Config) {
-		config.Title = SwaggerTitle
-	})
+	swaggerHandler := ginSwagger.WrapHandler(swaggerFiles.Handler)
 
 	routeGroup := engine.Group(RouteSwagger)
 	routeGroup.GET("/*any", addSwaggerRedirect(swaggerHandler))
