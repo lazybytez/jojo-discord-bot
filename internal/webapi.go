@@ -71,8 +71,8 @@ func enrichMiddlewares(e *gin.Engine) {
 // This way it is easier to access the swagger.
 func addSwaggerRedirect(originalHandler gin.HandlerFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if strings.HasSuffix(strings.TrimSuffix(c.Request.RequestURI, "/"), RouteSwagger) {
-			c.Redirect(http.StatusMovedPermanently, RouteSwaggerIndex)
+		if strings.HasSuffix(strings.TrimSuffix(c.Request.RequestURI, "/"), buildRoutePath(RouteSwagger)) {
+			c.Redirect(http.StatusMovedPermanently, buildRoutePath(RouteSwaggerIndex))
 
 			return
 		}
@@ -93,7 +93,7 @@ func configureGeneralSwaggerMeta(basePath string) {
 // that can be used to find information about the web api.
 func initSwagger() {
 	configuredBasePath := Config.webApiBasePath
-	if strings.HasSuffix(configuredBasePath, "/") && strings.HasPrefix(RouteApiV1, "/") {
+	if strings.HasSuffix(configuredBasePath, "/") && strings.HasPrefix(buildRoutePath(RouteApiV1), "/") {
 		configuredBasePath = strings.TrimSuffix(configuredBasePath, "/")
 	}
 	// base path for us is configured base path + current api version.
@@ -102,7 +102,7 @@ func initSwagger() {
 	configureGeneralSwaggerMeta(basePath)
 	swaggerHandler := ginSwagger.WrapHandler(swaggerFiles.Handler)
 
-	routeGroup := engine.Group(RouteSwagger)
+	routeGroup := engine.Group(buildRoutePath(RouteSwagger))
 	routeGroup.GET("/*any", addSwaggerRedirect(swaggerHandler))
 }
 
@@ -121,7 +121,7 @@ func initWebApi() {
 	engine = gin.New()
 	enrichMiddlewares(engine)
 
-	v1ApiRouter = engine.Group(RouteApiV1)
+	v1ApiRouter = engine.Group(buildRoutePath(RouteApiV1))
 
 	httpServer = &http.Server{
 		Addr:    ":8080",
@@ -147,6 +147,13 @@ func initWebApi() {
 	}
 }
 
+// buildRoutePath prepares the path of a route to be registered
+func buildRoutePath(route string) string {
+	return fmt.Sprintf("%s/%s",
+		strings.TrimSuffix(Config.webApiBasePath, "/"),
+		strings.TrimPrefix(route, "/"))
+}
+
 // shutdownApiWebserver tries to gracefully shut down
 // the api webserver run by the bot.
 func shutdownApiWebserver() {
@@ -162,7 +169,7 @@ func shutdownApiWebserver() {
 	webApiLogger.Info("Gracefully shutting down api webserver...")
 
 	if err := httpServer.Shutdown(ctx); err != nil {
-		webApiLogger.Err(err, "Failed to gracefully shutdown the api webserv!")
+		webApiLogger.Err(err, "Failed to gracefully shutdown the api webserver!")
 
 		return
 	}
