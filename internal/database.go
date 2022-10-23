@@ -77,7 +77,7 @@ func CreateEntityManager() api.EntityManager {
 //  1. when DB_DSN is present under the specified path
 //  2. when DB_DSN is empty under the current working directory
 func getSQLiteDialector() *gorm.Dialector {
-	dsn := Config.sqlDsn
+	dsn := Config.sqlUrl
 	if "" == dsn {
 		dsn = "jojo.db"
 	}
@@ -91,9 +91,9 @@ func getSQLiteDialector() *gorm.Dialector {
 // The defined DB_DSN will be used to establish the connection.
 // If the DSN is empty, the application will crash!
 func getPostgresDialector() *gorm.Dialector {
-	dsn := Config.sqlDsn
+	dsn := Config.sqlUrl
 	if "" == dsn {
-		ExitFatal(fmt.Sprintf("A DB_DSN must be defined when using DB_MODE \"%v\"", ModePostgres))
+		ExitFatal(fmt.Sprintf("A DATABASE_URL must be defined when using DATABASE_MODE \"%v\"", ModePostgres))
 	}
 
 	sqlDialector := postgres.Open(dsn)
