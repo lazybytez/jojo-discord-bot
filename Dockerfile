@@ -46,5 +46,8 @@ LABEL org.opencontainers.image.vendor="Lazy Bytez"
 LABEL org.opencontainers.image.source="https://github.com/lazybytez/jojo-discord-bot"
 LABEL org.opencontainers.image.licenses="AGPL-3.0"
 
+# Default port for WebAPI
+EXPOSE 8080
+
 ENTRYPOINT ["/usr/bin/dumb-init", "--", "/usr/bin/entrypoint.sh"]
 CMD ["/app/jojo-discord-bot"]
