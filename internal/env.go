@@ -30,8 +30,8 @@ const envFile = ".env"
 // Available environment variables
 const (
 	token          = "TOKEN"
-	sqlMode        = "DB_MODE"
-	sqlDsn         = "DB_DSN"
+	sqlMode        = "DATABASE_MODE"
+	sqlUrl         = "DATABASE_URL"
 	webApiMode     = "WEBAPI_MODE"
 	webApiBind     = "WEBAPI_BIND"
 	webApiHost     = "WEBAPI_HOST"
@@ -49,7 +49,7 @@ const (
 type JojoBotConfig struct {
 	token          string
 	sqlMode        string
-	sqlDsn         string
+	sqlUrl         string
 	webApiMode     string
 	webApiBind     string
 	webApiHost     string
@@ -108,7 +108,7 @@ func initEnv() {
 	Config = JojoBotConfig{
 		token:          getEnvOrFail(token),
 		sqlMode:        getEnvOrFail(sqlMode),
-		sqlDsn:         getEnvOrDefault(sqlDsn, ""),
+		sqlUrl:         getEnvOrDefault(sqlUrl, ""),
 		webApiMode:     getEnvOrDefault(webApiMode, DefaultWebApiMode),
 		webApiBind:     getEnvOrDefault(webApiBind, DefaultWebApiBind),
 		webApiHost:     getEnvOrDefault(webApiHost, DefaultWebApiHost),

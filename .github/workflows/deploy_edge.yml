@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Install Docker with buildx
         uses: docker/setup-buildx-action@v2
@@ -44,10 +46,13 @@ jobs:
 
       - name: Retrieve commit SHA
         id: commit_sha
-        run: echo "::set-output name=short::$(git rev-parse --short HEAD)"
+        run: |
+          echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
+      # Deploy stage image to GHCR
       - name: Build and publish images
         uses: docker/build-push-action@v3
+        id: build_push
         with:
           context: .
           file: ./Dockerfile
@@ -58,3 +63,16 @@ jobs:
           build-args: |
             app_version=edge
             build_commit_sha=${{ steps.commit_sha.outputs.short }}
+
+      # Handle stage deployment
+      - name: Mask hidden URLs
+        run: |
+          echo "::add-mask::${{ secrets.APP_URL }}"
+          echo "::add-mask::${{ secrets.SSH_URL }}" 
+      - name: Do deployment
+        uses: dokku/github-action@master
+        with:
+          git_remote_url: ${{ secrets.DEPLOYMENT_HOST }}
+          ssh_private_key: ${{ secrets.DEPLOYMENT_KEY }}
+          ssh_host_key: ${{ secrets.DEPLOYMENT_HOST_KEY }}
+          deploy_docker_image: "ghcr.io/lazybytez/jojo-discord-bot@${{ steps.build_push.outputs.digest }}"
