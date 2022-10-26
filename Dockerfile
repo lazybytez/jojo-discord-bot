@@ -28,12 +28,17 @@ FROM alpine:latest
 RUN apk add --no-cache iputils setpriv dumb-init && rm -rf /root/.cache
 
 RUN mkdir -p /app
-COPY --from=0 /app/jojo-discord-bot /app/jojo-discord-bot
+WORKDIR /app
+COPY --from=0 /app/jojo-discord-bot jojo-discord-bot
 COPY ./scripts/entrypoint.sh /usr/bin/entrypoint.sh
-RUN chmod 755 /app/jojo-discord-bot
+RUN chmod 755 jojo-discord-bot
 RUN chmod 755 /usr/bin/entrypoint.sh
 
+RUN echo "/v1/stats/	{" > CHECKS \
+	&& echo "/swagger	<!DOCTYPE html>" >> CHECKS
+
 VOLUME ["/app/data", "/app/log"]
+
 
 # General image informations
 LABEL author="Lazy Bytez"
