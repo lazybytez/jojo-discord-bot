@@ -66,9 +66,10 @@ jobs:
             build_commit_sha=${{ steps.commit_sha.outputs.short }}
 
       # Handle stage deployment
-      - name: Mask deployment URLs
+      - name: Mask hidden URLs
         run: |
-          echo "::add-mask::${{ secrets.APP_URL }}" 
+          echo "::add-mask::${{ secrets.APP_URL }}"
+          echo "::add-mask::${{ secrets.SSH_URL }}" 
       - name: Do deployment
         uses: dokku/github-action@master
         with:

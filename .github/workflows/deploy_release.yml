@@ -62,6 +62,9 @@ jobs:
             build_commit_sha=${{ steps.commit_sha.outputs.short }}
 
       # Handle prod deployment
+      - name: Mask hidden URLs
+        run: |
+          echo "::add-mask::${{ secrets.SSH_URL }}" 
       - name: Do deployment
         uses: dokku/github-action@master
         with:
