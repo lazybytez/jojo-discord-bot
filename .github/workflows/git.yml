@@ -12,8 +12,8 @@ jobs:
         uses: deepakputhraya/action-branch-name@master
         with:
           regex: '([a-zA-Z0-0-])+\/([a-zA-Z0-0-])+'
-          allowed_prefixes: "feature,hotfix,release,renovate"
-          ignore: main,develop
+          allowed_prefixes: "feature,fix,hotfix,release,renovate"
+          ignore: main
 
   # Verify that the commits matches the format
   verify_commit_messages:
@@ -24,6 +24,6 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run commitlint
-        uses: wagoid/commitlint-github-action@v2
+        uses: wagoid/commitlint-github-action@v4
         with:
           configFile: commitlint.config.js

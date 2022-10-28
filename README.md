@@ -128,6 +128,14 @@ Also see [CONTRIBUTING.md#commits](https://github.com/lazybytez/.github/blob/mai
 'test', // Some automated tests that have been added
 ```
 
+#### Branches:
+
+| Branch     | Usage                                  |
+|------------|----------------------------------------|
+| main       | The default branch                     |
+| feature/*  | For developing features                |
+| fix/*      | For fixing bugs                        |
+
 ### Recommended IDEs
 
 - [GoLand](https://www.jetbrains.com/de-de/go/) (paid)

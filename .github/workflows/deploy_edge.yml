@@ -5,7 +5,7 @@ name: Deploy Edge
 on:
   push:
     branches:
-      - 'develop'
+      - 'main'
 
 jobs:
   edge:
@@ -42,7 +42,7 @@ jobs:
           images: |
             ghcr.io/lazybytez/jojo-discord-bot
           tags: |
-            type=edge,branch=develop
+            type=edge,branch=main
 
       - name: Retrieve commit SHA
         id: commit_sha

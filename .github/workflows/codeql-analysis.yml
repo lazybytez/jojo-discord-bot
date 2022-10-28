@@ -6,7 +6,6 @@ on:
   pull_request:
   push:
     branches:
-      - develop
       - main
   schedule:
     - cron: '0 0 * * 0'
