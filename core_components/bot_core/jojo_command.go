@@ -21,6 +21,7 @@ package bot_core
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/core_components/bot_core/command/auditlog"
 	"github.com/lazybytez/jojo-discord-bot/core_components/bot_core/command/module"
 	"github.com/lazybytez/jojo-discord-bot/core_components/bot_core/command/sync_commands"
 )
@@ -119,6 +120,41 @@ func initAndRegisterJojoCommand() {
 						"guild to tackle inconsistencies",
 					Type: discordgo.ApplicationCommandOptionSubCommand,
 				},
+				{
+					Name:        "auditlog",
+					Description: "Manage settings of the bot audit log!",
+					Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Name:        "status",
+							Description: "Show the status of the current bot audit log configuration",
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+						},
+						{
+							Name:        "enable",
+							Description: "Enable printing the bot audit log to the configured channel",
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+						},
+						{
+							Name:        "disable",
+							Description: "Disable printing the bot audit log to the configured channel",
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+						},
+						{
+							Name:        "set-channel",
+							Description: "Configure the channel where bot audit log messages should be send to",
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+							Options: []*discordgo.ApplicationCommandOption{
+								{
+									Name:        "channel",
+									Description: "The channel where audit log messages should be send to",
+									Required:    true,
+									Type:        discordgo.ApplicationCommandOptionChannel,
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 		Handler: handleJojoCommand,
@@ -137,6 +173,7 @@ func handleJojoCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	){
 		"module":        module.HandleModuleSubCommand,
 		"sync-commands": sync_commands.HandleSyncCommandSubCommand,
+		"auditlog":      auditlog.HandleAuditLogCommandSubCommand,
 	}
 
 	api.ProcessSubCommands(
