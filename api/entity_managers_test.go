@@ -134,6 +134,29 @@ func (suite *EntityManagersTestSuite) TestGetGuildComponentStatusEntityManagerWi
 	suite.Equal(result, result2)
 }
 
+func (suite *EntityManagersTestSuite) TestGetAuditLogConfigEntityManagerWithExistingAuditLogConfigEntityManager() {
+	auditLogEntityManager := &entities.AuditLogConfigEntityManager{}
+
+	suite.em.auditLogConfigEntityManager = auditLogEntityManager
+
+	result := suite.em.AuditLogConfig()
+
+	suite.NotNil(result)
+	suite.Equal(auditLogEntityManager, result)
+}
+
+func (suite *EntityManagersTestSuite) TestGetAuditLogConfigEntityManagerWithNoExistingAuditLogConfigEntityManager() {
+	result := suite.em.AuditLogConfig()
+	result2 := suite.em.AuditLogConfig()
+
+	// First call
+	suite.NotNil(result)
+	suite.IsType(&entities.AuditLogConfigEntityManager{}, result)
+
+	// Consecutive calls
+	suite.Equal(result, result2)
+}
+
 func TestEntityManagers(t *testing.T) {
 	suite.Run(t, new(EntityManagersTestSuite))
 }

@@ -157,3 +157,34 @@ func (em *EntityManager) GuildComponentStatus() GuildComponentStatusEntityManage
 
 	return em.guildComponentStatusEntityManager
 }
+
+// AuditLogConfigEntityManager is an entity manager
+// that provides functionality for entities.AuditLogConfig CRUD operations.
+type AuditLogConfigEntityManager interface {
+	// GetByGuildId tries to get a AuditLogConfig by its guild ID.
+	// The function uses a cache and first tries to resolve a value from it.
+	// If no cache entry is present, a request to the entities will be made.
+	// If no AuditLogConfig can be found, the function returns a new empty
+	// AuditLogConfig.
+	GetByGuildId(guildId uint64) (*entities.AuditLogConfig, error)
+
+	// Create saves the passed Guild in the db.
+	// Use Update or Save to update an already existing Guild.
+	Create(auditLogConfig *entities.AuditLogConfig) error
+	// Save updates the passed Guild in the db.
+	// This does a generic update, use Update to do a precise and more performant update
+	// of the entity when only updating a single field!
+	Save(auditLogConfig *entities.AuditLogConfig) error
+	// Update updates the defined field on the entity and saves it in the db.
+	Update(auditLogConfig *entities.AuditLogConfig, column string, value interface{}) error
+}
+
+// AuditLogConfig returns the AuditLogConfigEntityManager that is currently active,
+// which can be used to do entities.AuditLogConfig specific entities actions.
+func (em *EntityManager) AuditLogConfig() AuditLogConfigEntityManager {
+	if nil == em.auditLogConfigEntityManager {
+		em.auditLogConfigEntityManager = entities.NewAuditLogConfigEntityManager(em)
+	}
+
+	return em.auditLogConfigEntityManager
+}
