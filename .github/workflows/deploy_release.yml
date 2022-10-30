@@ -50,6 +50,7 @@ jobs:
 
       - name: Build and publish public image
         uses: docker/build-push-action@v3
+        id: build_push
         with:
           context: .
           file: ./Dockerfile
