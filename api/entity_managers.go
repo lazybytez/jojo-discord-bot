@@ -166,7 +166,7 @@ type AuditLogConfigEntityManager interface {
 	// If no cache entry is present, a request to the entities will be made.
 	// If no AuditLogConfig can be found, the function returns a new empty
 	// AuditLogConfig.
-	GetByGuildId(guildId uint64) (*entities.AuditLogConfig, error)
+	GetByGuildId(guildId uint) (*entities.AuditLogConfig, error)
 
 	// Create saves the passed Guild in the db.
 	// Use Update or Save to update an already existing Guild.

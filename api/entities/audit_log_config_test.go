@@ -48,7 +48,7 @@ func (suite *AuditLogConfigEntityManagerTestSuite) SetupTest() {
 	suite.em = entity_manager_mock.EntityManagerMock{}
 	suite.gem = &AuditLogConfigEntityManager{
 		&suite.em,
-		cache.New[uint64, AuditLogConfig](5 * time.Second),
+		cache.New[uint, AuditLogConfig](5 * time.Second),
 	}
 }
 
@@ -65,7 +65,7 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestNewAuditLogConfigEntityMa
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestGetByGuildID() {
-	testGuildId := uint64(12345123451234512345)
+	testGuildId := uint(123123)
 
 	suite.em.On("DB").Return(suite.dba)
 	suite.dba.On(
@@ -92,7 +92,7 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestGetByGuildID() {
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestGetByGuildIDWithCache() {
-	testGuildId := uint64(12345123451234512345)
+	testGuildId := uint(123123)
 
 	testAuditLogConfig := &AuditLogConfig{
 		GuildID: testGuildId,
@@ -112,7 +112,7 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestGetByGuildIDWithCache() {
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestGetByGuildIDWithError() {
-	testGuildId := uint64(12345123451234512345)
+	testGuildId := uint(123123)
 
 	expectedError := fmt.Errorf("something bad happened during database read")
 
@@ -136,7 +136,7 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestGetByGuildIDWithError() {
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestCreate() {
-	testGuildId := uint64(12345123451234512345)
+	testGuildId := uint(123123)
 	testAuditLogConfig := AuditLogConfig{
 		GuildID: testGuildId,
 	}
@@ -155,7 +155,7 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestCreate() {
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestCreateWithError() {
-	testGuildId := uint64(12345123451234512345)
+	testGuildId := uint(123123)
 	testAuditLogConfig := AuditLogConfig{
 		GuildID: testGuildId,
 	}
@@ -177,7 +177,7 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestCreateWithError() {
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestSave() {
-	testGuildId := uint64(12345123451234512345)
+	testGuildId := uint(123123)
 	testAuditLogConfig := AuditLogConfig{
 		GuildID: testGuildId,
 	}
@@ -196,7 +196,7 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestSave() {
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestSaveWithError() {
-	testGuildID := uint64(12345123451234512345)
+	testGuildID := uint(123123)
 	testAuditLogConfig := AuditLogConfig{
 		GuildID: testGuildID,
 	}
@@ -218,7 +218,7 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestSaveWithError() {
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestUpdate() {
-	testGuildId := uint64(12345123451234512345)
+	testGuildId := uint(123123)
 	testAuditLogConfig := AuditLogConfig{
 		GuildID: testGuildId,
 	}
@@ -239,7 +239,7 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestUpdate() {
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestUpdateWithError() {
-	testGuildId := uint64(12345123451234512345)
+	testGuildId := uint(123123)
 	testAuditLogConfig := AuditLogConfig{
 		GuildID: testGuildId,
 	}

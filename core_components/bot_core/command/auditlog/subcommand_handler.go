@@ -21,6 +21,7 @@ package auditlog
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/api/slash_commands"
 )
 
 var C *api.Component
@@ -34,15 +35,20 @@ func HandleAuditLogCommandSubCommand(
 	i *discordgo.InteractionCreate,
 	option *discordgo.ApplicationCommandInteractionDataOption,
 ) {
+	if nil == i.Member {
+		slash_commands.RespondWithCommandIsGuildOnly(C, s, i, "auditlog")
+
+		return
+	}
+
 	subCommands := map[string]func(
 		s *discordgo.Session,
 		i *discordgo.InteractionCreate,
 		option *discordgo.ApplicationCommandInteractionDataOption,
 	){
-		"status": handleAuditLogStatus,
-		//"show":    handleModuleShow,
-		//"enable":  handleModuleEnable,
-		//"disable": handleModuleDisable,
+		"status":  handleAuditLogStatus,
+		"enable":  handleAuditLogEnable,
+		"disable": handleAuditLogDisable,
 	}
 
 	success := api.ProcessSubCommands(

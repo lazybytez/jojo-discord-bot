@@ -25,111 +25,110 @@ import (
 	"strconv"
 )
 
+const (
+	statusCommandResponseHeader                = "Bot Audit Log Status"
+	statusBotAuditLogEnabledName               = "Enabled"
+	statusBotAuditLogEnabledValue              = ":white_check_mark:"
+	statusBotAuditLogDisabledValue             = ":x:"
+	statusBotAuditLogChannelName               = "Channel"
+	statusBotAuditLogChannelNotConfiguredValue = "Not configured!"
+)
+
 // handleModuleDisable enables the targeted module.
 func handleAuditLogStatus(
 	s *discordgo.Session,
 	i *discordgo.InteractionCreate,
 	_ *discordgo.ApplicationCommandInteractionDataOption,
 ) {
-	resp := slash_commands.GenerateInteractionResponseTemplate("Bot Audit Log", "")
+	resp := slash_commands.GenerateInteractionResponseTemplate(statusCommandResponseHeader, "")
 
-	guildIdInt, err := strconv.ParseUint(i.GuildID, 10, 64)
+	guild, err := C.EntityManager().Guilds().Get(i.GuildID)
 	if nil != err {
-		respondWithError(s, i, resp)
+		slash_commands.RespondWithGenericErrorMessage(C, s, i, resp)
 
 		return
 	}
 
-	guildAuditLogConfig, err := C.EntityManager().AuditLogConfig().GetByGuildId(guildIdInt)
+	guildAuditLogConfig, err := C.EntityManager().AuditLogConfig().GetByGuildId(guild.ID)
 	if nil != err {
-		respondWithNotConfiguredStatus(s, i, resp)
+		respondWithAuditLogConfigStatus(s,
+			i,
+			resp,
+			statusBotAuditLogDisabledValue,
+			statusBotAuditLogChannelNotConfiguredValue)
 
 		return
 	}
 
-	populateAuditLogConfigStatusEmbedFields(resp,
-		getStatusDisplay(guildAuditLogConfig.Enabled),
-		getConfiguredChannel(s, guildAuditLogConfig.ChannelId),
-	)
+	currentChannelId := guildAuditLogConfig.ChannelId
+	if nil == currentChannelId {
+		respondWithAuditLogConfigStatus(s,
+			i,
+			resp,
+			statusBotAuditLogDisabledValue,
+			statusBotAuditLogChannelNotConfiguredValue)
 
-	slash_commands.Respond(C, s, i, resp)
+		return
+	}
+
+	channelStatus, channelFound := getConfiguredChannel(s, *currentChannelId)
+	statusBadge := getStatusDisplay(guildAuditLogConfig.Enabled, channelFound)
+
+	respondWithAuditLogConfigStatus(s,
+		i,
+		resp,
+		statusBadge,
+		channelStatus)
 }
 
 // getStatusDisplay returns the string representation
 // of the passed audit log enablement status.
-func getStatusDisplay(auditLogEnabled bool) string {
-	if auditLogEnabled {
-		return ":white_check_mark:"
+func getStatusDisplay(auditLogEnabled bool, channelFound bool) string {
+	if auditLogEnabled && channelFound {
+		return statusBotAuditLogEnabledValue
 	}
 
-	return ":x:"
+	return statusBotAuditLogDisabledValue
 }
 
 // getConfiguredChannel returns the currently configured channel
-// for the bot audit log.
-func getConfiguredChannel(session *discordgo.Session, channel uint64) string {
+// for the bot audit log. It also returns a boolean indicating whether the configured channel could
+// be found on the guild.
+func getConfiguredChannel(session *discordgo.Session, channel uint64) (string, bool) {
 	channelIdStr := strconv.FormatUint(channel, 10)
 
 	dgChannel, err := session.Channel(channelIdStr)
 	if nil == err {
-		return fmt.Sprintf("<#%v>", dgChannel)
+		return fmt.Sprintf("<#%v>", dgChannel.ID), true
 	}
 
-	return "Not configured!"
+	return fmt.Sprintf("Seems like the configured channel with id `%d` has been deleted. "+
+		"Please re-enable the bot auditlog to receive further bot audit log messages!",
+		channel), false
 }
 
-// populateComponentStatusEmbedFields cares about filling up the interaction
-// response templates embed with the status of the requested component.
-func populateAuditLogConfigStatusEmbedFields(
+// respondWithAuditLogConfigStatus cares about filling up the interaction
+// response templates embed with the status of the bot audit log.
+// After preparing the response, the response is sent.
+func respondWithAuditLogConfigStatus(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
 	resp *discordgo.InteractionResponseData,
 	auditLogStatus string,
 	auditLogChannel string,
 ) {
 	resp.Embeds[0].Fields = []*discordgo.MessageEmbedField{
 		{
-			Name:   "Enabled",
+			Name:   statusBotAuditLogEnabledName,
 			Value:  auditLogStatus,
 			Inline: false,
 		},
 		{
-			Name:   "Configured Channel",
+			Name:   statusBotAuditLogChannelName,
 			Value:  auditLogChannel,
 			Inline: false,
 		},
 	}
-}
-
-// respondWithNotConfiguredStatus responds with a message
-// telling the user that the audit log is not configured.
-//
-// This function should be used when no database row exists.
-func respondWithNotConfiguredStatus(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-	resp *discordgo.InteractionResponseData,
-) {
-	populateAuditLogConfigStatusEmbedFields(resp,
-		":x:",
-		"Not configured!")
-
-	slash_commands.Respond(C, s, i, resp)
-}
-
-// respondWithError responds with a message
-// telling the user the command failed.
-func respondWithError(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-	resp *discordgo.InteractionResponseData,
-) {
-	embeds := []*discordgo.MessageEmbedField{
-		{
-			Name:  ":x: Damn, something went wrong!",
-			Value: "Something unexpected happened while processing the command!",
-		},
-	}
-
-	resp.Embeds[0].Fields = embeds
 
 	slash_commands.Respond(C, s, i, resp)
 }

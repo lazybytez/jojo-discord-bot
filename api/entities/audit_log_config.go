@@ -27,9 +27,9 @@ import (
 // AuditLogConfig holds the guild specific configuration for audit logging.
 type AuditLogConfig struct {
 	gorm.Model
-	GuildID   uint64 `gorm:"uniqueIndex;"`
-	Guild     Guild  `gorm:"constraint:OnDelete:CASCADE;"`
-	ChannelId uint64
+	GuildID   uint  `gorm:"uniqueIndex;"`
+	Guild     Guild `gorm:"constraint:OnDelete:CASCADE;"`
+	ChannelId *uint64
 	Enabled   bool
 }
 
@@ -38,14 +38,14 @@ type AuditLogConfig struct {
 type AuditLogConfigEntityManager struct {
 	EntityManager
 
-	cache *cache.Cache[uint64, AuditLogConfig]
+	cache *cache.Cache[uint, AuditLogConfig]
 }
 
 // NewAuditLogConfigEntityManager creates a new AuditLogConfigEntityManager.
 func NewAuditLogConfigEntityManager(entityManager EntityManager) *AuditLogConfigEntityManager {
 	alcem := &AuditLogConfigEntityManager{
 		entityManager,
-		cache.New[uint64, AuditLogConfig](10 * time.Minute),
+		cache.New[uint, AuditLogConfig](10 * time.Minute),
 	}
 
 	err := alcem.cache.EnableAutoCleanup(10 * time.Minute)
@@ -62,7 +62,7 @@ func NewAuditLogConfigEntityManager(entityManager EntityManager) *AuditLogConfig
 // If no cache entry is present, a request to the entities will be made.
 // If no AuditLogConfig can be found, the function returns a new empty
 // AuditLogConfig.
-func (alcem *AuditLogConfigEntityManager) GetByGuildId(guildId uint64) (*AuditLogConfig, error) {
+func (alcem *AuditLogConfigEntityManager) GetByGuildId(guildId uint) (*AuditLogConfig, error) {
 	auditLogConfig, ok := cache.Get(alcem.cache, guildId)
 
 	if ok {

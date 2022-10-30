@@ -29,6 +29,9 @@ import (
 // jojoCommand holds the command configuration for the jojo command.
 var jojoCommand *api.Command
 
+// adminMemberPermissions is the default permission used for the jojo command.
+var adminMemberPermissions int64 = discordgo.PermissionAdministrator
+
 // getModuleCommandChoices builds a slice containing all available modules
 // as command option choices
 func getModuleCommandChoices() []*discordgo.ApplicationCommandOptionChoice {
@@ -57,8 +60,9 @@ func initAndRegisterJojoCommand() {
 
 	jojoCommand = &api.Command{
 		Cmd: &discordgo.ApplicationCommand{
-			Name:        "jojo",
-			Description: "Manage modules and core settings of the bot!",
+			Name:                     "jojo",
+			Description:              "Manage modules and core settings of the bot!",
+			DefaultMemberPermissions: &adminMemberPermissions,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:        "module",
@@ -134,24 +138,22 @@ func initAndRegisterJojoCommand() {
 							Name:        "enable",
 							Description: "Enable printing the bot audit log to the configured channel",
 							Type:        discordgo.ApplicationCommandOptionSubCommand,
-						},
-						{
-							Name:        "disable",
-							Description: "Disable printing the bot audit log to the configured channel",
-							Type:        discordgo.ApplicationCommandOptionSubCommand,
-						},
-						{
-							Name:        "set-channel",
-							Description: "Configure the channel where bot audit log messages should be send to",
-							Type:        discordgo.ApplicationCommandOptionSubCommand,
 							Options: []*discordgo.ApplicationCommandOption{
 								{
 									Name:        "channel",
 									Description: "The channel where audit log messages should be send to",
 									Required:    true,
 									Type:        discordgo.ApplicationCommandOptionChannel,
+									ChannelTypes: []discordgo.ChannelType{
+										discordgo.ChannelTypeGuildText,
+									},
 								},
 							},
+						},
+						{
+							Name:        "disable",
+							Description: "Disable printing the bot audit log to the configured channel",
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
 						},
 					},
 				},
