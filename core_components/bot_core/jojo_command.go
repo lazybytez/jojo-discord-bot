@@ -21,12 +21,16 @@ package bot_core
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/core_components/bot_core/command/auditlog"
 	"github.com/lazybytez/jojo-discord-bot/core_components/bot_core/command/module"
 	"github.com/lazybytez/jojo-discord-bot/core_components/bot_core/command/sync_commands"
 )
 
 // jojoCommand holds the command configuration for the jojo command.
 var jojoCommand *api.Command
+
+// adminMemberPermissions is the default permission used for the jojo command.
+var adminMemberPermissions int64 = discordgo.PermissionAdministrator
 
 // getModuleCommandChoices builds a slice containing all available modules
 // as command option choices
@@ -56,8 +60,9 @@ func initAndRegisterJojoCommand() {
 
 	jojoCommand = &api.Command{
 		Cmd: &discordgo.ApplicationCommand{
-			Name:        "jojo",
-			Description: "Manage modules and core settings of the bot!",
+			Name:                     "jojo",
+			Description:              "Manage modules and core settings of the bot!",
+			DefaultMemberPermissions: &adminMemberPermissions,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:        "module",
@@ -119,6 +124,39 @@ func initAndRegisterJojoCommand() {
 						"guild to tackle inconsistencies",
 					Type: discordgo.ApplicationCommandOptionSubCommand,
 				},
+				{
+					Name:        "auditlog",
+					Description: "Manage settings of the bot audit log!",
+					Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Name:        "status",
+							Description: "Show the status of the current bot audit log configuration",
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+						},
+						{
+							Name:        "enable",
+							Description: "Enable printing the bot audit log to the configured channel",
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+							Options: []*discordgo.ApplicationCommandOption{
+								{
+									Name:        "channel",
+									Description: "The channel where audit log messages should be send to",
+									Required:    true,
+									Type:        discordgo.ApplicationCommandOptionChannel,
+									ChannelTypes: []discordgo.ChannelType{
+										discordgo.ChannelTypeGuildText,
+									},
+								},
+							},
+						},
+						{
+							Name:        "disable",
+							Description: "Disable printing the bot audit log to the configured channel",
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+						},
+					},
+				},
 			},
 		},
 		Handler: handleJojoCommand,
@@ -137,6 +175,7 @@ func handleJojoCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	){
 		"module":        module.HandleModuleSubCommand,
 		"sync-commands": sync_commands.HandleSyncCommandSubCommand,
+		"auditlog":      auditlog.HandleAuditLogCommandSubCommand,
 	}
 
 	api.ProcessSubCommands(

@@ -19,8 +19,14 @@
 package slash_commands
 
 import (
+	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
+)
+
+const (
+	GenericErrorResponseEmbedName  = ":x: Damn, something went wrong!"
+	GenericErrorResponseEmbedValue = "Something unexpected happened while processing the command!"
 )
 
 // GenerateInteractionResponseTemplate creates a prefilled discordgo.InteractionResponseData
@@ -86,6 +92,66 @@ func Respond(
 	if nil != err {
 		c.Logger().Err(err, "Failed to deliver interaction response on slash-command!")
 	}
+}
+
+// RespondWithSimpleEmbedMessage fills the passed discordgo.InteractionResponseData
+// with an embed that contains a single field with a name and value.
+//
+// The prepared interaction response will be sent.
+func RespondWithSimpleEmbedMessage(
+	c *api.Component,
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	resp *discordgo.InteractionResponseData,
+	header string,
+	message string,
+) {
+	embeds := []*discordgo.MessageEmbedField{
+		{
+			Name:  header,
+			Value: message,
+		},
+	}
+
+	resp.Embeds[0].Fields = embeds
+
+	Respond(c, s, i, resp)
+}
+
+// RespondWithGenericErrorMessage fills the passed discordgo.InteractionResponseData
+// with a generic error message as content.
+//
+// The prepared interaction response will be sent.
+func RespondWithGenericErrorMessage(
+	c *api.Component,
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	resp *discordgo.InteractionResponseData,
+) {
+	embeds := []*discordgo.MessageEmbedField{
+		{
+			Name:  GenericErrorResponseEmbedName,
+			Value: GenericErrorResponseEmbedValue,
+		},
+	}
+
+	resp.Embeds[0].Fields = embeds
+
+	Respond(c, s, i, resp)
+}
+
+// RespondWithCommandIsGuildOnly responds with a message stating that the executed
+// command is only available on guilds.
+func RespondWithCommandIsGuildOnly(
+	c *api.Component,
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	commandName string,
+) {
+	resp := GenerateInteractionResponseTemplate("Stop!",
+		fmt.Sprintf("The `%s` command and its subcommand cannot be executed in DMs!", commandName))
+
+	Respond(c, s, i, resp)
 }
 
 // EditResponse edits the passed interactions original response with

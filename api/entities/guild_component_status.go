@@ -38,7 +38,7 @@ type GuildComponentStatus struct {
 	Enabled     bool
 }
 
-// GuildComponentStatusEntityManager is the GuildCom specific entity manager
+// GuildComponentStatusEntityManager is the guild component specific entity manager
 // that allows easy access to guilds in the entities.
 type GuildComponentStatusEntityManager struct {
 	EntityManager
