@@ -199,13 +199,13 @@ type AuditLogEntityManager interface {
 
 	// Create saves the passed entities.AuditLog entry in the db.
 	// Use Update or Save to update an already existing Guild.
-	Create(auditLogConfig *entities.AuditLog) error
+	Create(auditLog *entities.AuditLog) error
 	// Save updates the passed entities.AuditLog in the db.
 	// This does a generic update, use Update to do a precise and more performant update
 	// of the entity when only updating a single field!
-	Save(auditLogConfig *entities.AuditLog) error
+	Save(auditLog *entities.AuditLog) error
 	// Update updates the defined field on the entity and saves it in the db.
-	Update(auditLogConfig *entities.AuditLog, column string, value interface{}) error
+	Update(auditLog *entities.AuditLog, column string, value interface{}) error
 }
 
 // AuditLog returns the AuditLogEntityManager that is currently active,

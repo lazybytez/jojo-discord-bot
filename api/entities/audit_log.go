@@ -29,7 +29,7 @@ import (
 // messages.
 type AuditLog struct {
 	gorm.Model
-	GuildID               uint64              `gorm:"index:idx_audit_log_guild_id;index:idx_audit_log_guild_id_user_id;index:idx_audit_log_guild_id_component_id_user_id;"`
+	GuildID               uint                `gorm:"index:idx_audit_log_guild_id;index:idx_audit_log_guild_id_user_id;index:idx_audit_log_guild_id_component_id_user_id;"`
 	Guild                 Guild               `gorm:"constraint:OnDelete:CASCADE;"`
 	RegisteredComponentID uint                `gorm:"index:idx_audit_log_guild_id;index:idx_audit_log_guild_id_user_id;index:idx_audit_log_guild_id_component_id_user_id;"`
 	RegisteredComponent   RegisteredComponent `gorm:"constraint:OnDelete:CASCADE;"`
