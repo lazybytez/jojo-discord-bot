@@ -38,6 +38,20 @@ func handleAuditLogDisable(
 	i *discordgo.InteractionCreate,
 	_ *discordgo.ApplicationCommandInteractionDataOption,
 ) {
+	dgoGuild, err := s.Guild(i.GuildID)
+	if nil != err {
+		C.Logger().Err(err, "Failed to get guild with id \"%S\" to create "+
+			"bot audit log when enabling a module on guild!",
+			i.GuildID)
+
+		return
+	}
+
+	user := i.User
+	if nil == user {
+		user = i.Member.User
+	}
+
 	resp := slash_commands.GenerateInteractionResponseTemplate(disableCommandResponseHeader, "")
 
 	guild, err := C.EntityManager().Guilds().Get(i.GuildID)
@@ -86,4 +100,10 @@ func handleAuditLogDisable(
 		resp,
 		disableAuditSuccessResponseName,
 		disableAuditLogSuccessResponseValue)
+
+	C.BotAuditLogger().Log(
+		dgoGuild,
+		user,
+		"The bot audit log announcements have been disabled!",
+		false)
 }

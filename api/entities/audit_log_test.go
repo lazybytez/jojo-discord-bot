@@ -60,7 +60,7 @@ func (suite *AuditLogEntityManagerTestSuite) TestNewAuditLogConfigEntityManager(
 }
 
 func (suite *AuditLogEntityManagerTestSuite) TestCreate() {
-	testGuildId := uint64(123123)
+	testGuildId := uint(123123)
 	testAuditLogConfig := AuditLog{
 		GuildID: testGuildId,
 	}
@@ -75,7 +75,7 @@ func (suite *AuditLogEntityManagerTestSuite) TestCreate() {
 }
 
 func (suite *AuditLogEntityManagerTestSuite) TestCreateWithError() {
-	testGuildId := uint64(123123)
+	testGuildId := uint(123123)
 	testAuditLogConfig := AuditLog{
 		GuildID: testGuildId,
 	}
@@ -93,7 +93,7 @@ func (suite *AuditLogEntityManagerTestSuite) TestCreateWithError() {
 }
 
 func (suite *AuditLogEntityManagerTestSuite) TestSave() {
-	testGuildId := uint64(123123)
+	testGuildId := uint(123123)
 	testAuditLogConfig := AuditLog{
 		GuildID: testGuildId,
 	}
@@ -108,7 +108,7 @@ func (suite *AuditLogEntityManagerTestSuite) TestSave() {
 }
 
 func (suite *AuditLogEntityManagerTestSuite) TestSaveWithError() {
-	testGuildID := uint64(123123)
+	testGuildID := uint(123123)
 	testAuditLogConfig := AuditLog{
 		GuildID: testGuildID,
 	}
@@ -126,7 +126,7 @@ func (suite *AuditLogEntityManagerTestSuite) TestSaveWithError() {
 }
 
 func (suite *AuditLogEntityManagerTestSuite) TestUpdate() {
-	testGuildId := uint64(123123)
+	testGuildId := uint(123123)
 	testAuditLogConfig := AuditLog{
 		GuildID: testGuildId,
 	}
@@ -143,7 +143,7 @@ func (suite *AuditLogEntityManagerTestSuite) TestUpdate() {
 }
 
 func (suite *AuditLogEntityManagerTestSuite) TestUpdateWithError() {
-	testGuildId := uint64(123123)
+	testGuildId := uint(123123)
 	testAuditLogConfig := AuditLog{
 		GuildID: testGuildId,
 	}

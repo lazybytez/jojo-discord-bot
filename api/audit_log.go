@@ -84,6 +84,13 @@ func (bal *BotAuditLogger) Log(guild *discordgo.Guild, user *discordgo.User, msg
 	}
 
 	err = bal.c.EntityManager().AuditLog().Create(auditLog)
+	if nil != err {
+		bal.c.Logger().Err(err, "Tried to create bot audit log entry with message \"%s\", "+
+			"but could not store entry in database!",
+			msg)
+
+		return
+	}
 
 	if announce {
 		bal.announceLog(user, auditLog)

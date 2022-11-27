@@ -40,6 +40,20 @@ func handleAuditLogEnable(
 	i *discordgo.InteractionCreate,
 	options *discordgo.ApplicationCommandInteractionDataOption,
 ) {
+	dgoGuild, err := s.Guild(i.GuildID)
+	if nil != err {
+		C.Logger().Err(err, "Failed to get guild with id \"%S\" to create "+
+			"bot audit log when enabling a module on guild!",
+			i.GuildID)
+
+		return
+	}
+
+	user := i.User
+	if nil == user {
+		user = i.Member.User
+	}
+
 	resp := slash_commands.GenerateInteractionResponseTemplate(enableCommandResponseHeader, "")
 
 	guild, err := C.EntityManager().Guilds().Get(i.GuildID)
@@ -127,6 +141,12 @@ func handleAuditLogEnable(
 		resp,
 		enableSuccessResponseName,
 		fmt.Sprintf(enableSuccessResponseValueTemplate, channel.Mention()))
+
+	C.BotAuditLogger().Log(
+		dgoGuild,
+		user,
+		fmt.Sprintf("The bot audit log announcements have been enabled for channel %s!", channel.Mention()),
+		false)
 }
 
 // notifyAuditLogChannelConfigured sends an information message to the channel that

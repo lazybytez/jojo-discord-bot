@@ -211,7 +211,7 @@ type AuditLogEntityManager interface {
 // AuditLog returns the AuditLogEntityManager that is currently active,
 // which can be used to do entities.AuditLog specific entities actions.
 func (em *EntityManager) AuditLog() AuditLogEntityManager {
-	if nil == em.auditLogConfigEntityManager {
+	if nil == em.auditLogEntityManager {
 		em.auditLogEntityManager = entities.NewAuditLogEntityManager(em)
 	}
 

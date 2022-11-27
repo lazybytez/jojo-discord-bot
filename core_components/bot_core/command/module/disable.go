@@ -59,6 +59,26 @@ func handleModuleDisable(
 
 	generateModuleDisableSuccessfulEmbedField(resp, regComp)
 	slash_commands.Respond(C, s, i, resp)
+
+	dgoGuild, err := s.Guild(i.GuildID)
+	if nil != err {
+		C.Logger().Err(err, "Failed to get guild with id \"%S\" to create "+
+			"bot audit log when enabling a module on guild!",
+			i.GuildID)
+
+		return
+	}
+
+	user := i.User
+	if nil == user {
+		user = i.Member.User
+	}
+
+	C.BotAuditLogger().Log(
+		dgoGuild,
+		user,
+		fmt.Sprintf("The component `%s` has been disabled", regComp.Name),
+		true)
 }
 
 func disableComponentForGuild(
