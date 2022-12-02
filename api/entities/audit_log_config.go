@@ -19,9 +19,9 @@
 package entities
 
 import (
-	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"gorm.io/gorm"
-	"time"
+	"strconv"
 )
 
 // AuditLogConfig holds the guild specific configuration for audit logging.
@@ -37,22 +37,11 @@ type AuditLogConfig struct {
 // that allows easy access to audit log configurations.
 type AuditLogConfigEntityManager struct {
 	EntityManager
-
-	cache *cache.Cache[uint, AuditLogConfig]
 }
 
 // NewAuditLogConfigEntityManager creates a new AuditLogConfigEntityManager.
 func NewAuditLogConfigEntityManager(entityManager EntityManager) *AuditLogConfigEntityManager {
-	alcem := &AuditLogConfigEntityManager{
-		entityManager,
-		cache.New[uint, AuditLogConfig](10 * time.Minute),
-	}
-
-	err := alcem.cache.EnableAutoCleanup(10 * time.Minute)
-	if nil != err {
-		entityManager.Logger().Err(err, "Failed to initialize periodic cache cleanup task "+
-			"for AuditLogConfig entity manager!")
-	}
+	alcem := &AuditLogConfigEntityManager{entityManager}
 
 	return alcem
 }
@@ -63,9 +52,10 @@ func NewAuditLogConfigEntityManager(entityManager EntityManager) *AuditLogConfig
 // If no AuditLogConfig can be found, the function returns a new empty
 // AuditLogConfig.
 func (alcem *AuditLogConfigEntityManager) GetByGuildId(guildId uint) (*AuditLogConfig, error) {
-	auditLogConfig, ok := cache.Get(alcem.cache, guildId)
+	cacheKey := alcem.getCacheKey(guildId)
+	auditLogConfig := cache.Get(cacheKey, &AuditLogConfig{})
 
-	if ok {
+	if nil == auditLogConfig {
 		return auditLogConfig, nil
 	}
 
@@ -76,7 +66,7 @@ func (alcem *AuditLogConfigEntityManager) GetByGuildId(guildId uint) (*AuditLogC
 		return auditLogConfig, err
 	}
 
-	cache.Update(alcem.cache, auditLogConfig.GuildID, auditLogConfig)
+	cache.Update(cacheKey, AuditLogConfig{})
 
 	return auditLogConfig, nil
 }
@@ -89,8 +79,8 @@ func (alcem *AuditLogConfigEntityManager) Create(auditLogConfig *AuditLogConfig)
 		return err
 	}
 
-	// Ensure entity is in cache when just updated
-	cache.Update(alcem.cache, auditLogConfig.GuildID, auditLogConfig)
+	// Invalidate cache item (if present)
+	cache.Invalidate(alcem.getCacheKey(auditLogConfig.GuildID), &AuditLogConfig{})
 
 	return nil
 }
@@ -104,8 +94,8 @@ func (alcem *AuditLogConfigEntityManager) Save(auditLogConfig *AuditLogConfig) e
 		return err
 	}
 
-	// Ensure entity is in cache when just updated
-	cache.Update(alcem.cache, auditLogConfig.GuildID, auditLogConfig)
+	// Invalidate cache item (if present)
+	cache.Invalidate(alcem.getCacheKey(auditLogConfig.GuildID), &AuditLogConfig{})
 
 	return nil
 }
@@ -117,7 +107,14 @@ func (alcem *AuditLogConfigEntityManager) Update(auditLogConfig *AuditLogConfig,
 		return err
 	}
 
-	cache.Update(alcem.cache, auditLogConfig.GuildID, auditLogConfig)
-
+	// Invalidate cache item (if present)
+	cache.Invalidate(alcem.getCacheKey(auditLogConfig.GuildID), &AuditLogConfig{})
+	
 	return nil
+}
+
+// getCacheKey returns the computed cache key used to cache
+// AuditLogConfig objects.
+func (alcem *AuditLogConfigEntityManager) getCacheKey(guildId uint) string {
+	return strconv.FormatUint(uint64(guildId), 10)
 }

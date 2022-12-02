@@ -20,7 +20,7 @@ package entities
 
 import (
 	"fmt"
-	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"gorm.io/gorm"
 	"time"
 )
@@ -74,16 +74,16 @@ func (gcsem *GuildComponentStatusEntityManager) Get(guildId uint, componentId ui
 		return comp, nil
 	}
 
-	regComp := &GuildComponentStatus{}
+	guildCompStatus := &GuildComponentStatus{}
 	queryStr := ColumnGuild + " = ? AND " + ColumnComponent + " = ?"
-	err := gcsem.DB().GetFirstEntity(regComp, queryStr, guildId, componentId)
+	err := gcsem.DB().GetFirstEntity(guildCompStatus, queryStr, guildId, componentId)
 	if nil != err {
-		return regComp, err
+		return guildCompStatus, err
 	}
 
-	cache.Update(gcsem.cache, gcsem.getComponentStatusCacheKey(regComp.GuildID, regComp.ComponentID), regComp)
+	cache.Update(gcsem.cache, gcsem.getComponentStatusCacheKey(guildCompStatus.GuildID, guildCompStatus.ComponentID), guildCompStatus)
 
-	return regComp, nil
+	return guildCompStatus, nil
 }
 
 // GetDisplay returns the status of a component in a form
