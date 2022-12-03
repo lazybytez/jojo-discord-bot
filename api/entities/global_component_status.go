@@ -19,9 +19,9 @@
 package entities
 
 import (
-	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"gorm.io/gorm"
-	"time"
+	"strconv"
 )
 
 const GlobalComponentStatusEnabledDisplay = ":white_check_mark:"
@@ -40,21 +40,12 @@ type GlobalComponentStatus struct {
 // that allows easy access to global component status in the entities.
 type GlobalComponentStatusEntityManager struct {
 	EntityManager
-
-	cache *cache.Cache[uint, GlobalComponentStatus]
 }
 
 // NewGlobalComponentStatusEntityManager creates a new GlobalComponentStatusEntityManager.
 func NewGlobalComponentStatusEntityManager(entityManager EntityManager) *GlobalComponentStatusEntityManager {
 	gem := &GlobalComponentStatusEntityManager{
 		entityManager,
-		cache.New[uint, GlobalComponentStatus](10 * time.Minute),
-	}
-
-	err := gem.cache.EnableAutoCleanup(10 * time.Minute)
-	if nil != err {
-		entityManager.Logger().Err(err, "Failed to initialize periodic cache cleanup task "+
-			"for GlobalComponmentStatus entity manager!")
 	}
 
 	return gem
@@ -65,10 +56,10 @@ func NewGlobalComponentStatusEntityManager(entityManager EntityManager) *GlobalC
 // If no GlobalComponentStatus can be found, the function returns a new empty
 // GlobalComponentStatus.
 func (gem *GlobalComponentStatusEntityManager) Get(registeredComponentStatusId uint) (*GlobalComponentStatus, error) {
-	comp, ok := cache.Get(gem.cache, registeredComponentStatusId)
+	cachedStatus, ok := cache.Get(gem.getCacheKey(registeredComponentStatusId), GlobalComponentStatus{})
 
 	if ok {
-		return comp, nil
+		return &cachedStatus, nil
 	}
 
 	globalCompStatus := &GlobalComponentStatus{}
@@ -77,7 +68,8 @@ func (gem *GlobalComponentStatusEntityManager) Get(registeredComponentStatusId u
 		return globalCompStatus, err
 	}
 
-	cache.Update(gem.cache, globalCompStatus.ComponentID, globalCompStatus)
+	// Invalidate cache item (if present)
+	cache.Update(gem.getCacheKey(registeredComponentStatusId), *globalCompStatus)
 
 	return globalCompStatus, err
 }
@@ -106,8 +98,8 @@ func (gem *GlobalComponentStatusEntityManager) Create(globalComponentStatus *Glo
 		return err
 	}
 
-	// Ensure entity is in cache when just updated
-	cache.Update(gem.cache, globalComponentStatus.ComponentID, globalComponentStatus)
+	// Invalidate cache item (if present)
+	cache.Invalidate(gem.getCacheKey(globalComponentStatus.ComponentID), GlobalComponentStatus{})
 
 	return nil
 }
@@ -121,8 +113,8 @@ func (gem *GlobalComponentStatusEntityManager) Save(globalComponentStatus *Globa
 		return err
 	}
 
-	// Ensure entity is in cache when just updated
-	cache.Update(gem.cache, globalComponentStatus.ComponentID, globalComponentStatus)
+	// Invalidate cache item (if present)
+	cache.Invalidate(gem.getCacheKey(globalComponentStatus.ComponentID), GlobalComponentStatus{})
 
 	return nil
 }
@@ -138,8 +130,14 @@ func (gem *GlobalComponentStatusEntityManager) Update(
 		return err
 	}
 
-	// Ensure entity is in cache when just updated
-	cache.Update(gem.cache, globalComponentStatus.ComponentID, globalComponentStatus)
+	// Invalidate cache item (if present)
+	cache.Invalidate(gem.getCacheKey(globalComponentStatus.ComponentID), GlobalComponentStatus{})
 
 	return nil
+}
+
+// getCacheKey returns the computed cache key used to cache
+// GlobalComponentStatus objects.
+func (gem *GlobalComponentStatusEntityManager) getCacheKey(registeredComponentStatusId uint) string {
+	return strconv.FormatUint(uint64(registeredComponentStatusId), 10)
 }

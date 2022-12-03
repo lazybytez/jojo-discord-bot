@@ -20,7 +20,7 @@ package entities
 
 import (
 	"fmt"
-	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"github.com/lazybytez/jojo-discord-bot/test/dbmock"
 	"github.com/lazybytez/jojo-discord-bot/test/entity_manager_mock"
 	"github.com/lazybytez/jojo-discord-bot/test/logmock"
@@ -48,8 +48,9 @@ func (suite *AuditLogConfigEntityManagerTestSuite) SetupTest() {
 	suite.em = entity_manager_mock.EntityManagerMock{}
 	suite.gem = &AuditLogConfigEntityManager{
 		&suite.em,
-		cache.New[uint, AuditLogConfig](5 * time.Second),
 	}
+
+	cache.Init(cache.ModeMemory, 10*time.Minute, "")
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestNewAuditLogConfigEntityManager() {

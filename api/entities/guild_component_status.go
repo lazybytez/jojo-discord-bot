@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"gorm.io/gorm"
-	"time"
 )
 
 const GuildComponentStatusEnabledDisplay = ":white_check_mark:"
@@ -42,21 +41,12 @@ type GuildComponentStatus struct {
 // that allows easy access to guilds in the entities.
 type GuildComponentStatusEntityManager struct {
 	EntityManager
-
-	cache *cache.Cache[string, GuildComponentStatus]
 }
 
 // NewGuildComponentStatusEntityManager creates a new GuildComponentStatusEntityManager.
 func NewGuildComponentStatusEntityManager(entityManager EntityManager) *GuildComponentStatusEntityManager {
 	gem := &GuildComponentStatusEntityManager{
 		entityManager,
-		cache.New[string, GuildComponentStatus](10 * time.Minute),
-	}
-
-	err := gem.cache.EnableAutoCleanup(10 * time.Minute)
-	if nil != err {
-		entityManager.Logger().Err(err, "Failed to initialize periodic cache cleanup task "+
-			"for GuildComponentStatus entity manager!")
 	}
 
 	return gem
@@ -68,10 +58,10 @@ func NewGuildComponentStatusEntityManager(entityManager EntityManager) *GuildCom
 // GuildComponentStatus.
 func (gcsem *GuildComponentStatusEntityManager) Get(guildId uint, componentId uint) (*GuildComponentStatus, error) {
 	cacheKey := gcsem.getComponentStatusCacheKey(guildId, componentId)
-	comp, ok := cache.Get(gcsem.cache, cacheKey)
+	cachedStatus, ok := cache.Get(cacheKey, GuildComponentStatus{})
 
 	if ok {
-		return comp, nil
+		return &cachedStatus, nil
 	}
 
 	guildCompStatus := &GuildComponentStatus{}
@@ -81,7 +71,7 @@ func (gcsem *GuildComponentStatusEntityManager) Get(guildId uint, componentId ui
 		return guildCompStatus, err
 	}
 
-	cache.Update(gcsem.cache, gcsem.getComponentStatusCacheKey(guildCompStatus.GuildID, guildCompStatus.ComponentID), guildCompStatus)
+	cache.Update(cacheKey, *guildCompStatus)
 
 	return guildCompStatus, nil
 }
@@ -109,11 +99,9 @@ func (gcsem *GuildComponentStatusEntityManager) Create(guildComponentStatus *Gui
 		return err
 	}
 
-	// Ensure entity is in cache when just updated
-	cache.Update(
-		gcsem.cache,
-		gcsem.getComponentStatusCacheKey(guildComponentStatus.GuildID, guildComponentStatus.ComponentID),
-		guildComponentStatus)
+	// Invalidate cache item (if present)
+	cacheKey := gcsem.getComponentStatusCacheKey(guildComponentStatus.GuildID, guildComponentStatus.ComponentID)
+	cache.Invalidate(cacheKey, GuildComponentStatus{})
 
 	return nil
 }
@@ -127,27 +115,27 @@ func (gcsem *GuildComponentStatusEntityManager) Save(guildComponentStatus *Guild
 		return err
 	}
 
-	// Ensure entity is in cache when just updated
-	cache.Update(
-		gcsem.cache,
-		gcsem.getComponentStatusCacheKey(guildComponentStatus.GuildID, guildComponentStatus.ComponentID),
-		guildComponentStatus)
+	// Invalidate cache item (if present)
+	cacheKey := gcsem.getComponentStatusCacheKey(guildComponentStatus.GuildID, guildComponentStatus.ComponentID)
+	cache.Invalidate(cacheKey, GuildComponentStatus{})
 
 	return nil
 }
 
 // Update updates the defined field on the entity and saves it in the database.
 func (gcsem *GuildComponentStatusEntityManager) Update(
-	component *GuildComponentStatus,
+	guildComponentStatus *GuildComponentStatus,
 	column string,
 	value interface{},
 ) error {
-	err := gcsem.DB().UpdateEntity(component, column, value)
+	err := gcsem.DB().UpdateEntity(guildComponentStatus, column, value)
 	if nil != err {
 		return err
 	}
 
-	cache.Update(gcsem.cache, gcsem.getComponentStatusCacheKey(component.GuildID, component.ComponentID), component)
+	// Invalidate cache item (if present)
+	cacheKey := gcsem.getComponentStatusCacheKey(guildComponentStatus.GuildID, guildComponentStatus.ComponentID)
+	cache.Invalidate(cacheKey, GuildComponentStatus{})
 
 	return nil
 }

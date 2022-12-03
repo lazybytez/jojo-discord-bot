@@ -71,14 +71,14 @@ func New(lifetime time.Duration) *InMemoryCacheProvider {
 // A valid cache entry is present when:
 //  1. for the given type and key an item can be found.
 //  2. the found items lifetime is not exceeded
-func (provider *InMemoryCacheProvider) Get(key string, t interface{}) interface{} {
+func (provider *InMemoryCacheProvider) Get(key string, t interface{}) (interface{}, bool) {
 	provider.mu.RLock()
 	typedCache, ok := provider.cachePool[reflect.TypeOf(t)]
 	lifetime := provider.lifetime
 	provider.mu.RUnlock()
 
 	if !ok || nil == typedCache {
-		return nil
+		return nil, false
 	}
 
 	typedCache.mu.RLock()
@@ -86,28 +86,28 @@ func (provider *InMemoryCacheProvider) Get(key string, t interface{}) interface{
 	typedCache.mu.RUnlock()
 
 	if !ok || nil == item {
-		return nil
+		return nil, false
 	}
 
 	item.mu.RLock()
 	defer item.mu.RUnlock()
 
 	if item.invalid {
-		return nil
+		return nil, false
 	}
 
 	timeDiff := time.Since(item.since)
 	if timeDiff >= lifetime {
-		return nil
+		return nil, false
 	}
 
-	return item.value
+	return item.value, true
 }
 
 // Update adds and item to the cache or updates it.
 func (provider *InMemoryCacheProvider) Update(key string, t reflect.Type, value interface{}) {
 	provider.mu.RLock()
-	typedCache, ok := provider.cachePool[reflect.TypeOf(t)]
+	typedCache, ok := provider.cachePool[t]
 	provider.mu.RUnlock()
 
 	if !ok || nil == typedCache {

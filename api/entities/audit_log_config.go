@@ -53,20 +53,20 @@ func NewAuditLogConfigEntityManager(entityManager EntityManager) *AuditLogConfig
 // AuditLogConfig.
 func (alcem *AuditLogConfigEntityManager) GetByGuildId(guildId uint) (*AuditLogConfig, error) {
 	cacheKey := alcem.getCacheKey(guildId)
-	auditLogConfig := cache.Get(cacheKey, &AuditLogConfig{})
+	cachedAuditLogConfig, ok := cache.Get(cacheKey, AuditLogConfig{})
 
-	if nil == auditLogConfig {
-		return auditLogConfig, nil
+	if ok {
+		return &cachedAuditLogConfig, nil
 	}
 
-	auditLogConfig = &AuditLogConfig{}
+	auditLogConfig := &AuditLogConfig{}
 	queryStr := ColumnGuild + " = ?"
 	err := alcem.DB().GetFirstEntity(auditLogConfig, queryStr, guildId)
 	if nil != err {
 		return auditLogConfig, err
 	}
 
-	cache.Update(cacheKey, AuditLogConfig{})
+	cache.Update(cacheKey, *auditLogConfig)
 
 	return auditLogConfig, nil
 }
@@ -80,7 +80,7 @@ func (alcem *AuditLogConfigEntityManager) Create(auditLogConfig *AuditLogConfig)
 	}
 
 	// Invalidate cache item (if present)
-	cache.Invalidate(alcem.getCacheKey(auditLogConfig.GuildID), &AuditLogConfig{})
+	cache.Invalidate(alcem.getCacheKey(auditLogConfig.GuildID), AuditLogConfig{})
 
 	return nil
 }
@@ -95,7 +95,7 @@ func (alcem *AuditLogConfigEntityManager) Save(auditLogConfig *AuditLogConfig) e
 	}
 
 	// Invalidate cache item (if present)
-	cache.Invalidate(alcem.getCacheKey(auditLogConfig.GuildID), &AuditLogConfig{})
+	cache.Invalidate(alcem.getCacheKey(auditLogConfig.GuildID), AuditLogConfig{})
 
 	return nil
 }
@@ -108,8 +108,8 @@ func (alcem *AuditLogConfigEntityManager) Update(auditLogConfig *AuditLogConfig,
 	}
 
 	// Invalidate cache item (if present)
-	cache.Invalidate(alcem.getCacheKey(auditLogConfig.GuildID), &AuditLogConfig{})
-	
+	cache.Invalidate(alcem.getCacheKey(auditLogConfig.GuildID), AuditLogConfig{})
+
 	return nil
 }
 
