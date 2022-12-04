@@ -53,10 +53,7 @@ func (suite *AuditLogEntityManagerTestSuite) TestNewAuditLogConfigEntityManager(
 	gem := NewAuditLogConfigEntityManager(&testEntityManager)
 
 	suite.NotNil(gem)
-	suite.NotNil(gem.cache)
 	suite.Equal(&testEntityManager, gem.EntityManager)
-
-	gem.cache.DisableAutoCleanup()
 }
 
 func (suite *AuditLogEntityManagerTestSuite) TestCreate() {
