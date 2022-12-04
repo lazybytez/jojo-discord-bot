@@ -68,6 +68,7 @@ type Component struct {
 	handlerManager      ComponentHandlerManager
 	slashCommandManager *SlashCommandManager
 	discord             *discordgo.Session
+	botAuditLogger      *BotAuditLogger
 }
 
 // RegistrableComponent is the interface that allows a component to be

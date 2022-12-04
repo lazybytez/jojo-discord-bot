@@ -151,7 +151,7 @@ func buildRoutePath(route string) string {
 // the api webserver run by the bot.
 func shutdownApiWebserver() {
 	if nil == httpServer {
-		webApiLogger.Warn("Tried to shut down the apüi webserver before it has been started!")
+		webApiLogger.Warn("Tried to shut down the api webserver before it has been started!")
 
 		return
 	}

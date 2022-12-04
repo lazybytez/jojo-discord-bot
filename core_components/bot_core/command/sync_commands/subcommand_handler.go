@@ -51,6 +51,20 @@ func HandleSyncCommandSubCommand(
 	i *discordgo.InteractionCreate,
 	_ *discordgo.ApplicationCommandInteractionDataOption,
 ) {
+	dgoGuild, err := s.Guild(i.GuildID)
+	if nil != err {
+		C.Logger().Err(err, "Failed to get guild with id \"%S\" to create "+
+			"bot audit log when enabling a module on guild!",
+			i.GuildID)
+
+		return
+	}
+
+	user := i.User
+	if nil == user {
+		user = i.Member.User
+	}
+
 	resp := slash_commands.GenerateInteractionResponseTemplate("Slash Command Synchronisation", "")
 
 	lastSync, ok := cache.Get(lastGuildSyncCache, i.GuildID)
@@ -61,6 +75,12 @@ func HandleSyncCommandSubCommand(
 	}
 
 	respondWithProcessing(s, i, resp)
+	C.BotAuditLogger().Log(
+		dgoGuild,
+		user,
+		"A slash-command re-sync has been triggered",
+		true)
+
 	C.Logger().Info(
 		"Manual slash-command sync has been triggered for guild \"%v\"",
 		i.GuildID)
@@ -70,6 +90,11 @@ func HandleSyncCommandSubCommand(
 	cache.Update(lastGuildSyncCache, i.GuildID, &currentTime)
 
 	finishWitSuccess(s, i, resp)
+	C.BotAuditLogger().Log(
+		dgoGuild,
+		user,
+		"A slash-command re-sync has been finished",
+		true)
 }
 
 // respondWithProcessing responds with a message

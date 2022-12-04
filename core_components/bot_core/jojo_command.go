@@ -57,6 +57,7 @@ func initAndRegisterJojoCommand() {
 	// Ensure the module package knows about the component
 	module.C = &C
 	sync_commands.C = &C
+	auditlog.C = &C
 
 	jojoCommand = &api.Command{
 		Cmd: &discordgo.ApplicationCommand{

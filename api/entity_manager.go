@@ -33,6 +33,7 @@ var defaultEntities = []interface{}{
 	&entities.GlobalComponentStatus{},
 	&entities.GuildComponentStatus{},
 	&entities.AuditLogConfig{},
+	&entities.AuditLog{},
 }
 
 // EntityManager is a struct embedded by GormDatabaseAccessor
@@ -46,6 +47,7 @@ type EntityManager struct {
 	registeredComponentEntityManager   RegisteredComponentEntityManager
 	guildComponentStatusEntityManager  GuildComponentStatusEntityManager
 	auditLogConfigEntityManager        AuditLogConfigEntityManager
+	auditLogEntityManager              AuditLogEntityManager
 }
 
 // entityManager is the internal database.GormDatabaseAccess instance

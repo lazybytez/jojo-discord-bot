@@ -168,10 +168,10 @@ type AuditLogConfigEntityManager interface {
 	// AuditLogConfig.
 	GetByGuildId(guildId uint) (*entities.AuditLogConfig, error)
 
-	// Create saves the passed Guild in the db.
+	// Create saves the passed entities.AuditLogConfig in the db.
 	// Use Update or Save to update an already existing Guild.
 	Create(auditLogConfig *entities.AuditLogConfig) error
-	// Save updates the passed Guild in the db.
+	// Save updates the passed entities.AuditLogConfig in the db.
 	// This does a generic update, use Update to do a precise and more performant update
 	// of the entity when only updating a single field!
 	Save(auditLogConfig *entities.AuditLogConfig) error
@@ -187,4 +187,33 @@ func (em *EntityManager) AuditLogConfig() AuditLogConfigEntityManager {
 	}
 
 	return em.auditLogConfigEntityManager
+}
+
+// AuditLogEntityManager is an entity manager
+// that provides functionality for entities.AuditLog CRUD operations.
+type AuditLogEntityManager interface {
+	// GetById tries to get a AuditLog by its guild ID.
+	// If no AuditLogConfig can be found, the function returns a new empty
+	// AuditLog.
+	//GetById(guildId uint) (*entities.AuditLog, error)
+
+	// Create saves the passed entities.AuditLog entry in the db.
+	// Use Update or Save to update an already existing Guild.
+	Create(auditLog *entities.AuditLog) error
+	// Save updates the passed entities.AuditLog in the db.
+	// This does a generic update, use Update to do a precise and more performant update
+	// of the entity when only updating a single field!
+	Save(auditLog *entities.AuditLog) error
+	// Update updates the defined field on the entity and saves it in the db.
+	Update(auditLog *entities.AuditLog, column string, value interface{}) error
+}
+
+// AuditLog returns the AuditLogEntityManager that is currently active,
+// which can be used to do entities.AuditLog specific entities actions.
+func (em *EntityManager) AuditLog() AuditLogEntityManager {
+	if nil == em.auditLogEntityManager {
+		em.auditLogEntityManager = entities.NewAuditLogEntityManager(em)
+	}
+
+	return em.auditLogEntityManager
 }
