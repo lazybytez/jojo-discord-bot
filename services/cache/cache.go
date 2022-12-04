@@ -50,15 +50,19 @@ type Provider interface {
 var cache Provider
 
 // Init initializes the caching system.
-// The cache implementation used is choosen by the supplied Mode.
+// The cache implementation used is chosen by the supplied Mode.
 func Init(mode Mode, lifetime time.Duration, dsn Dsn) {
 	switch mode {
 	case ModeMemory:
-		cache = memory.New(lifetime)
+		inMemoryCache := memory.New(lifetime)
+		inMemoryCache.UseGarbageCollector()
+		cache = inMemoryCache
 	case ModeRedis:
 		panic("Cache mode redis is not implemented yet!")
 	default:
-		cache = memory.New(lifetime)
+		inMemoryCache := memory.New(lifetime)
+		inMemoryCache.UseGarbageCollector()
+		cache = inMemoryCache
 	}
 }
 

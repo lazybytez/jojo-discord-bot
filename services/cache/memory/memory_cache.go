@@ -52,9 +52,10 @@ type CachePool map[reflect.Type]*Cache
 
 // InMemoryCacheProvider provides the ability to cache data in the RAM.
 type InMemoryCacheProvider struct {
-	mu        sync.RWMutex
-	cachePool CachePool
-	lifetime  time.Duration
+	mu         sync.RWMutex
+	cachePool  CachePool
+	lifetime   time.Duration
+	cleanUpJob *time.Ticker
 }
 
 // New creates a new cache with the specified lifetime (in seconds).
@@ -63,7 +64,63 @@ func New(lifetime time.Duration) *InMemoryCacheProvider {
 		sync.RWMutex{},
 		CachePool{},
 		lifetime,
+		nil,
 	}
+}
+
+// cleanUpCache runs a single cleanup process
+// over the cache.
+func cleanUpCache(provider *InMemoryCacheProvider) {
+	provider.mu.RLock()
+	for _, cachePool := range provider.cachePool {
+		// Asynchronously process pool clean up to prevent locking
+		//the entire cache longer than necessary.
+		cachePool := cachePool
+		go func() {
+			cachePool.mu.RLock()
+			var invalidItemKeys []string
+
+			// step 1: collect
+			for key, value := range cachePool.entries {
+				if value.invalid {
+					invalidItemKeys = append(invalidItemKeys, key)
+
+					continue
+				}
+			}
+
+			// step 2: drop
+			for _, invalidItem := range invalidItemKeys {
+				delete(cachePool.entries, invalidItem)
+			}
+
+			cachePool.mu.RUnlock()
+		}()
+	}
+	provider.mu.RUnlock()
+}
+
+// UseGarbageCollector configures a periodic job
+// that throws out items from the cache that are invalid,
+// to prevent unnecessary memory usage.
+//
+// Note that currently there is no method to stop the garbage collector
+// once started. However, this is fine for the applications needs.
+func (provider *InMemoryCacheProvider) UseGarbageCollector() bool {
+	if nil != provider.cleanUpJob {
+		return false
+	}
+
+	ticker := time.NewTicker(provider.lifetime)
+	provider.cleanUpJob = ticker
+
+	go func() {
+		for range ticker.C {
+			go cleanUpCache(provider)
+		}
+	}()
+
+	return true
 }
 
 // Get an Item from the cache, if there is a valid one.
