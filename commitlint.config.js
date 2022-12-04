@@ -25,9 +25,10 @@ module.exports = {
         'scope-enum': [2, 'always', [
             'deps', // Changes done on anything dependency related
             'devops', // Changes done on technical processes
-            'api', // Changes in /api/ directory
-            'comp', // Changes in /component/ directory
-            'int', // Changes in /internal/ directory
+            'api', // Changes to the public api
+            'comp', // Changes to feature components
+            'int', // Changes to internal stuff
+            'serv', // Changes to the services sit between internal and public api
             'core' // Changes on files in project root
         ]]
     }
