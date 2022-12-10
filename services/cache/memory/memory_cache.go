@@ -203,7 +203,7 @@ func (provider *InMemoryCacheProvider) Invalidate(key string, t reflect.Type) bo
 	typedCache, ok := provider.cachePool[t]
 	provider.mu.RUnlock()
 
-	if nil == typedCache {
+	if !ok || nil == typedCache {
 		return false
 	}
 
