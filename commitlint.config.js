@@ -28,7 +28,7 @@ module.exports = {
             'api', // Changes to the public api
             'comp', // Changes to feature components
             'int', // Changes to internal stuff
-            'serv', // Changes to the services sit between internal and public api
+            'serv', // Changes to the services that sit between internal and public api
             'core' // Changes on files in project root
         ]]
     }
