@@ -19,7 +19,7 @@
 package handler_manager_mock
 
 import (
-	"github.com/bwmarrin/discordgo"
+	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -29,40 +29,22 @@ type HandlerManagerMock struct {
 	mock.Mock
 }
 
-func (h *HandlerManagerMock) RegisterSimpleMessageHandler(name string, handler func(session *discordgo.Session, create *discordgo.MessageCreate), messages ...string) (string, bool) {
-	result := h.Called(name, handler, messages)
-
-	return result.String(0), result.Bool(1)
-}
-
-func (h *HandlerManagerMock) RegisterComplexMessageHandler(name string, handler func(session *discordgo.Session, create *discordgo.MessageCreate), messages ...string) (string, bool) {
-	result := h.Called(name, handler, messages)
-
-	return result.String(0), result.Bool(1)
-}
-
-func (h *HandlerManagerMock) Register(name string, handler interface{}) (string, bool) {
+func (h *HandlerManagerMock) Register(name string, handler interface{}) (api.HandlerName, bool) {
 	result := h.Called(name, handler)
 
-	return result.String(0), result.Bool(1)
+	return api.HandlerName(result.String(0)), result.Bool(1)
 }
 
-func (h *HandlerManagerMock) RegisterOnce(name string, handler interface{}) (string, bool) {
+func (h *HandlerManagerMock) RegisterOnce(name string, handler interface{}) (api.HandlerName, bool) {
 	result := h.Called(name, handler)
 
-	return result.String(0), result.Bool(1)
+	return api.HandlerName(result.String(0)), result.Bool(1)
 }
 
-func (h *HandlerManagerMock) Unregister(name string) error {
+func (h *HandlerManagerMock) Unregister(name api.HandlerName) error {
 	result := h.Called(name)
 
 	return result.Error(0)
-}
-
-func (h *HandlerManagerMock) AddDecorator(name string, decorator interface{}) bool {
-	result := h.Called(name, decorator)
-
-	return result.Bool(1)
 }
 
 func (h *HandlerManagerMock) UnregisterAll() {

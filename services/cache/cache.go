@@ -51,7 +51,7 @@ var cache Provider
 
 // Init initializes the caching system.
 // The cache implementation used is chosen by the supplied Mode.
-func Init(mode Mode, lifetime time.Duration, dsn Dsn) {
+func Init(mode Mode, lifetime time.Duration, _ Dsn) {
 	switch mode {
 	case ModeMemory:
 		inMemoryCache := memory.New(lifetime)

@@ -21,6 +21,7 @@ package api
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"github.com/lazybytez/jojo-discord-bot/api/entities"
 	"github.com/lazybytez/jojo-discord-bot/api/util"
 	"reflect"
 	"sync"
@@ -204,7 +205,7 @@ func (c *Component) HandlerManager() ComponentHandlerManager {
 //
 //	func (session *discordgo.Session, event <event to call, e.g. discordgo.MessageCreate)
 func (c *ComponentHandlerContainer) Register(name string, handler interface{}) (HandlerName, bool) {
-	handlerName := GetHandlerName(c.owner, name)
+	handlerName := GetHandlerName(c.owner.Code, name)
 
 	if _, ok := GetHandler(handlerName); ok {
 		c.owner.Logger().Err(fmt.Errorf(
@@ -274,7 +275,7 @@ func (c *ComponentHandlerContainer) RegisterOnce(
 	name string,
 	handler interface{},
 ) (HandlerName, bool) {
-	handlerName := GetHandlerName(c.owner, name)
+	handlerName := GetHandlerName(c.owner.Code, name)
 
 	if _, ok := GetHandler(handlerName); ok {
 		c.owner.Logger().Err(fmt.Errorf(
@@ -395,8 +396,8 @@ func GetHandler(name HandlerName) (*AssignedEventHandler, bool) {
 //
 // It acts as the auto-formatter that should be used to retrieve
 // Handler names.
-func GetHandlerName(c *Component, name string) HandlerName {
-	return HandlerName(util.StringToSnakeCase(fmt.Sprintf("%v_%v", c.Name, name)))
+func GetHandlerName(c entities.ComponentCode, name string) HandlerName {
+	return HandlerName(util.StringToSnakeCase(fmt.Sprintf("%s_%s", c, name)))
 }
 
 // === Handler wrappers

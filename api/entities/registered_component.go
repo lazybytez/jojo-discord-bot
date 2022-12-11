@@ -28,6 +28,10 @@ import (
 // cannot be managed by server owners, as they are important core components
 const CoreComponentPrefix = "bot_"
 
+// ComponentCode is the code of a specific component.
+// It is used as a unique identifier across all components.
+type ComponentCode string
+
 // RegisteredComponent represents a single component that is or was known
 // to the system.
 //
@@ -36,7 +40,7 @@ const CoreComponentPrefix = "bot_"
 // of the GuildComponentStatus and GlobalComponentStatus tables.
 type RegisteredComponent struct {
 	gorm.Model
-	Code           string `gorm:"uniqueIndex"`
+	Code           ComponentCode `gorm:"uniqueIndex"`
 	Name           string
 	Description    string
 	DefaultEnabled bool
@@ -47,14 +51,14 @@ type RegisteredComponent struct {
 type RegisteredComponentEntityManager struct {
 	EntityManager
 
-	availableComponents []string
+	availableComponents []ComponentCode
 }
 
 // NewRegisteredComponentEntityManager creates a new RegisteredComponentEntityManager.
 func NewRegisteredComponentEntityManager(entityManager EntityManager) *RegisteredComponentEntityManager {
 	return &RegisteredComponentEntityManager{
 		entityManager,
-		make([]string, 0),
+		make([]ComponentCode, 0),
 	}
 }
 
@@ -62,7 +66,7 @@ func NewRegisteredComponentEntityManager(entityManager EntityManager) *Registere
 // cache. If no cache entry is present, a request to the database will be made.
 // If no RegisteredComponent can be found, the function returns a new empty
 // RegisteredComponent.
-func (rgem *RegisteredComponentEntityManager) Get(registeredComponentCode string) (*RegisteredComponent, error) {
+func (rgem *RegisteredComponentEntityManager) Get(registeredComponentCode ComponentCode) (*RegisteredComponent, error) {
 	cacheKey := rgem.getCacheKey(registeredComponentCode)
 	cachedComp, ok := cache.Get(cacheKey, RegisteredComponent{})
 
@@ -146,7 +150,7 @@ func (rgem *RegisteredComponentEntityManager) Update(regComp *RegisteredComponen
 // MarkAsAvailable marks the passed component as available, by putting
 // the codes into an array.
 // Note that duplicates will be filtered.
-func (rgem *RegisteredComponentEntityManager) MarkAsAvailable(code string) {
+func (rgem *RegisteredComponentEntityManager) MarkAsAvailable(code ComponentCode) {
 	for _, comp := range rgem.availableComponents {
 		if code == comp {
 			return
@@ -161,11 +165,11 @@ func (rgem *RegisteredComponentEntityManager) MarkAsAvailable(code string) {
 //
 // Core components are components which are prefixed with the CoreComponentPrefix.
 func (regComp *RegisteredComponent) IsCoreComponent() bool {
-	return strings.HasPrefix(regComp.Code, CoreComponentPrefix)
+	return strings.HasPrefix(string(regComp.Code), CoreComponentPrefix)
 }
 
 // getCacheKey returns the computed cache key used to cache
 // RegisteredComponent objects.
-func (rgem *RegisteredComponentEntityManager) getCacheKey(registeredComponentCode string) string {
-	return registeredComponentCode
+func (rgem *RegisteredComponentEntityManager) getCacheKey(registeredComponentCode ComponentCode) string {
+	return string(registeredComponentCode)
 }
