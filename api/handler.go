@@ -34,11 +34,16 @@ import (
 // registration or injecting custom logic like the component status checks.
 //
 
+// HandlerName is the name of a specific handler
+// that belongs to a specific component.
+// Its format should be always `component_name_handler_name`.
+type HandlerName string
+
 // componentHandlerMap is a wrapper that holds the map that contains
 // the Handler name -> Handler mapping.
 type componentHandlerMap struct {
 	sync.RWMutex
-	handlers map[string]*AssignedEventHandler
+	handlers map[HandlerName]*AssignedEventHandler
 }
 
 // handlerComponentMapping is a map that holds references to function's
@@ -51,7 +56,7 @@ type componentHandlerMap struct {
 // The reason for doing this is, to allow future adjustments of handlers,
 // by holding a reference that can be edited.
 var handlerComponentMapping = componentHandlerMap{
-	handlers: make(map[string]*AssignedEventHandler),
+	handlers: make(map[HandlerName]*AssignedEventHandler),
 }
 
 // AssignedEventHandler holds the necessary data to handle events
@@ -65,7 +70,7 @@ var handlerComponentMapping = componentHandlerMap{
 // component status checks or permissions. Those features are injected during the
 // call of the ComponentHandlerContainer.Register and ComponentHandlerContainer.RegisterOnce methods.
 type AssignedEventHandler struct {
-	name            string
+	name            HandlerName
 	component       *Component
 	originalHandler interface{}
 	handler         interface{}
@@ -84,7 +89,7 @@ type AssignedEventHandlerAccess interface {
 }
 
 // GetName returns the name of the Handler assigned to the AssignedEventHandler
-func (ase *AssignedEventHandler) GetName() string {
+func (ase *AssignedEventHandler) GetName() HandlerName {
 	return ase.name
 }
 
@@ -129,7 +134,7 @@ type ComponentHandlerManager interface {
 	//
 	// In general, the common format for a handler function is:
 	//   func (session *discordgo.Session, event <event to call, e.g. discordgo.MessageCreate)
-	Register(name string, handler interface{}) (string, bool)
+	Register(name string, handler interface{}) (HandlerName, bool)
 
 	// RegisterOnce registers an event handler as a one-time event Handler.
 	// The registered handler will be removed after being triggered once.
@@ -149,14 +154,16 @@ type ComponentHandlerManager interface {
 	//
 	// In general, the common format for a handler function is:
 	//   func (session *discordgo.Session, event <event to call, e.g. discordgo.MessageCreate)
-	RegisterOnce(name string, handler interface{}) (string, bool)
+	RegisterOnce(name string, handler interface{}) (HandlerName, bool)
 
 	// Unregister removes the handler with the given name (if existing) from
 	// the registered handlers.
 	//
 	// If the specified handler does not exist, an error will be returned.
-	Unregister(name string) error
+	Unregister(name HandlerName) error
 
+	// UnregisterAll unregisters all event handlers.
+	// Internally, it does the same as calling Unregister for all handlers.
 	UnregisterAll()
 }
 
@@ -196,7 +203,7 @@ func (c *Component) HandlerManager() ComponentHandlerManager {
 // In general, the common format for a handler function is:
 //
 //	func (session *discordgo.Session, event <event to call, e.g. discordgo.MessageCreate)
-func (c *ComponentHandlerContainer) Register(name string, handler interface{}) (string, bool) {
+func (c *ComponentHandlerContainer) Register(name string, handler interface{}) (HandlerName, bool) {
 	handlerName := GetHandlerName(c.owner, name)
 
 	if _, ok := GetHandler(handlerName); ok {
@@ -266,7 +273,7 @@ func (c *ComponentHandlerContainer) addDiscordGoHandler(assignedEvent *AssignedE
 func (c *ComponentHandlerContainer) RegisterOnce(
 	name string,
 	handler interface{},
-) (string, bool) {
+) (HandlerName, bool) {
 	handlerName := GetHandlerName(c.owner, name)
 
 	if _, ok := GetHandler(handlerName); ok {
@@ -322,8 +329,7 @@ func (c *ComponentHandlerContainer) addDiscordGoOnceTimeHandler(assignedEvent *A
 // the registered handlers.
 //
 // If the specified Handler does not exist, an error will be returned.
-func (c *ComponentHandlerContainer) Unregister(name string) error {
-	handlerName := GetHandlerName(c.owner, name)
+func (c *ComponentHandlerContainer) Unregister(handlerName HandlerName) error {
 	handler, ok := GetHandler(handlerName)
 
 	if !ok {
@@ -354,7 +360,7 @@ func (c *ComponentHandlerContainer) UnregisterAll() {
 //
 // Note that adding a Handler with a name that is already in the map
 // will override the existing Handler (but not unregister it from DiscordGo!).
-func (c *ComponentHandlerContainer) addComponentHandler(name string, handler *AssignedEventHandler) {
+func (c *ComponentHandlerContainer) addComponentHandler(name HandlerName, handler *AssignedEventHandler) {
 	handlerComponentMapping.Lock()
 	defer handlerComponentMapping.Unlock()
 
@@ -366,7 +372,7 @@ func (c *ComponentHandlerContainer) addComponentHandler(name string, handler *As
 //
 // It also removes all decorators that are assigned to the
 // Handler.
-func removeComponentHandler(name string) {
+func removeComponentHandler(name HandlerName) {
 	handlerComponentMapping.Lock()
 	defer handlerComponentMapping.Unlock()
 
@@ -375,7 +381,7 @@ func removeComponentHandler(name string) {
 
 // GetHandler returns a Handler by its fully qualified name (id).
 // The required ID can be obtained using GetHandlerName.
-func GetHandler(name string) (*AssignedEventHandler, bool) {
+func GetHandler(name HandlerName) (*AssignedEventHandler, bool) {
 	handlerComponentMapping.RLock()
 	defer handlerComponentMapping.RUnlock()
 
@@ -388,8 +394,8 @@ func GetHandler(name string) (*AssignedEventHandler, bool) {
 //
 // It acts as the auto-formatter that should be used to retrieve
 // Handler names.
-func GetHandlerName(c *Component, name string) string {
-	return util.StringToSnakeCase(fmt.Sprintf("%v_%v", c.Name, name))
+func GetHandlerName(c *Component, name string) HandlerName {
+	return HandlerName(util.StringToSnakeCase(fmt.Sprintf("%v_%v", c.Name, name)))
 }
 
 // === Handler wrappers
@@ -397,7 +403,7 @@ func GetHandlerName(c *Component, name string) string {
 // wrapWithComponentStatusHandler wraps the original handler function and
 // ensures that the original handler function is only called when
 // the owning component is enabled.
-func (c *ComponentHandlerContainer) wrapWithComponentStatusHandler(name string) {
+func (c *ComponentHandlerContainer) wrapWithComponentStatusHandler(name HandlerName) {
 	assignedEventHandler, ok := GetHandler(name)
 	if !ok {
 		c.owner.Logger().Err(fmt.Errorf(
@@ -427,7 +433,7 @@ func (c *ComponentHandlerContainer) wrapWithComponentStatusHandler(name string) 
 
 // wrapOneTimeHandler is a wrapper appended functions used in one-time
 // event handlers. It ensures that the executed Handler is removed properly.
-func (c *ComponentHandlerContainer) wrapOneTimeHandler(name string) {
+func (c *ComponentHandlerContainer) wrapOneTimeHandler(name HandlerName) {
 	assignedEventHandler, ok := GetHandler(name)
 	if !ok {
 		c.owner.Logger().Err(fmt.Errorf(
