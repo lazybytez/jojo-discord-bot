@@ -20,7 +20,7 @@ package entities
 
 import (
 	"fmt"
-	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"github.com/lazybytez/jojo-discord-bot/test/dbmock"
 	"github.com/lazybytez/jojo-discord-bot/test/entity_manager_mock"
 	"github.com/lazybytez/jojo-discord-bot/test/logmock"
@@ -48,8 +48,9 @@ func (suite *AuditLogConfigEntityManagerTestSuite) SetupTest() {
 	suite.em = entity_manager_mock.EntityManagerMock{}
 	suite.gem = &AuditLogConfigEntityManager{
 		&suite.em,
-		cache.New[uint, AuditLogConfig](5 * time.Second),
 	}
+
+	cache.Init(cache.ModeMemory, 10*time.Minute, "")
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestNewAuditLogConfigEntityManager() {
@@ -58,14 +59,12 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestNewAuditLogConfigEntityMa
 	gem := NewAuditLogConfigEntityManager(&testEntityManager)
 
 	suite.NotNil(gem)
-	suite.NotNil(gem.cache)
 	suite.Equal(&testEntityManager, gem.EntityManager)
-
-	gem.cache.DisableAutoCleanup()
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestGetByGuildID() {
 	testGuildId := uint(123123)
+	testCacheKey := "123123"
 
 	suite.em.On("DB").Return(suite.dba)
 	suite.dba.On(
@@ -86,19 +85,20 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestGetByGuildID() {
 	suite.NotNil(result)
 	suite.Equal(testGuildId, result.GuildID)
 
-	cachedRegisteredComponent, ok := cache.Get(suite.gem.cache, testGuildId)
+	cachedRegisteredComponent, ok := cache.Get(testCacheKey, AuditLogConfig{})
 	suite.True(ok)
-	suite.Equal(result, cachedRegisteredComponent)
+	suite.Equal(*result, cachedRegisteredComponent)
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestGetByGuildIDWithCache() {
 	testGuildId := uint(123123)
+	testCacheKey := "123123"
 
 	testAuditLogConfig := &AuditLogConfig{
 		GuildID: testGuildId,
 	}
 
-	cache.Update(suite.gem.cache, testGuildId, testAuditLogConfig)
+	cache.Update(testCacheKey, *testAuditLogConfig)
 
 	// Do not expect call of GetFirstEntity or DB calls
 	// When GetFirstEntity is called, test will fail as call is unexpected
@@ -113,6 +113,7 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestGetByGuildIDWithCache() {
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestGetByGuildIDWithError() {
 	testGuildId := uint(123123)
+	testCacheKey := "123123"
 
 	expectedError := fmt.Errorf("something bad happened during database read")
 
@@ -130,13 +131,14 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestGetByGuildIDWithError() {
 	suite.NotNil(result)
 	suite.Equal(*result, AuditLogConfig{})
 
-	cachedRegisteredComponent, ok := cache.Get(suite.gem.cache, testGuildId)
+	cachedRegisteredComponent, ok := cache.Get(testCacheKey, AuditLogConfig{})
 	suite.False(ok)
-	suite.Nil(cachedRegisteredComponent)
+	suite.Equal(AuditLogConfig{}, cachedRegisteredComponent)
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestCreate() {
 	testGuildId := uint(123123)
+	testCacheKey := "123123"
 	testAuditLogConfig := AuditLogConfig{
 		GuildID: testGuildId,
 	}
@@ -149,13 +151,14 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestCreate() {
 	suite.NoError(err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedRegisteredComponent, ok := cache.Get(suite.gem.cache, testGuildId)
-	suite.True(ok)
-	suite.Equal(&testAuditLogConfig, cachedRegisteredComponent)
+	cachedRegisteredComponent, ok := cache.Get(testCacheKey, AuditLogConfig{})
+	suite.False(ok)
+	suite.Equal(AuditLogConfig{}, cachedRegisteredComponent)
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestCreateWithError() {
 	testGuildId := uint(123123)
+	testCacheKey := "123123"
 	testAuditLogConfig := AuditLogConfig{
 		GuildID: testGuildId,
 	}
@@ -171,13 +174,14 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestCreateWithError() {
 	suite.Equal(expectedErr, err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedRegisteredComponent, ok := cache.Get(suite.gem.cache, testGuildId)
+	cachedRegisteredComponent, ok := cache.Get(testCacheKey, AuditLogConfig{})
 	suite.False(ok)
-	suite.Nil(cachedRegisteredComponent)
+	suite.Equal(AuditLogConfig{}, cachedRegisteredComponent)
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestSave() {
 	testGuildId := uint(123123)
+	testCacheKey := "123123"
 	testAuditLogConfig := AuditLogConfig{
 		GuildID: testGuildId,
 	}
@@ -190,13 +194,14 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestSave() {
 	suite.NoError(err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedRegisteredComponent, ok := cache.Get(suite.gem.cache, testGuildId)
-	suite.True(ok)
-	suite.Equal(&testAuditLogConfig, cachedRegisteredComponent)
+	cachedRegisteredComponent, ok := cache.Get(testCacheKey, AuditLogConfig{})
+	suite.False(ok)
+	suite.Equal(AuditLogConfig{}, cachedRegisteredComponent)
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestSaveWithError() {
 	testGuildID := uint(123123)
+	testCacheKey := "123123"
 	testAuditLogConfig := AuditLogConfig{
 		GuildID: testGuildID,
 	}
@@ -212,13 +217,14 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestSaveWithError() {
 	suite.Equal(expectedErr, err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedRegisteredComponent, ok := cache.Get(suite.gem.cache, testGuildID)
+	cachedRegisteredComponent, ok := cache.Get(testCacheKey, AuditLogConfig{})
 	suite.False(ok)
-	suite.Nil(cachedRegisteredComponent)
+	suite.Equal(AuditLogConfig{}, cachedRegisteredComponent)
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestUpdate() {
 	testGuildId := uint(123123)
+	testCacheKey := "123123"
 	testAuditLogConfig := AuditLogConfig{
 		GuildID: testGuildId,
 	}
@@ -233,13 +239,14 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestUpdate() {
 	suite.NoError(err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedRegisteredComponent, ok := cache.Get(suite.gem.cache, testGuildId)
-	suite.True(ok)
-	suite.Equal(&testAuditLogConfig, cachedRegisteredComponent)
+	cachedRegisteredComponent, ok := cache.Get(testCacheKey, AuditLogConfig{})
+	suite.False(ok)
+	suite.Equal(AuditLogConfig{}, cachedRegisteredComponent)
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestUpdateWithError() {
 	testGuildId := uint(123123)
+	testCacheKey := "123123"
 	testAuditLogConfig := AuditLogConfig{
 		GuildID: testGuildId,
 	}
@@ -257,9 +264,9 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestUpdateWithError() {
 	suite.Equal(expectedErr, err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedRegisteredComponent, ok := cache.Get(suite.gem.cache, testGuildId)
+	cachedRegisteredComponent, ok := cache.Get(testCacheKey, AuditLogConfig{})
 	suite.False(ok)
-	suite.Nil(cachedRegisteredComponent)
+	suite.Equal(AuditLogConfig{}, cachedRegisteredComponent)
 }
 
 func TestAuditLogConfigEntityManager(t *testing.T) {

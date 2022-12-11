@@ -19,10 +19,9 @@
 package entities
 
 import (
-	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"gorm.io/gorm"
 	"strings"
-	"time"
 )
 
 // CoreComponentPrefix is the prefix put in front of components that
@@ -48,7 +47,6 @@ type RegisteredComponent struct {
 type RegisteredComponentEntityManager struct {
 	EntityManager
 
-	cache               *cache.Cache[string, RegisteredComponent]
 	availableComponents []string
 }
 
@@ -56,7 +54,6 @@ type RegisteredComponentEntityManager struct {
 func NewRegisteredComponentEntityManager(entityManager EntityManager) *RegisteredComponentEntityManager {
 	return &RegisteredComponentEntityManager{
 		entityManager,
-		cache.New[string, RegisteredComponent](10 * time.Minute),
 		make([]string, 0),
 	}
 }
@@ -66,10 +63,11 @@ func NewRegisteredComponentEntityManager(entityManager EntityManager) *Registere
 // If no RegisteredComponent can be found, the function returns a new empty
 // RegisteredComponent.
 func (rgem *RegisteredComponentEntityManager) Get(registeredComponentCode string) (*RegisteredComponent, error) {
-	comp, ok := cache.Get(rgem.cache, registeredComponentCode)
+	cacheKey := rgem.getCacheKey(registeredComponentCode)
+	cachedComp, ok := cache.Get(cacheKey, RegisteredComponent{})
 
 	if ok {
-		return comp, nil
+		return &cachedComp, nil
 	}
 
 	regComp := &RegisteredComponent{}
@@ -78,7 +76,7 @@ func (rgem *RegisteredComponentEntityManager) Get(registeredComponentCode string
 		return regComp, err
 	}
 
-	cache.Update(rgem.cache, regComp.Code, regComp)
+	cache.Update(cacheKey, *regComp)
 
 	return regComp, err
 }
@@ -108,8 +106,9 @@ func (rgem *RegisteredComponentEntityManager) Create(regComp *RegisteredComponen
 		return err
 	}
 
-	// Ensure entity is in cache when just updated
-	cache.Update(rgem.cache, regComp.Code, regComp)
+	// Invalidate cache item (if present)
+	cacheKey := rgem.getCacheKey(regComp.Code)
+	cache.Invalidate(cacheKey, GlobalComponentStatus{})
 
 	return nil
 }
@@ -123,8 +122,9 @@ func (rgem *RegisteredComponentEntityManager) Save(regComp *RegisteredComponent)
 		return err
 	}
 
-	// Ensure entity is in cache when just updated
-	cache.Update(rgem.cache, regComp.Code, regComp)
+	// Invalidate cache item (if present)
+	cacheKey := rgem.getCacheKey(regComp.Code)
+	cache.Invalidate(cacheKey, GlobalComponentStatus{})
 
 	return nil
 }
@@ -136,7 +136,9 @@ func (rgem *RegisteredComponentEntityManager) Update(regComp *RegisteredComponen
 		return err
 	}
 
-	cache.Update(rgem.cache, regComp.Code, regComp)
+	// Invalidate cache item (if present)
+	cacheKey := rgem.getCacheKey(regComp.Code)
+	cache.Invalidate(cacheKey, GlobalComponentStatus{})
 
 	return nil
 }
@@ -160,4 +162,10 @@ func (rgem *RegisteredComponentEntityManager) MarkAsAvailable(code string) {
 // Core components are components which are prefixed with the CoreComponentPrefix.
 func (regComp *RegisteredComponent) IsCoreComponent() bool {
 	return strings.HasPrefix(regComp.Code, CoreComponentPrefix)
+}
+
+// getCacheKey returns the computed cache key used to cache
+// RegisteredComponent objects.
+func (rgem *RegisteredComponentEntityManager) getCacheKey(registeredComponentCode string) string {
+	return registeredComponentCode
 }

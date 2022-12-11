@@ -55,7 +55,8 @@ func initGorm() {
 	coreLogger.Info("Open GORM instance...")
 	var err error
 	gormDB, err = gorm.Open(*dial, &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
+		Logger:      logger.Default.LogMode(logger.Silent),
+		PrepareStmt: true,
 	})
 	if nil != err {
 		ExitFatal(fmt.Sprintf("Failed to initialize database subsystem! Error: \"%v\"", err.Error()))

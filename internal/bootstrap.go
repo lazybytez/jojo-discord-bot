@@ -39,6 +39,7 @@ var coreLogger = logger.New(coreLoggerPrefix, nil)
 func Bootstrap() {
 	// Init config & db
 	initEnv()
+	initCache()
 	initGorm()
 
 	// Create DiscordGo session

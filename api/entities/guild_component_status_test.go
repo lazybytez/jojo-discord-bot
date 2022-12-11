@@ -20,7 +20,7 @@ package entities
 
 import (
 	"fmt"
-	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"github.com/lazybytez/jojo-discord-bot/test/dbmock"
 	"github.com/lazybytez/jojo-discord-bot/test/entity_manager_mock"
 	"github.com/lazybytez/jojo-discord-bot/test/logmock"
@@ -48,8 +48,9 @@ func (suite *GuildComponentStatusEntityManagerTestSuite) SetupTest() {
 	suite.em = entity_manager_mock.EntityManagerMock{}
 	suite.gem = &GuildComponentStatusEntityManager{
 		&suite.em,
-		cache.New[string, GuildComponentStatus](5 * time.Second),
 	}
+
+	cache.Init(cache.ModeMemory, 10*time.Minute, "")
 }
 
 func (suite *GuildComponentStatusEntityManagerTestSuite) TestGetCacheKey() {
@@ -69,15 +70,13 @@ func (suite *GuildComponentStatusEntityManagerTestSuite) TestNewGuildComponentSt
 	gem := NewGuildComponentStatusEntityManager(&testEntityManager)
 
 	suite.NotNil(gem)
-	suite.NotNil(gem.cache)
 	suite.Equal(&testEntityManager, gem.EntityManager)
-
-	gem.cache.DisableAutoCleanup()
 }
 
 func (suite *GuildComponentStatusEntityManagerTestSuite) TestGet() {
 	guildId := uint(65835858358583)
 	componentId := uint(48688742646283)
+	testCacheKey := "65835858358583_48688742646283"
 
 	suite.em.On("DB").Return(suite.dba)
 	suite.dba.On(
@@ -100,26 +99,23 @@ func (suite *GuildComponentStatusEntityManagerTestSuite) TestGet() {
 	suite.Equal(guildId, result.GuildID)
 	suite.Equal(componentId, result.ComponentID)
 
-	cacheKey := suite.gem.getComponentStatusCacheKey(guildId, componentId)
-
-	cachedGuildComponentStatus, ok := cache.Get(suite.gem.cache, cacheKey)
+	cachedGuildComponentStatus, ok := cache.Get(testCacheKey, GuildComponentStatus{})
 
 	suite.True(ok)
-	suite.Equal(result, cachedGuildComponentStatus)
+	suite.Equal(*result, cachedGuildComponentStatus)
 }
 
 func (suite *GuildComponentStatusEntityManagerTestSuite) TestGetWithCache() {
 	guildId := uint(65835858358583)
 	componentId := uint(48688742646283)
+	testCacheKey := "65835858358583_48688742646283"
 
 	testGuildComponentStatus := &GuildComponentStatus{
 		GuildID:     guildId,
 		ComponentID: componentId,
 	}
 
-	cacheKey := suite.gem.getComponentStatusCacheKey(guildId, componentId)
-
-	cache.Update(suite.gem.cache, cacheKey, testGuildComponentStatus)
+	cache.Update(testCacheKey, *testGuildComponentStatus)
 
 	// Do not expect call of GetFirstEntity or DB calls
 	// When GetFirstEntity is called, test will fail as call is unexpected
@@ -136,6 +132,7 @@ func (suite *GuildComponentStatusEntityManagerTestSuite) TestGetWithCache() {
 func (suite *GuildComponentStatusEntityManagerTestSuite) TestGetWithError() {
 	guildId := uint(65835858358583)
 	componentId := uint(48688742646283)
+	testCacheKey := "65835858358583_48688742646283"
 
 	expectedError := fmt.Errorf("something bad happened during database read")
 
@@ -153,16 +150,15 @@ func (suite *GuildComponentStatusEntityManagerTestSuite) TestGetWithError() {
 	suite.NotNil(result)
 	suite.Equal(*result, GuildComponentStatus{})
 
-	cacheKey := suite.gem.getComponentStatusCacheKey(guildId, componentId)
-
-	cachedGuildComponentStatus, ok := cache.Get(suite.gem.cache, cacheKey)
+	cachedGuildComponentStatus, ok := cache.Get(testCacheKey, GuildComponentStatus{})
 	suite.False(ok)
-	suite.Nil(cachedGuildComponentStatus)
+	suite.Equal(GuildComponentStatus{}, cachedGuildComponentStatus)
 }
 
 func (suite *GuildComponentStatusEntityManagerTestSuite) TestCreate() {
 	guildId := uint(65835858358583)
 	componentId := uint(48688742646283)
+	testCacheKey := "65835858358583_48688742646283"
 
 	testGuildComponentStatus := GuildComponentStatus{
 		GuildID:     guildId,
@@ -177,16 +173,15 @@ func (suite *GuildComponentStatusEntityManagerTestSuite) TestCreate() {
 	suite.NoError(err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cacheKey := suite.gem.getComponentStatusCacheKey(guildId, componentId)
-
-	cachedGuildComponentStatus, ok := cache.Get(suite.gem.cache, cacheKey)
-	suite.True(ok)
-	suite.Equal(&testGuildComponentStatus, cachedGuildComponentStatus)
+	cachedGuildComponentStatus, ok := cache.Get(testCacheKey, GuildComponentStatus{})
+	suite.False(ok)
+	suite.Equal(GuildComponentStatus{}, cachedGuildComponentStatus)
 }
 
 func (suite *GuildComponentStatusEntityManagerTestSuite) TestCreateWithError() {
 	guildId := uint(65835858358583)
 	componentId := uint(48688742646283)
+	testCacheKey := "65835858358583_48688742646283"
 	testGuildComponentStatus := GuildComponentStatus{
 		GuildID:     guildId,
 		ComponentID: componentId,
@@ -203,16 +198,15 @@ func (suite *GuildComponentStatusEntityManagerTestSuite) TestCreateWithError() {
 	suite.Equal(expectedErr, err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cacheKey := suite.gem.getComponentStatusCacheKey(guildId, componentId)
-
-	cachedGuildComponentStatus, ok := cache.Get(suite.gem.cache, cacheKey)
+	cachedGuildComponentStatus, ok := cache.Get(testCacheKey, GuildComponentStatus{})
 	suite.False(ok)
-	suite.Nil(cachedGuildComponentStatus)
+	suite.Equal(GuildComponentStatus{}, cachedGuildComponentStatus)
 }
 
 func (suite *GuildComponentStatusEntityManagerTestSuite) TestSave() {
 	guildId := uint(65835858358583)
 	componentId := uint(48688742646283)
+	testCacheKey := "65835858358583_48688742646283"
 	testGuildComponentStatus := GuildComponentStatus{
 		GuildID:     guildId,
 		ComponentID: componentId,
@@ -226,16 +220,15 @@ func (suite *GuildComponentStatusEntityManagerTestSuite) TestSave() {
 	suite.NoError(err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cacheKey := suite.gem.getComponentStatusCacheKey(guildId, componentId)
-
-	cachedGuildComponentStatus, ok := cache.Get(suite.gem.cache, cacheKey)
-	suite.True(ok)
-	suite.Equal(&testGuildComponentStatus, cachedGuildComponentStatus)
+	cachedGuildComponentStatus, ok := cache.Get(testCacheKey, GuildComponentStatus{})
+	suite.False(ok)
+	suite.Equal(GuildComponentStatus{}, cachedGuildComponentStatus)
 }
 
 func (suite *GuildComponentStatusEntityManagerTestSuite) TestSaveWithError() {
 	guildId := uint(65835858358583)
 	componentId := uint(48688742646283)
+	testCacheKey := "65835858358583_48688742646283"
 	testGuildComponentStatus := GuildComponentStatus{
 		GuildID:     guildId,
 		ComponentID: componentId,
@@ -252,16 +245,15 @@ func (suite *GuildComponentStatusEntityManagerTestSuite) TestSaveWithError() {
 	suite.Equal(expectedErr, err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cacheKey := suite.gem.getComponentStatusCacheKey(guildId, componentId)
-
-	cachedGuildComponentStatus, ok := cache.Get(suite.gem.cache, cacheKey)
+	cachedGuildComponentStatus, ok := cache.Get(testCacheKey, GuildComponentStatus{})
 	suite.False(ok)
-	suite.Nil(cachedGuildComponentStatus)
+	suite.Equal(GuildComponentStatus{}, cachedGuildComponentStatus)
 }
 
 func (suite *GuildComponentStatusEntityManagerTestSuite) TestUpdate() {
 	guildId := uint(65835858358583)
 	componentId := uint(48688742646283)
+	testCacheKey := "65835858358583_48688742646283"
 	testGuildComponentStatus := GuildComponentStatus{
 		GuildID:     guildId,
 		ComponentID: componentId,
@@ -277,16 +269,15 @@ func (suite *GuildComponentStatusEntityManagerTestSuite) TestUpdate() {
 	suite.NoError(err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cacheKey := suite.gem.getComponentStatusCacheKey(guildId, componentId)
-
-	cachedGuildComponentStatus, ok := cache.Get(suite.gem.cache, cacheKey)
-	suite.True(ok)
-	suite.Equal(&testGuildComponentStatus, cachedGuildComponentStatus)
+	cachedGuildComponentStatus, ok := cache.Get(testCacheKey, GuildComponentStatus{})
+	suite.False(ok)
+	suite.Equal(GuildComponentStatus{}, cachedGuildComponentStatus)
 }
 
 func (suite *GuildComponentStatusEntityManagerTestSuite) TestUpdateWithError() {
 	guildId := uint(65835858358583)
 	componentId := uint(48688742646283)
+	testCacheKey := "65835858358583_48688742646283"
 	testGuildComponentStatus := GuildComponentStatus{
 		GuildID:     guildId,
 		ComponentID: componentId,
@@ -305,11 +296,9 @@ func (suite *GuildComponentStatusEntityManagerTestSuite) TestUpdateWithError() {
 	suite.Equal(expectedErr, err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cacheKey := suite.gem.getComponentStatusCacheKey(guildId, componentId)
-
-	cachedGuildComponentStatus, ok := cache.Get(suite.gem.cache, cacheKey)
+	cachedGuildComponentStatus, ok := cache.Get(testCacheKey, GuildComponentStatus{})
 	suite.False(ok)
-	suite.Nil(cachedGuildComponentStatus)
+	suite.Equal(GuildComponentStatus{}, cachedGuildComponentStatus)
 }
 
 func TestGuildComponentStatusEntityManager(t *testing.T) {

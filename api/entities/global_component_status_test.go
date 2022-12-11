@@ -20,7 +20,7 @@ package entities
 
 import (
 	"fmt"
-	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"github.com/lazybytez/jojo-discord-bot/test/dbmock"
 	"github.com/lazybytez/jojo-discord-bot/test/entity_manager_mock"
 	"github.com/lazybytez/jojo-discord-bot/test/logmock"
@@ -48,8 +48,9 @@ func (suite *GlobalComponentStatusEntityManagerTestSuite) SetupTest() {
 	suite.em = entity_manager_mock.EntityManagerMock{}
 	suite.gem = &GlobalComponentStatusEntityManager{
 		&suite.em,
-		cache.New[uint, GlobalComponentStatus](5 * time.Second),
 	}
+
+	cache.Init(cache.ModeMemory, 10*time.Minute, "")
 }
 
 func (suite *GlobalComponentStatusEntityManagerTestSuite) TestNewGlobalComponentStatusEntityManager() {
@@ -58,15 +59,12 @@ func (suite *GlobalComponentStatusEntityManagerTestSuite) TestNewGlobalComponent
 	gem := NewGlobalComponentStatusEntityManager(&testEntityManager)
 
 	suite.NotNil(gem)
-	suite.NotNil(gem.cache)
 	suite.Equal(&testEntityManager, gem.EntityManager)
-
-	gem.cache.DisableAutoCleanup()
 }
 
 func (suite *GlobalComponentStatusEntityManagerTestSuite) TestGet() {
 	testId := uint(65835858358583)
-
+	testCacheKey := "65835858358583"
 	suite.em.On("DB").Return(suite.dba)
 	suite.dba.On(
 		"GetFirstEntity",
@@ -86,19 +84,19 @@ func (suite *GlobalComponentStatusEntityManagerTestSuite) TestGet() {
 	suite.NotNil(result)
 	suite.Equal(testId, result.ComponentID)
 
-	cachedGlobalComponentStatus, ok := cache.Get(suite.gem.cache, testId)
+	cachedGlobalComponentStatus, ok := cache.Get(testCacheKey, GlobalComponentStatus{})
 	suite.True(ok)
-	suite.Equal(result, cachedGlobalComponentStatus)
+	suite.Equal(*result, cachedGlobalComponentStatus)
 }
 
 func (suite *GlobalComponentStatusEntityManagerTestSuite) TestGetWithCache() {
 	testId := uint(65835858358583)
-
+	testCacheKey := "65835858358583"
 	testGlobalComponentStatus := &GlobalComponentStatus{
 		ComponentID: testId,
 	}
 
-	cache.Update(suite.gem.cache, testId, testGlobalComponentStatus)
+	cache.Update(testCacheKey, *testGlobalComponentStatus)
 
 	// Do not expect call of GetFirstEntity or DB calls
 	// When GetFirstEntity is called, test will fail as call is unexpected
@@ -113,7 +111,7 @@ func (suite *GlobalComponentStatusEntityManagerTestSuite) TestGetWithCache() {
 
 func (suite *GlobalComponentStatusEntityManagerTestSuite) TestGetWithError() {
 	testId := uint(65835858358583)
-
+	testCacheKey := "65835858358583"
 	expectedError := fmt.Errorf("something bad happened during database read")
 
 	suite.em.On("DB").Return(suite.dba)
@@ -130,13 +128,14 @@ func (suite *GlobalComponentStatusEntityManagerTestSuite) TestGetWithError() {
 	suite.NotNil(result)
 	suite.Equal(*result, GlobalComponentStatus{})
 
-	cachedGlobalComponentStatus, ok := cache.Get(suite.gem.cache, testId)
+	cachedGlobalComponentStatus, ok := cache.Get(testCacheKey, GlobalComponentStatus{})
 	suite.False(ok)
-	suite.Nil(cachedGlobalComponentStatus)
+	suite.Equal(GlobalComponentStatus{}, cachedGlobalComponentStatus)
 }
 
 func (suite *GlobalComponentStatusEntityManagerTestSuite) TestCreate() {
 	testId := uint(65835858358583)
+	testCacheKey := "65835858358583"
 	testGlobalComponentStatus := GlobalComponentStatus{
 		ComponentID: testId,
 	}
@@ -149,13 +148,14 @@ func (suite *GlobalComponentStatusEntityManagerTestSuite) TestCreate() {
 	suite.NoError(err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedGlobalComponentStatus, ok := cache.Get(suite.gem.cache, testId)
-	suite.True(ok)
-	suite.Equal(&testGlobalComponentStatus, cachedGlobalComponentStatus)
+	cachedGlobalComponentStatus, ok := cache.Get(testCacheKey, GlobalComponentStatus{})
+	suite.False(ok)
+	suite.Equal(GlobalComponentStatus{}, cachedGlobalComponentStatus)
 }
 
 func (suite *GlobalComponentStatusEntityManagerTestSuite) TestCreateWithError() {
 	testId := uint(65835858358583)
+	testCacheKey := "65835858358583"
 	testGlobalComponentStatus := GlobalComponentStatus{
 		ComponentID: testId,
 	}
@@ -171,13 +171,14 @@ func (suite *GlobalComponentStatusEntityManagerTestSuite) TestCreateWithError() 
 	suite.Equal(expectedErr, err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedGlobalComponentStatus, ok := cache.Get(suite.gem.cache, testId)
+	cachedGlobalComponentStatus, ok := cache.Get(testCacheKey, GlobalComponentStatus{})
 	suite.False(ok)
-	suite.Nil(cachedGlobalComponentStatus)
+	suite.Equal(GlobalComponentStatus{}, cachedGlobalComponentStatus)
 }
 
 func (suite *GlobalComponentStatusEntityManagerTestSuite) TestSave() {
 	testId := uint(65835858358583)
+	testCacheKey := "65835858358583"
 	testGlobalComponentStatus := GlobalComponentStatus{
 		ComponentID: testId,
 	}
@@ -190,13 +191,14 @@ func (suite *GlobalComponentStatusEntityManagerTestSuite) TestSave() {
 	suite.NoError(err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedGlobalComponentStatus, ok := cache.Get(suite.gem.cache, testId)
-	suite.True(ok)
-	suite.Equal(&testGlobalComponentStatus, cachedGlobalComponentStatus)
+	cachedGlobalComponentStatus, ok := cache.Get(testCacheKey, GlobalComponentStatus{})
+	suite.False(ok)
+	suite.Equal(GlobalComponentStatus{}, cachedGlobalComponentStatus)
 }
 
 func (suite *GlobalComponentStatusEntityManagerTestSuite) TestSaveWithError() {
 	testId := uint(65835858358583)
+	testCacheKey := "65835858358583"
 	testGlobalComponentStatus := GlobalComponentStatus{
 		ComponentID: testId,
 	}
@@ -212,13 +214,14 @@ func (suite *GlobalComponentStatusEntityManagerTestSuite) TestSaveWithError() {
 	suite.Equal(expectedErr, err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedGlobalComponentStatus, ok := cache.Get(suite.gem.cache, testId)
+	cachedGlobalComponentStatus, ok := cache.Get(testCacheKey, GlobalComponentStatus{})
 	suite.False(ok)
-	suite.Nil(cachedGlobalComponentStatus)
+	suite.Equal(GlobalComponentStatus{}, cachedGlobalComponentStatus)
 }
 
 func (suite *GlobalComponentStatusEntityManagerTestSuite) TestUpdate() {
 	testId := uint(65835858358583)
+	testCacheKey := "65835858358583"
 	testGlobalComponentStatus := GlobalComponentStatus{
 		ComponentID: testId,
 	}
@@ -233,13 +236,14 @@ func (suite *GlobalComponentStatusEntityManagerTestSuite) TestUpdate() {
 	suite.NoError(err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedGlobalComponentStatus, ok := cache.Get(suite.gem.cache, testId)
-	suite.True(ok)
-	suite.Equal(&testGlobalComponentStatus, cachedGlobalComponentStatus)
+	cachedGlobalComponentStatus, ok := cache.Get(testCacheKey, GlobalComponentStatus{})
+	suite.False(ok)
+	suite.Equal(GlobalComponentStatus{}, cachedGlobalComponentStatus)
 }
 
 func (suite *GlobalComponentStatusEntityManagerTestSuite) TestUpdateWithError() {
 	testId := uint(65835858358583)
+	testCacheKey := "65835858358583"
 	testGlobalComponentStatus := GlobalComponentStatus{
 		ComponentID: testId,
 	}
@@ -257,9 +261,9 @@ func (suite *GlobalComponentStatusEntityManagerTestSuite) TestUpdateWithError() 
 	suite.Equal(expectedErr, err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedGlobalComponentStatus, ok := cache.Get(suite.gem.cache, testId)
+	cachedGlobalComponentStatus, ok := cache.Get(testCacheKey, GlobalComponentStatus{})
 	suite.False(ok)
-	suite.Nil(cachedGlobalComponentStatus)
+	suite.Equal(GlobalComponentStatus{}, cachedGlobalComponentStatus)
 }
 
 func TestGlobalComponentStatusEntityManager(t *testing.T) {

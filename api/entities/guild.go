@@ -19,10 +19,9 @@
 package entities
 
 import (
-	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"gorm.io/gorm"
 	"strconv"
-	"time"
 )
 
 // Guild represents a single Discord guild
@@ -40,7 +39,6 @@ type Guild struct {
 // that allows easy access to guilds in the entities.
 type GuildEntityManager struct {
 	EntityManager
-	cache *cache.Cache[uint64, Guild]
 }
 
 // NewGuildEntityManager creates a new GuildEntityManager with
@@ -48,12 +46,6 @@ type GuildEntityManager struct {
 func NewGuildEntityManager(em EntityManager) *GuildEntityManager {
 	gem := &GuildEntityManager{
 		em,
-		cache.New[uint64, Guild](10 * time.Minute),
-	}
-
-	err := gem.cache.EnableAutoCleanup(10 * time.Minute)
-	if nil != err {
-		em.Logger().Err(err, "Failed to initialize periodic cache cleanup task for Guild entity manager!")
 	}
 
 	return gem
@@ -69,10 +61,10 @@ func (gem *GuildEntityManager) Get(guildId string) (*Guild, error) {
 		return &Guild{}, err
 	}
 
-	cachedGuild, ok := cache.Get(gem.cache, guildIdInt)
+	cachedGuild, ok := cache.Get(gem.getCacheKeyFromStringGuildId(guildId), Guild{})
 
 	if ok {
-		return cachedGuild, nil
+		return &cachedGuild, nil
 	}
 
 	guild := &Guild{}
@@ -81,7 +73,7 @@ func (gem *GuildEntityManager) Get(guildId string) (*Guild, error) {
 		return &Guild{}, err
 	}
 
-	cache.Update(gem.cache, guild.GuildID, guild)
+	cache.Update(gem.getCacheKeyFromStringGuildId(guildId), *guild)
 
 	return guild, err
 }
@@ -102,8 +94,8 @@ func (gem *GuildEntityManager) Create(guild *Guild) error {
 		return err
 	}
 
-	// Ensure entity is in cache when just updated
-	cache.Update(gem.cache, guild.GuildID, guild)
+	// Invalidate cache item (if present)
+	cache.Invalidate(gem.getCacheKeyFromIntGuildId(guild.GuildID), GlobalComponentStatus{})
 
 	return nil
 }
@@ -117,8 +109,8 @@ func (gem *GuildEntityManager) Save(guild *Guild) error {
 		return err
 	}
 
-	// Ensure entity is in cache when just updated
-	cache.Update(gem.cache, guild.GuildID, guild)
+	// Invalidate cache item (if present)
+	cache.Invalidate(gem.getCacheKeyFromIntGuildId(guild.GuildID), GlobalComponentStatus{})
 
 	return nil
 }
@@ -130,7 +122,20 @@ func (gem *GuildEntityManager) Update(guild *Guild, column string, value interfa
 		return err
 	}
 
-	cache.Update(gem.cache, guild.GuildID, guild)
+	// Invalidate cache item (if present)
+	cache.Invalidate(gem.getCacheKeyFromIntGuildId(guild.GuildID), GlobalComponentStatus{})
 
 	return nil
+}
+
+// getCacheKeyFromStringGuildId returns the computed cache key used to cache
+// Guild objects.
+func (gem *GuildEntityManager) getCacheKeyFromStringGuildId(guildId string) string {
+	return guildId
+}
+
+// getCacheKeyFromIntGuildId returns the computed cache key used to cache
+// Guild objects.
+func (gem *GuildEntityManager) getCacheKeyFromIntGuildId(guildId uint64) string {
+	return strconv.FormatUint(guildId, 10)
 }

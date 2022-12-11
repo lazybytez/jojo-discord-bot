@@ -19,26 +19,20 @@
 package sync_commands
 
 import (
+	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/api/cache"
 	"github.com/lazybytez/jojo-discord-bot/api/slash_commands"
+	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"time"
 )
 
 var C *api.Component
 
-// lastGuildSyncCache
-var lastGuildSyncCache *cache.Cache[string, time.Time]
-
-func init() {
-	lastGuildSyncCache = cache.New[string, time.Time](10 * time.Minute)
-
-	// In ths case of error, we ignore the error. Even caching 10K guild names and
-	// timestamps does not take that much RAM. But with the passed parameters, it is
-	// to expect that the cache can be initialized. Also, the
-	// component specific available at this point
-	_ = lastGuildSyncCache.EnableAutoCleanup(10 * time.Minute)
+// getLastGuildSyncCacheKey returns the cache key used to store
+// the last time a command sync has been run.
+func getLastGuildSyncCacheKey(guildID string) string {
+	return fmt.Sprintf("last_command_sync_%s", guildID)
 }
 
 // HandleSyncCommandSubCommand handles the execution of the
@@ -67,8 +61,10 @@ func HandleSyncCommandSubCommand(
 
 	resp := slash_commands.GenerateInteractionResponseTemplate("Slash Command Synchronisation", "")
 
-	lastSync, ok := cache.Get(lastGuildSyncCache, i.GuildID)
-	if ok && time.Since(*lastSync) < 10*time.Minute {
+	cacheKey := getLastGuildSyncCacheKey(i.GuildID)
+	lastSync, ok := cache.Get(cacheKey, time.Time{})
+
+	if ok && time.Since(lastSync) < 10*time.Minute {
 		respondWithOnCoolDown(s, i, resp)
 
 		return
@@ -87,7 +83,7 @@ func HandleSyncCommandSubCommand(
 	C.SlashCommandManager().SyncApplicationComponentCommands(s, i.GuildID)
 
 	currentTime := time.Now()
-	cache.Update(lastGuildSyncCache, i.GuildID, &currentTime)
+	cache.Update(cacheKey, currentTime)
 
 	finishWitSuccess(s, i, resp)
 	C.BotAuditLogger().Log(

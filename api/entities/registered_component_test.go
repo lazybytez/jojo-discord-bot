@@ -20,7 +20,7 @@ package entities
 
 import (
 	"fmt"
-	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"github.com/lazybytez/jojo-discord-bot/test/dbmock"
 	"github.com/lazybytez/jojo-discord-bot/test/entity_manager_mock"
 	"github.com/lazybytez/jojo-discord-bot/test/logmock"
@@ -48,9 +48,10 @@ func (suite *RegisteredComponentEntityManagerTestSuite) SetupTest() {
 	suite.em = entity_manager_mock.EntityManagerMock{}
 	suite.gem = &RegisteredComponentEntityManager{
 		&suite.em,
-		cache.New[string, RegisteredComponent](5 * time.Second),
 		[]string{},
 	}
+
+	cache.Init(cache.ModeMemory, 10*time.Minute, "")
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestNewRegisteredComponentEntityManager() {
@@ -59,14 +60,12 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestNewRegisteredCompone
 	gem := NewRegisteredComponentEntityManager(&testEntityManager)
 
 	suite.NotNil(gem)
-	suite.NotNil(gem.cache)
 	suite.Equal(&testEntityManager, gem.EntityManager)
-
-	gem.cache.DisableAutoCleanup()
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestGet() {
 	testCode := "very_important_component"
+	testCacheKey := "very_important_component"
 
 	suite.em.On("DB").Return(suite.dba)
 	suite.dba.On(
@@ -87,19 +86,20 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestGet() {
 	suite.NotNil(result)
 	suite.Equal(testCode, result.Code)
 
-	cachedRegisteredComponent, ok := cache.Get(suite.gem.cache, testCode)
+	cachedRegisteredComponent, ok := cache.Get(testCacheKey, RegisteredComponent{})
 	suite.True(ok)
-	suite.Equal(result, cachedRegisteredComponent)
+	suite.Equal(*result, cachedRegisteredComponent)
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestGetWithCache() {
 	testCode := "very_important_component"
+	testCacheKey := "very_important_component"
 
 	testRegisteredComponent := &RegisteredComponent{
 		Code: testCode,
 	}
 
-	cache.Update(suite.gem.cache, testCode, testRegisteredComponent)
+	cache.Update(testCacheKey, *testRegisteredComponent)
 
 	// Do not expect call of GetFirstEntity or DB calls
 	// When GetFirstEntity is called, test will fail as call is unexpected
@@ -114,6 +114,7 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestGetWithCache() {
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestGetWithError() {
 	testCode := "very_important_component"
+	testCacheKey := "very_important_component"
 
 	expectedError := fmt.Errorf("something bad happened during database read")
 
@@ -131,13 +132,14 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestGetWithError() {
 	suite.NotNil(result)
 	suite.Equal(*result, RegisteredComponent{})
 
-	cachedRegisteredComponent, ok := cache.Get(suite.gem.cache, testCode)
+	cachedRegisteredComponent, ok := cache.Get(testCacheKey, RegisteredComponent{})
 	suite.False(ok)
-	suite.Nil(cachedRegisteredComponent)
+	suite.Equal(RegisteredComponent{}, cachedRegisteredComponent)
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestCreate() {
 	testCode := "very_important_component"
+	testCacheKey := "very_important_component"
 	testRegisteredComponent := RegisteredComponent{
 		Code: testCode,
 	}
@@ -150,13 +152,14 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestCreate() {
 	suite.NoError(err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedRegisteredComponent, ok := cache.Get(suite.gem.cache, testCode)
-	suite.True(ok)
-	suite.Equal(&testRegisteredComponent, cachedRegisteredComponent)
+	cachedRegisteredComponent, ok := cache.Get(testCacheKey, RegisteredComponent{})
+	suite.False(ok)
+	suite.Equal(RegisteredComponent{}, cachedRegisteredComponent)
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestCreateWithError() {
 	testCode := "very_important_component"
+	testCacheKey := "very_important_component"
 	testRegisteredComponent := RegisteredComponent{
 		Code: testCode,
 	}
@@ -172,13 +175,14 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestCreateWithError() {
 	suite.Equal(expectedErr, err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedRegisteredComponent, ok := cache.Get(suite.gem.cache, testCode)
+	cachedRegisteredComponent, ok := cache.Get(testCacheKey, RegisteredComponent{})
 	suite.False(ok)
-	suite.Nil(cachedRegisteredComponent)
+	suite.Equal(RegisteredComponent{}, cachedRegisteredComponent)
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestSave() {
 	testCode := "very_important_component"
+	testCacheKey := "very_important_component"
 	testRegisteredComponent := RegisteredComponent{
 		Code: testCode,
 	}
@@ -191,13 +195,14 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestSave() {
 	suite.NoError(err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedRegisteredComponent, ok := cache.Get(suite.gem.cache, testCode)
-	suite.True(ok)
-	suite.Equal(&testRegisteredComponent, cachedRegisteredComponent)
+	cachedRegisteredComponent, ok := cache.Get(testCacheKey, RegisteredComponent{})
+	suite.False(ok)
+	suite.Equal(RegisteredComponent{}, cachedRegisteredComponent)
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestSaveWithError() {
 	testCode := "very_important_component"
+	testCacheKey := "very_important_component"
 	testRegisteredComponent := RegisteredComponent{
 		Code: testCode,
 	}
@@ -213,13 +218,14 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestSaveWithError() {
 	suite.Equal(expectedErr, err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedRegisteredComponent, ok := cache.Get(suite.gem.cache, testCode)
+	cachedRegisteredComponent, ok := cache.Get(testCacheKey, RegisteredComponent{})
 	suite.False(ok)
-	suite.Nil(cachedRegisteredComponent)
+	suite.Equal(RegisteredComponent{}, cachedRegisteredComponent)
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestUpdate() {
 	testCode := "very_important_component"
+	testCacheKey := "very_important_component"
 	testRegisteredComponent := RegisteredComponent{
 		Code: testCode,
 	}
@@ -234,13 +240,14 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestUpdate() {
 	suite.NoError(err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedRegisteredComponent, ok := cache.Get(suite.gem.cache, testCode)
-	suite.True(ok)
-	suite.Equal(&testRegisteredComponent, cachedRegisteredComponent)
+	cachedRegisteredComponent, ok := cache.Get(testCacheKey, RegisteredComponent{})
+	suite.False(ok)
+	suite.Equal(RegisteredComponent{}, cachedRegisteredComponent)
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestUpdateWithError() {
 	testCode := "very_important_component"
+	testCacheKey := "very_important_component"
 	testRegisteredComponent := RegisteredComponent{
 		Code: testCode,
 	}
@@ -258,9 +265,9 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestUpdateWithError() {
 	suite.Equal(expectedErr, err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedRegisteredComponent, ok := cache.Get(suite.gem.cache, testCode)
+	cachedRegisteredComponent, ok := cache.Get(testCacheKey, RegisteredComponent{})
 	suite.False(ok)
-	suite.Nil(cachedRegisteredComponent)
+	suite.Equal(RegisteredComponent{}, cachedRegisteredComponent)
 }
 
 func TestRegisteredComponentEntityManager(t *testing.T) {

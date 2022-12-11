@@ -21,6 +21,7 @@ package internal
 import (
 	"fmt"
 	"github.com/joho/godotenv"
+	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"os"
 	"path"
 )
@@ -32,6 +33,8 @@ const (
 	token          = "TOKEN"
 	sqlMode        = "DATABASE_MODE"
 	sqlUrl         = "DATABASE_URL"
+	cacheMode      = "CACHE_MODE"
+	cacheDsn       = "CACHE_DSN"
 	webApiMode     = "WEBAPI_MODE"
 	webApiBind     = "WEBAPI_BIND"
 	webApiHost     = "WEBAPI_HOST"
@@ -50,6 +53,8 @@ type JojoBotConfig struct {
 	token          string
 	sqlMode        string
 	sqlUrl         string
+	cacheMode      cache.Mode
+	cacheDsn       cache.Dsn
 	webApiMode     string
 	webApiBind     string
 	webApiHost     string
@@ -109,6 +114,8 @@ func initEnv() {
 		token:          getEnvOrFail(token),
 		sqlMode:        getEnvOrFail(sqlMode),
 		sqlUrl:         getEnvOrDefault(sqlUrl, ""),
+		cacheMode:      cache.Mode(getEnvOrFail(cacheMode)),
+		cacheDsn:       cache.Dsn(getEnvOrDefault(cacheDsn, "")),
 		webApiMode:     getEnvOrDefault(webApiMode, DefaultWebApiMode),
 		webApiBind:     getEnvOrDefault(webApiBind, DefaultWebApiBind),
 		webApiHost:     getEnvOrDefault(webApiHost, DefaultWebApiHost),

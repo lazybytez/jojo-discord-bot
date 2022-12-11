@@ -20,7 +20,7 @@ package entities
 
 import (
 	"fmt"
-	"github.com/lazybytez/jojo-discord-bot/api/cache"
+	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"github.com/lazybytez/jojo-discord-bot/test/dbmock"
 	"github.com/lazybytez/jojo-discord-bot/test/entity_manager_mock"
 	"github.com/lazybytez/jojo-discord-bot/test/logmock"
@@ -48,8 +48,9 @@ func (suite *GuildEntityManagerTestSuite) SetupTest() {
 	suite.em = entity_manager_mock.EntityManagerMock{}
 	suite.gem = &GuildEntityManager{
 		&suite.em,
-		cache.New[uint64, Guild](5 * time.Second),
 	}
+
+	cache.Init(cache.ModeMemory, 10*time.Minute, "")
 }
 
 func (suite *GuildEntityManagerTestSuite) TestNewGuildEntityManager() {
@@ -58,15 +59,13 @@ func (suite *GuildEntityManagerTestSuite) TestNewGuildEntityManager() {
 	gem := NewGuildEntityManager(&testEntityManager)
 
 	suite.NotNil(gem)
-	suite.NotNil(gem.cache)
 	suite.Equal(&testEntityManager, gem.EntityManager)
-
-	gem.cache.DisableAutoCleanup()
 }
 
 func (suite *GuildEntityManagerTestSuite) TestGet() {
 	testIdString := "652658256236529525"
 	testId := uint64(652658256236529525)
+	testCacheKey := "652658256236529525"
 
 	suite.em.On("DB").Return(suite.dba)
 	suite.dba.On(
@@ -87,19 +86,20 @@ func (suite *GuildEntityManagerTestSuite) TestGet() {
 	suite.NotNil(result)
 	suite.Equal(testId, result.GuildID)
 
-	cachedGuild, ok := cache.Get(suite.gem.cache, testId)
+	cachedGuild, ok := cache.Get(testCacheKey, Guild{})
 	suite.True(ok)
-	suite.Equal(result, cachedGuild)
+	suite.Equal(*result, cachedGuild)
 }
 
 func (suite *GuildEntityManagerTestSuite) TestGetWithCache() {
 	testIdString := "652658256236529525"
 	testId := uint64(652658256236529525)
+	testCacheKey := "652658256236529525"
 	testGuild := &Guild{
 		GuildID: testId,
 	}
 
-	cache.Update(suite.gem.cache, testId, testGuild)
+	cache.Update(testCacheKey, *testGuild)
 
 	// Do not expect call of GetFirstEntity or DB calls
 	// When GetFirstEntity is called, test will fail as call is unexpected
@@ -115,6 +115,7 @@ func (suite *GuildEntityManagerTestSuite) TestGetWithCache() {
 func (suite *GuildEntityManagerTestSuite) TestGetWithError() {
 	testIdString := "652658256236529525"
 	testId := uint64(652658256236529525)
+	testCacheKey := "652658256236529525"
 
 	expectedError := fmt.Errorf("something bad happened during database read")
 
@@ -132,13 +133,14 @@ func (suite *GuildEntityManagerTestSuite) TestGetWithError() {
 	suite.NotNil(result)
 	suite.Equal(*result, Guild{})
 
-	cachedGuild, ok := cache.Get(suite.gem.cache, testId)
+	cachedGuild, ok := cache.Get(testCacheKey, Guild{})
 	suite.False(ok)
-	suite.Nil(cachedGuild)
+	suite.Equal(Guild{}, cachedGuild)
 }
 
 func (suite *GuildEntityManagerTestSuite) TestCreate() {
 	testId := uint64(652658256236529525)
+	testCacheKey := "652658256236529525"
 	testGuild := Guild{
 		GuildID: testId,
 	}
@@ -151,13 +153,14 @@ func (suite *GuildEntityManagerTestSuite) TestCreate() {
 	suite.NoError(err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedGuild, ok := cache.Get(suite.gem.cache, testId)
-	suite.True(ok)
-	suite.Equal(&testGuild, cachedGuild)
+	cachedGuild, ok := cache.Get(testCacheKey, Guild{})
+	suite.False(ok)
+	suite.Equal(Guild{}, cachedGuild)
 }
 
 func (suite *GuildEntityManagerTestSuite) TestCreateWithError() {
 	testId := uint64(652658256236529525)
+	testCacheKey := "652658256236529525"
 	testGuild := Guild{
 		GuildID: testId,
 	}
@@ -173,13 +176,14 @@ func (suite *GuildEntityManagerTestSuite) TestCreateWithError() {
 	suite.Equal(expectedErr, err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedGuild, ok := cache.Get(suite.gem.cache, testId)
+	cachedGuild, ok := cache.Get(testCacheKey, Guild{})
 	suite.False(ok)
-	suite.Nil(cachedGuild)
+	suite.Equal(Guild{}, cachedGuild)
 }
 
 func (suite *GuildEntityManagerTestSuite) TestSave() {
 	testId := uint64(652658256236529525)
+	testCacheKey := "652658256236529525"
 	testGuild := Guild{
 		GuildID: testId,
 	}
@@ -192,13 +196,14 @@ func (suite *GuildEntityManagerTestSuite) TestSave() {
 	suite.NoError(err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedGuild, ok := cache.Get(suite.gem.cache, testId)
-	suite.True(ok)
-	suite.Equal(&testGuild, cachedGuild)
+	cachedGuild, ok := cache.Get(testCacheKey, Guild{})
+	suite.False(ok)
+	suite.Equal(Guild{}, cachedGuild)
 }
 
 func (suite *GuildEntityManagerTestSuite) TestSaveWithError() {
 	testId := uint64(652658256236529525)
+	testCacheKey := "652658256236529525"
 	testGuild := Guild{
 		GuildID: testId,
 	}
@@ -214,13 +219,14 @@ func (suite *GuildEntityManagerTestSuite) TestSaveWithError() {
 	suite.Equal(expectedErr, err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedGuild, ok := cache.Get(suite.gem.cache, testId)
+	cachedGuild, ok := cache.Get(testCacheKey, Guild{})
 	suite.False(ok)
-	suite.Nil(cachedGuild)
+	suite.Equal(Guild{}, cachedGuild)
 }
 
 func (suite *GuildEntityManagerTestSuite) TestUpdate() {
 	testId := uint64(652658256236529525)
+	testCacheKey := "652658256236529525"
 	testGuild := Guild{
 		GuildID: testId,
 	}
@@ -235,13 +241,14 @@ func (suite *GuildEntityManagerTestSuite) TestUpdate() {
 	suite.NoError(err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedGuild, ok := cache.Get(suite.gem.cache, testId)
-	suite.True(ok)
-	suite.Equal(&testGuild, cachedGuild)
+	cachedGuild, ok := cache.Get(testCacheKey, Guild{})
+	suite.False(ok)
+	suite.Equal(Guild{}, cachedGuild)
 }
 
 func (suite *GuildEntityManagerTestSuite) TestUpdateWithError() {
 	testId := uint64(652658256236529525)
+	testCacheKey := "652658256236529525"
 	testGuild := Guild{
 		GuildID: testId,
 	}
@@ -259,9 +266,9 @@ func (suite *GuildEntityManagerTestSuite) TestUpdateWithError() {
 	suite.Equal(expectedErr, err)
 	suite.dba.AssertExpectations(suite.T())
 
-	cachedGuild, ok := cache.Get(suite.gem.cache, testId)
+	cachedGuild, ok := cache.Get(testCacheKey, Guild{})
 	suite.False(ok)
-	suite.Nil(cachedGuild)
+	suite.Equal(Guild{}, cachedGuild)
 }
 
 func TestGuildEntityManager(t *testing.T) {

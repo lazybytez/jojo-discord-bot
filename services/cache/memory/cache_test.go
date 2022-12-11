@@ -16,20 +16,50 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// Configuration of commitlint to check commit message guidelines
-module.exports = {
-    extends: ['@commitlint/config-conventional'],
-    parserPreset: 'conventional-changelog-conventionalcommits',
-    rules: {
-        'subject-max-length': [2, 'always', 50],
-        'scope-enum': [2, 'always', [
-            'deps', // Changes done on anything dependency related
-            'devops', // Changes done on technical processes
-            'api', // Changes to the public api
-            'comp', // Changes to feature components
-            'int', // Changes to internal stuff
-            'serv', // Changes to the services that sit between internal and public api
-            'core' // Changes on files in project root
-        ]]
-    }
-};
+package memory
+
+import (
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/suite"
+)
+
+type CacheTestSuite struct {
+	suite.Suite
+	cache *InMemoryCacheProvider
+}
+
+func (suite *CacheTestSuite) SetupTest() {
+	suite.cache = &InMemoryCacheProvider{
+		sync.RWMutex{},
+		CachePool{},
+		10 * time.Second,
+		nil,
+	}
+}
+
+func (suite *CacheTestSuite) TestNew() {
+	tables := []struct {
+		lifetime time.Duration
+		expected time.Duration
+	}{
+		{5 * time.Second, 5 * time.Second},
+		{5 * time.Minute, 5 * time.Minute},
+	}
+
+	for _, table := range tables {
+		result := New(table.lifetime).lifetime
+
+		suite.Equal(
+			table.expected,
+			result,
+			"Arguments: %v",
+			table.lifetime)
+	}
+}
+
+func TestCache(t *testing.T) {
+	suite.Run(t, new(CacheTestSuite))
+}
