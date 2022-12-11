@@ -247,7 +247,7 @@ func (c *ComponentHandlerContainer) addDiscordGoHandler(assignedEvent *AssignedE
 		return reflect.ValueOf(assignedEvent.handler).Call(args)
 	})
 
-	c.owner.discord.AddHandler(typedHandler.Interface())
+	assignedEvent.unregister = c.owner.discord.AddHandler(typedHandler.Interface())
 }
 
 // === One-Time Handlers
@@ -320,7 +320,7 @@ func (c *ComponentHandlerContainer) addDiscordGoOnceTimeHandler(assignedEvent *A
 		return reflect.ValueOf(assignedEvent.handler).Call(args)
 	})
 
-	c.owner.discord.AddHandlerOnce(typedHandler.Interface())
+	assignedEvent.unregister = c.owner.discord.AddHandlerOnce(typedHandler.Interface())
 }
 
 // === Handler removal
@@ -334,12 +334,13 @@ func (c *ComponentHandlerContainer) Unregister(handlerName HandlerName) error {
 
 	if !ok {
 		return fmt.Errorf(
-			"there is no handler called \"%v\" registered that could be unregistered",
+			"there is no handler called \"%s\" registered that could be unregistered",
 			handlerName)
 	}
 
 	handler.unregister()
 	removeComponentHandler(handlerName)
+	c.owner.Logger().Info("Successfully unregistered handler with name \"%s\"!", handlerName)
 
 	return nil
 }
