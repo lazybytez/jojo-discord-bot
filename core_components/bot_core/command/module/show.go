@@ -30,7 +30,7 @@ func handleModuleShow(
 	i *discordgo.InteractionCreate,
 	option *discordgo.ApplicationCommandInteractionDataOption,
 ) {
-	resp := slash_commands.GenerateInteractionResponseTemplate("Module Information", "")
+	resp := slash_commands.GenerateEphemeralInteractionResponseTemplate("Module Information", "")
 
 	regComp := findComponent(option)
 	if nil == regComp || regComp.IsCoreComponent() {

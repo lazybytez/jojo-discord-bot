@@ -54,7 +54,7 @@ func handleAuditLogEnable(
 		user = i.Member.User
 	}
 
-	resp := slash_commands.GenerateInteractionResponseTemplate(enableCommandResponseHeader, "")
+	resp := slash_commands.GenerateEphemeralInteractionResponseTemplate(enableCommandResponseHeader, "")
 
 	guild, err := C.EntityManager().Guilds().Get(i.GuildID)
 	if nil != err {

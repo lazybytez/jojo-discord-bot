@@ -59,7 +59,7 @@ func HandleSyncCommandSubCommand(
 		user = i.Member.User
 	}
 
-	resp := slash_commands.GenerateInteractionResponseTemplate("Slash Command Synchronisation", "")
+	resp := slash_commands.GenerateEphemeralInteractionResponseTemplate("Slash Command Synchronisation", "")
 
 	cacheKey := getLastGuildSyncCacheKey(i.GuildID)
 	lastSync, ok := cache.Get(cacheKey, time.Time{})
