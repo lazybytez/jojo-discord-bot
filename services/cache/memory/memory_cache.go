@@ -77,10 +77,10 @@ func cleanUpCache(provider *InMemoryCacheProvider) {
 		//the entire cache longer than necessary.
 		cachePool := cachePool
 		go func() {
-			cachePool.mu.RLock()
 			var invalidItemKeys []string
 
 			// step 1: collect
+			cachePool.mu.RLock()
 			for key, value := range cachePool.entries {
 				if value.invalid {
 					invalidItemKeys = append(invalidItemKeys, key)
@@ -88,13 +88,14 @@ func cleanUpCache(provider *InMemoryCacheProvider) {
 					continue
 				}
 			}
+			cachePool.mu.RUnlock()
 
 			// step 2: drop
+			cachePool.mu.Lock()
 			for _, invalidItem := range invalidItemKeys {
 				delete(cachePool.entries, invalidItem)
 			}
-
-			cachePool.mu.RUnlock()
+			cachePool.mu.Unlock()
 		}()
 	}
 	provider.mu.RUnlock()
