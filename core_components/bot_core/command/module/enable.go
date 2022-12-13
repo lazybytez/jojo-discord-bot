@@ -47,6 +47,13 @@ func handleModuleEnable(
 		return
 	}
 
+	if isModuleToggleRateLimited(guild) {
+		respondWithRateLimited(s, i, resp)
+
+		return
+	}
+	increaseRateLimitCount(guild)
+
 	if !enableComponentForGuild(s, i, guild, regComp, resp) {
 		respondWithAlreadyEnabled(s, i, resp, regComp.Name)
 
