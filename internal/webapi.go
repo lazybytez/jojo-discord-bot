@@ -117,7 +117,7 @@ func initWebApi() {
 	v1ApiRouter = engine.Group(buildRoutePath(RouteApiV1))
 
 	httpServer = &http.Server{
-		Addr:    ":8080",
+		Addr:    Config.webApiBind,
 		Handler: engine,
 	}
 

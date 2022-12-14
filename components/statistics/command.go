@@ -27,7 +27,6 @@ import (
 	"github.com/lazybytez/jojo-discord-bot/build"
 	"io"
 	"runtime"
-	"strconv"
 	"text/tabwriter"
 	"time"
 )
@@ -117,7 +116,7 @@ func buildStatOutput() string {
 	buf := &bytes.Buffer{}
 
 	count := collectGuildCount()
-	countMsg := strconv.FormatInt(count, 10)
+	countMsg := fmt.Sprintf("%d", count)
 	if count == -1 {
 		countMsg = "Error"
 	}

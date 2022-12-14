@@ -25,7 +25,7 @@ import (
 
 var (
 	lastGuildCountUpdate    time.Time
-	cachedGuildCount        int64
+	cachedGuildCount        int
 	cachedSlashCommandCount = -1
 	cachedClusterId         string
 )
@@ -34,14 +34,10 @@ var (
 // or recomputes the guild count.
 //
 // The guild count is cached for 10 minutes.
-func collectGuildCount() int64 {
+func collectGuildCount() int {
 	if time.Since(lastGuildCountUpdate) > 10*time.Minute {
-		guildCount, err := C.EntityManager().Guilds().Count()
-		if nil != err {
-			guildCount = -1
-		}
+		cachedGuildCount = C.DiscordApi().GuildCount()
 
-		cachedGuildCount = guildCount
 		lastGuildCountUpdate = time.Now()
 	}
 
