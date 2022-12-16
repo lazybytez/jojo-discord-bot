@@ -40,7 +40,7 @@ func handleAuditLogStatus(
 	i *discordgo.InteractionCreate,
 	_ *discordgo.ApplicationCommandInteractionDataOption,
 ) {
-	resp := slash_commands.GenerateInteractionResponseTemplate(statusCommandResponseHeader, "")
+	resp := slash_commands.GenerateEphemeralInteractionResponseTemplate(statusCommandResponseHeader, "")
 
 	guild, err := C.EntityManager().Guilds().Get(i.GuildID)
 	if nil != err {

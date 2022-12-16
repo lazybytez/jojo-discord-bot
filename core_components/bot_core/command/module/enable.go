@@ -31,7 +31,7 @@ func handleModuleEnable(
 	i *discordgo.InteractionCreate,
 	option *discordgo.ApplicationCommandInteractionDataOption,
 ) {
-	resp := slash_commands.GenerateInteractionResponseTemplate("Enable Module", "")
+	resp := slash_commands.GenerateEphemeralInteractionResponseTemplate("Enable Module", "")
 
 	regComp := findComponent(option)
 	if nil == regComp || regComp.IsCoreComponent() {
