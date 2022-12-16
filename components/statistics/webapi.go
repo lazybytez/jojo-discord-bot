@@ -30,7 +30,7 @@ import (
 //
 // @Description Statistics holds statistics about the bot like the current version.
 type StatsDTO struct {
-	GuildCount        int64  `json:"guild_count"`
+	GuildCount        int    `json:"guild_count"`
 	SlashCommandCount int    `json:"slash_command_count"`
 	Version           string `json:"version"`
 } //@Name Statistics

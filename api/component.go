@@ -64,6 +64,7 @@ type Component struct {
 	// Their initialization happens through call to the methods
 	// used to get them (Example: logger -> Component.Logger()).
 	// See ServiceManager interface on how to obtain them.
+	discordApi          DiscordApiWrapper
 	logger              services.Logger
 	handlerManager      ComponentHandlerManager
 	slashCommandManager *SlashCommandManager
