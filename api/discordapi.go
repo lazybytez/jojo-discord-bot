@@ -18,6 +18,11 @@
 
 package api
 
+import (
+	"fmt"
+	"github.com/bwmarrin/discordgo"
+)
+
 // DiscordGoApiWrapper is a wrapper around some crucial discordgo
 // functions. It provides functions that might be
 // frequently used without an ongoing event.
@@ -54,4 +59,29 @@ func (c *Component) DiscordApi() DiscordApiWrapper {
 // TODO: As soon as sharding support is implemented, the guild count needs to be computed from data collected across all shards
 func (dgw *DiscordGoApiWrapper) GuildCount() int {
 	return len(dgw.owner.discord.State.Guilds)
+}
+
+// SimpleBotStatus is a simplified version of discordgo.UpdateStatusData
+// that can be used to simply change the status of the bot to something else.
+// Note that the URL should be only set for discordgo.ActivityTypeStreaming.
+type SimpleBotStatus struct {
+	ActivityType discordgo.ActivityType
+	Content      string
+	Url          string
+}
+
+// SetBotStatus updates the status of the bot according to the passed
+// SimpleBotStatus data.
+func (dgw *DiscordGoApiWrapper) SetBotStatus(status SimpleBotStatus) error {
+	switch status.ActivityType {
+	case discordgo.ActivityTypeGame:
+		return dgw.owner.discord.UpdateGameStatus(0, status.Content)
+	case discordgo.ActivityTypeStreaming:
+		return dgw.owner.discord.UpdateStreamingStatus(0, status.Content, status.Url)
+	case discordgo.ActivityTypeListening:
+		return dgw.owner.discord.UpdateListeningStatus(status.Content)
+	default:
+		return fmt.Errorf("tried to update bot status to activity type \"%d\", which is not supported",
+			status.ActivityType)
+	}
 }
