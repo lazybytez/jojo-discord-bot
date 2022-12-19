@@ -122,6 +122,17 @@ type ServiceManager interface {
 	// Prefer using the EntityManager instead, as DatabaseAccess is considered
 	// a low-level api.
 	DatabaseAccess() *EntityManager
+	// BotAuditLogger returns the bot audit logger for the current component,
+	// which allows to create audit log entries.
+	BotAuditLogger() *BotAuditLogger
+	// DiscordApi is used to obtain the components slash DiscordApiWrapper management
+	//
+	// On first call, this function initializes the private Component.discordAPi
+	// field. On consecutive calls, the already present DiscordGoApiWrapper will be used.
+	DiscordApi() DiscordApiWrapper
+	// BotStatusManager returns the current StatusManager which
+	// allows to add additional status to the bot.
+	BotStatusManager() StatusManager
 }
 
 // LoadComponent is used by the component registration system that

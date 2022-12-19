@@ -40,6 +40,9 @@ type DiscordGoApiWrapper struct {
 type DiscordApiWrapper interface {
 	// GuildCount returns the number of guilds the bot is currently on.
 	GuildCount() int
+	// SetBotStatus updates the status of the bot according to the passed
+	// SimpleBotStatus data.
+	SetBotStatus(status SimpleBotStatus) error
 }
 
 // DiscordApi is used to obtain the components slash DiscordApiWrapper management

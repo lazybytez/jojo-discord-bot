@@ -28,5 +28,16 @@ func LoadComponent(_ *discordgo.Session) error {
 	// Register the messageCreate func as a callback for MessageCreate events.
 	_ = C.SlashCommandManager().Register(diceCommand)
 
+	registerBotStatus()
+
 	return nil
+}
+
+// registerBotStatus registers the bot status for status rotation
+// provided by the component.
+func registerBotStatus() {
+	C.BotStatusManager().AddStatusToRotation(api.SimpleBotStatus{
+		ActivityType: discordgo.ActivityTypeGame,
+		Content:      "/dice | throw dices",
+	})
 }
