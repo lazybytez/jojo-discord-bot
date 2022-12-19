@@ -19,7 +19,6 @@
 package api
 
 import (
-	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"reflect"
 	"sort"
@@ -118,39 +117,6 @@ func IsComponentEnabled(comp *Component, guildId string) bool {
 	guildStatus, _ := em.GuildComponentStatus().Get(guild.ID, regComp.ID)
 
 	return guildStatus.Enabled
-}
-
-// registerComponentStatusDecorator adds the decorator that handles
-// if event handlers should be called or not depending on the owning components
-// status
-func (c *ComponentHandlerContainer) registerComponentStatusDecorator(name string) {
-	ok := c.AddDecorator(name, decorateComponentStatus)
-	if !ok {
-		c.owner.Logger().Err(fmt.Errorf(
-			"failed to register cleanup decorator for one-time Handler with name \"%v\" of component \"%v\"",
-			name,
-			c.owner.Name),
-			"Failed to register one-time handler!")
-	}
-}
-
-// decorateComponentStatus ensures that handlers are only called when enabled globally
-// and enabled on the target guild.
-func decorateComponentStatus(
-	assignedEvent *AssignedEventHandler,
-	session *discordgo.Session,
-	event interface{},
-	originalHandler interface{},
-) {
-	comp := assignedEvent.GetComponent()
-	guildId := getGuildIdFromEventInterface(event)
-
-	if IsComponentEnabled(comp, guildId) {
-		reflect.ValueOf(originalHandler).Call([]reflect.Value{
-			reflect.ValueOf(session),
-			reflect.ValueOf(event),
-		})
-	}
 }
 
 // getGuildIdFromEventInterface returns the guild id of an event.

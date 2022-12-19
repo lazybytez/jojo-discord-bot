@@ -20,6 +20,7 @@ package api
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"github.com/lazybytez/jojo-discord-bot/api/entities"
 	"github.com/lazybytez/jojo-discord-bot/services"
 	"strings"
 )
@@ -48,7 +49,7 @@ type State struct {
 // It holds basic metadata about the component
 type Component struct {
 	// Metadata
-	Code         string
+	Code         entities.ComponentCode
 	Name         string
 	Description  string
 	LoadPriority int
@@ -159,5 +160,5 @@ func (c *Component) UnloadComponent(*discordgo.Session) error {
 //
 // Core components are components which are prefixed with the CoreComponentPrefix.
 func IsCoreComponent(c *Component) bool {
-	return strings.HasPrefix(c.Code, CoreComponentPrefix)
+	return strings.HasPrefix(string(c.Code), CoreComponentPrefix)
 }

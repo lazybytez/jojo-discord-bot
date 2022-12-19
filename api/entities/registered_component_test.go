@@ -48,7 +48,7 @@ func (suite *RegisteredComponentEntityManagerTestSuite) SetupTest() {
 	suite.em = entity_manager_mock.EntityManagerMock{}
 	suite.gem = &RegisteredComponentEntityManager{
 		&suite.em,
-		[]string{},
+		[]ComponentCode{},
 	}
 
 	cache.Init(cache.ModeMemory, 10*time.Minute, "")
@@ -64,7 +64,7 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestNewRegisteredCompone
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestGet() {
-	testCode := "very_important_component"
+	testCode := ComponentCode("very_important_component")
 	testCacheKey := "very_important_component"
 
 	suite.em.On("DB").Return(suite.dba)
@@ -92,7 +92,7 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestGet() {
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestGetWithCache() {
-	testCode := "very_important_component"
+	testCode := ComponentCode("very_important_component")
 	testCacheKey := "very_important_component"
 
 	testRegisteredComponent := &RegisteredComponent{
@@ -113,7 +113,7 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestGetWithCache() {
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestGetWithError() {
-	testCode := "very_important_component"
+	testCode := ComponentCode("very_important_component")
 	testCacheKey := "very_important_component"
 
 	expectedError := fmt.Errorf("something bad happened during database read")
@@ -138,7 +138,7 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestGetWithError() {
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestCreate() {
-	testCode := "very_important_component"
+	testCode := ComponentCode("very_important_component")
 	testCacheKey := "very_important_component"
 	testRegisteredComponent := RegisteredComponent{
 		Code: testCode,
@@ -158,7 +158,7 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestCreate() {
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestCreateWithError() {
-	testCode := "very_important_component"
+	testCode := ComponentCode("very_important_component")
 	testCacheKey := "very_important_component"
 	testRegisteredComponent := RegisteredComponent{
 		Code: testCode,
@@ -181,7 +181,7 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestCreateWithError() {
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestSave() {
-	testCode := "very_important_component"
+	testCode := ComponentCode("very_important_component")
 	testCacheKey := "very_important_component"
 	testRegisteredComponent := RegisteredComponent{
 		Code: testCode,
@@ -201,7 +201,7 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestSave() {
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestSaveWithError() {
-	testCode := "very_important_component"
+	testCode := ComponentCode("very_important_component")
 	testCacheKey := "very_important_component"
 	testRegisteredComponent := RegisteredComponent{
 		Code: testCode,
@@ -224,7 +224,7 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestSaveWithError() {
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestUpdate() {
-	testCode := "very_important_component"
+	testCode := ComponentCode("very_important_component")
 	testCacheKey := "very_important_component"
 	testRegisteredComponent := RegisteredComponent{
 		Code: testCode,
@@ -246,7 +246,7 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestUpdate() {
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestUpdateWithError() {
-	testCode := "very_important_component"
+	testCode := ComponentCode("very_important_component")
 	testCacheKey := "very_important_component"
 	testRegisteredComponent := RegisteredComponent{
 		Code: testCode,

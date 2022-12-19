@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/test/discordgo_mock"
-	"github.com/lazybytez/jojo-discord-bot/test/handler_manager_mock"
 	"github.com/stretchr/testify/suite"
 	"testing"
 )
@@ -91,27 +90,32 @@ func (suite *ComponentTestSuite) TestLoadComponentWithFailure() {
 }
 
 func (suite *ComponentTestSuite) TestUnloadComponent() {
-	mockHandlerManager := handler_manager_mock.HandlerManagerMock{}
-
 	testComponent := Component{
-		Code:         "some-component",
+		Code:         "some_component",
 		Name:         "Some Component",
 		Description:  "This is a component!",
 		LoadPriority: 100,
 		State: &State{
 			DefaultEnabled: true,
 		},
-		handlerManager: &mockHandlerManager,
 	}
 
-	dgSession, _ := discordgo_mock.MockSession()
+	mockHandlerManager := ComponentHandlerContainer{
+		owner: &testComponent,
+	}
+	testComponent.handlerManager = &mockHandlerManager
 
-	mockHandlerManager.On("UnregisterAll").Once()
+	dgSession, _ := discordgo_mock.MockSession()
+	handlerComponentMapping.handlers[("some_component_handler")] = &AssignedEventHandler{
+		name:       "some_component_handler",
+		component:  &testComponent,
+		unregister: func() {},
+	}
 
 	err := testComponent.UnloadComponent(dgSession)
 
 	suite.NoError(err)
-	mockHandlerManager.AssertExpectations(suite.T())
+	suite.Len(handlerComponentMapping.handlers, 0)
 }
 
 func (suite *ComponentTestSuite) TestIsCoreComponent() {

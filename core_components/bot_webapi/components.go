@@ -21,6 +21,7 @@ package bot_webapi
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/api/entities"
 	"net/http"
 )
 
@@ -34,11 +35,11 @@ import (
 // @Description and description. Additionally, it holds the current global
 // @Description and guild status.
 type ComponentDTO struct {
-	Code          string `json:"code"`
-	Name          string `json:"name"`
-	Description   string `json:"description"`
-	GlobalEnabled bool   `json:"global_enabled"`
-	GuildEnabled  bool   `json:"guild_enabled"`
+	Code          entities.ComponentCode `json:"code"`
+	Name          string                 `json:"name"`
+	Description   string                 `json:"description"`
+	GlobalEnabled bool                   `json:"global_enabled"`
+	GuildEnabled  bool                   `json:"guild_enabled"`
 } //@Name Component
 
 // ComponentDTOFromComponent creates a new ComponentDTO.

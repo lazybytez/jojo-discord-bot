@@ -24,7 +24,7 @@ func init() {
 }
 
 // LoadComponent loads the Dice Component
-func LoadComponent(discord *discordgo.Session) error {
+func LoadComponent(_ *discordgo.Session) error {
 	// Register the messageCreate func as a callback for MessageCreate events.
 	_ = C.SlashCommandManager().Register(diceCommand)
 

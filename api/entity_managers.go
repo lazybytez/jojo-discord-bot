@@ -61,7 +61,7 @@ type RegisteredComponentEntityManager interface {
 	// cache. If no cache entry is present, a request to the entities will be made.
 	// If no RegisteredComponent can be found, the function returns a new empty
 	// RegisteredComponent.
-	Get(registeredComponentCode string) (*entities.RegisteredComponent, error)
+	Get(registeredComponentCode entities.ComponentCode) (*entities.RegisteredComponent, error)
 	// GetAvailable returns all components that have been registered
 	// during application bootstrap.
 	GetAvailable() []*entities.RegisteredComponent
@@ -78,7 +78,7 @@ type RegisteredComponentEntityManager interface {
 	// MarkAsAvailable marks the passed component as available, by putting
 	// the codes into an array.
 	// Note that duplicates will be filtered.
-	MarkAsAvailable(code string)
+	MarkAsAvailable(code entities.ComponentCode)
 }
 
 // RegisteredComponent returns the RegisteredComponentEntityManager that is currently active,

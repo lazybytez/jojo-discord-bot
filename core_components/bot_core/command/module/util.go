@@ -25,8 +25,17 @@ import (
 
 // findComponent tries to find a specific component by its code.
 func findComponent(option *discordgo.ApplicationCommandInteractionDataOption) *entities.RegisteredComponent {
+	var componentCode entities.ComponentCode
+
+	switch v := option.Options[0].Value.(type) {
+	case string:
+		componentCode = entities.ComponentCode(v)
+	default:
+		return nil
+	}
+
 	for _, c := range C.EntityManager().RegisteredComponent().GetAvailable() {
-		if c.Code == option.Options[0].Value {
+		if c.Code == componentCode {
 			return c
 		}
 	}
