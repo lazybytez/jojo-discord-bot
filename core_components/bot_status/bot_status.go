@@ -85,6 +85,8 @@ func rotateStatus() {
 
 	if nil == status {
 		C.Logger().Info("Not updating status, as no status are registered!")
+
+		return
 	}
 
 	err := C.DiscordApi().SetBotStatus(*status)
