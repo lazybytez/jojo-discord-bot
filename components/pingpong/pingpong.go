@@ -52,50 +52,8 @@ func init() {
 
 // LoadComponent loads the Ping-Pong Component
 func LoadComponent(_ *discordgo.Session) error {
-	// Register the messageCreate func as a callback for MessageCreate events.
-	_, _ = C.HandlerManager().Register("ping", onPingMessageCreate)
-	_, _ = C.HandlerManager().Register("pong", onPongMessageCreate)
-
 	_ = C.SlashCommandManager().Register(pingCommand)
 	_ = C.SlashCommandManager().Register(pongCommand)
 
 	return nil
-}
-
-// onPingMessageCreate listens for new messages and replies with
-// "Pong!".
-func onPingMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if m.Author.ID == s.State.User.ID || m.Author.Bot {
-		return
-	}
-
-	if m.Content != "ping" {
-		return
-	}
-
-	_, err := s.ChannelMessageSend(m.ChannelID, "Pong!")
-	if nil != err {
-		C.Logger().Warn("Failed to deliver \"Pong!\" message: %v", err.Error())
-
-		return
-	}
-}
-
-// onPingMessageCreate listens for new messages and replies with
-// "Ping!".
-func onPongMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if m.Author.ID == s.State.User.ID || m.Author.Bot {
-		return
-	}
-
-	if m.Content != "pong" {
-		return
-	}
-
-	_, err := s.ChannelMessageSend(m.ChannelID, "Ping!")
-	if nil != err {
-		C.Logger().Warn("Failed to deliver \"Ping!\" message: %v", err.Error())
-
-		return
-	}
 }
