@@ -47,16 +47,27 @@ func handleModuleEnable(
 		return
 	}
 
+	if isModuleToggleRateLimited(guild) {
+		respondWithRateLimited(s, i, resp)
+
+		return
+	}
+	increaseRateLimitCount(guild)
+
 	if !enableComponentForGuild(s, i, guild, regComp, resp) {
 		respondWithAlreadyEnabled(s, i, resp, regComp.Name)
 
 		return
 	}
 
+	respondWithTogglingComponent(
+		s,
+		i,
+		resp,
+		regComp.Name,
+		UserActionEnable)
 	C.SlashCommandManager().SyncApplicationComponentCommands(s, i.GuildID)
-
-	generateModuleEnableSuccessfulEmbedField(resp, regComp)
-	slash_commands.Respond(C, s, i, resp)
+	finishWithModuleEnableSuccessfulEmbedField(s, i, resp, regComp)
 
 	dgoGuild, err := s.Guild(i.GuildID)
 	if nil != err {
@@ -108,9 +119,6 @@ func enableComponentForGuild(
 			return false
 		}
 
-		generateModuleEnableSuccessfulEmbedField(resp, regComp)
-		slash_commands.Respond(C, s, i, resp)
-
 		return true
 	}
 
@@ -131,9 +139,12 @@ func enableComponentForGuild(
 	return true
 }
 
-// generateModuleEnableSuccessfulEmbedField creates the necessary embed fields
-// used to response to a successful module enable command.
-func generateModuleEnableSuccessfulEmbedField(
+// finishWithModuleEnableSuccessfulEmbedField updates the previously send
+// processing message with a success message, that indicates
+// that the module could be enabled properly.
+func finishWithModuleEnableSuccessfulEmbedField(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
 	resp *discordgo.InteractionResponseData,
 	comp *entities.RegisteredComponent,
 ) {
@@ -149,6 +160,10 @@ func generateModuleEnableSuccessfulEmbedField(
 			Inline: false,
 		},
 	}
+
+	slash_commands.EditResponse(C, s, i, &discordgo.WebhookEdit{
+		Embeds: &resp.Embeds,
+	})
 }
 
 // respondWithAlreadyEnabled fills the passed discordgo.InteractionResponseData

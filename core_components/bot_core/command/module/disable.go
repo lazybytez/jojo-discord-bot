@@ -49,16 +49,27 @@ func handleModuleDisable(
 		return
 	}
 
+	if isModuleToggleRateLimited(guild) {
+		respondWithRateLimited(s, i, resp)
+
+		return
+	}
+	increaseRateLimitCount(guild)
+
 	if !disableComponentForGuild(guild, regComp) {
 		respondWithAlreadyDisabled(s, i, resp, regComp.Name)
 
 		return
 	}
 
+	respondWithTogglingComponent(
+		s,
+		i,
+		resp,
+		regComp.Name,
+		UserActionDisable)
 	C.SlashCommandManager().SyncApplicationComponentCommands(s, i.GuildID)
-
-	generateModuleDisableSuccessfulEmbedField(resp, regComp)
-	slash_commands.Respond(C, s, i, resp)
+	finishWithModuleDisableSuccessfulEmbedField(s, i, resp, regComp)
 
 	dgoGuild, err := s.Guild(i.GuildID)
 	if nil != err {
@@ -109,9 +120,12 @@ func disableComponentForGuild(
 	return true
 }
 
-// generateModuleDisableSuccessfulEmbedField creates the necessary embed fields
-// used to response to a successful module disable command.
-func generateModuleDisableSuccessfulEmbedField(
+// finishWithModuleDisableSuccessfulEmbedField updates the previously send
+// processing message with a success message, that indicates
+// that the module could be disabled properly.
+func finishWithModuleDisableSuccessfulEmbedField(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
 	resp *discordgo.InteractionResponseData,
 	comp *entities.RegisteredComponent,
 ) {
@@ -127,6 +141,10 @@ func generateModuleDisableSuccessfulEmbedField(
 			Inline: false,
 		},
 	}
+
+	slash_commands.EditResponse(C, s, i, &discordgo.WebhookEdit{
+		Embeds: &resp.Embeds,
+	})
 }
 
 // respondWithAlreadyDisabled fills the passed discordgo.InteractionResponseData

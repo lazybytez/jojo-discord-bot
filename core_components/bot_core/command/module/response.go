@@ -21,7 +21,44 @@ package module
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"github.com/davecgh/go-spew/spew"
+	"github.com/lazybytez/jojo-discord-bot/api/slash_commands"
 )
+
+// UserAction is a string that can be output
+// to tell the user the action that is currently applied
+// to a module
+type UserAction string
+
+const (
+	UserActionEnable  = "enabled"
+	UserActionDisable = "disabled"
+)
+
+// respondWithTogglingComponent responds with a message
+// telling the user the command is still processing.
+// This is necessary as the module enable/disable process
+// can take a few seconds.
+func respondWithTogglingComponent(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	resp *discordgo.InteractionResponseData,
+	componentName string,
+	action UserAction,
+) {
+	embeds := []*discordgo.MessageEmbedField{
+		{
+			Name: ":alarm_clock: Processing...",
+			Value: spew.Sprintf("The module \"%s\" is being %s, please wait...",
+				componentName,
+				action),
+		},
+	}
+
+	resp.Embeds[0].Fields = embeds
+
+	slash_commands.Respond(C, s, i, resp)
+}
 
 // respondWithMissingComponent fills the passed discordgo.InteractionResponseData
 // with an embed field that indicates that the specified component could not be found.
