@@ -28,7 +28,8 @@ jobs:
       - name: Run Go linters
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.48
+          version: v1.50.1
+          skip-cache: true
           
   tests:
     runs-on: ubuntu-latest
