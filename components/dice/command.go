@@ -35,7 +35,8 @@ var diceCommand = &api.Command{
 			},
 		},
 	},
-	Handler: handleDice,
+	Category: api.CategoryFun,
+	Handler:  handleDice,
 }
 
 // handleDice handles the dice slash command

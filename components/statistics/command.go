@@ -37,7 +37,8 @@ var statsCommand = &api.Command{
 		Name:        "stats",
 		Description: "Show information of the bot and runtime statistics.",
 	},
-	Handler: handleStats,
+	Category: api.CategoryUtilities,
+	Handler:  handleStats,
 }
 
 // infoCommand registers the alias /info

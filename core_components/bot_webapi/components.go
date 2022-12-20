@@ -37,6 +37,7 @@ import (
 type ComponentDTO struct {
 	Code          entities.ComponentCode `json:"code"`
 	Name          string                 `json:"name"`
+	Categories    api.Categories         `json:"categories"`
 	Description   string                 `json:"description"`
 	GlobalEnabled bool                   `json:"global_enabled"`
 	GuildEnabled  bool                   `json:"guild_enabled"`
@@ -72,6 +73,7 @@ func ComponentDTOFromComponent(c *api.Component, guildId string) (ComponentDTO, 
 	return ComponentDTO{
 		Code:          c.Code,
 		Name:          c.Name,
+		Categories:    c.Categories,
 		Description:   c.Description,
 		GlobalEnabled: gcs.Enabled,
 		GuildEnabled:  guildComponentStatus,

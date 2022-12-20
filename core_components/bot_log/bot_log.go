@@ -28,8 +28,9 @@ import (
 
 var C = api.Component{
 	// Metadata
-	Code: "bot_log",
-	Name: "Bot Log",
+	Code:       "bot_log",
+	Name:       "Bot Log",
+	Categories: api.Categories{api.CategoryInternal},
 	Description: "This component prints out some basic information in the " +
 		"log when bot is ready or added to guilds.",
 

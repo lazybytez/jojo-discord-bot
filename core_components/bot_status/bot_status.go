@@ -32,6 +32,7 @@ var C = api.Component{
 	// Metadata
 	Code:         "bot_status",
 	Name:         "Bot Status",
+	Categories:   api.Categories{api.CategoryInternal},
 	Description:  "This component handles automated rotation and setting of the bot status in Discord.",
 	LoadPriority: -1000, // Be the last core component, so others can register initial status
 
