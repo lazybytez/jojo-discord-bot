@@ -136,6 +136,73 @@ func (suite *ComponentTestSuite) TestIsCoreComponent() {
 	}
 }
 
+func (suite *ComponentTestSuite) TestComputeCategoriesWithOnlyInitialCategories() {
+	baseCategories := Categories{CategoryInternal}
+
+	testComponent := Component{
+		Code:       "some-component",
+		Categories: baseCategories,
+	}
+
+	suite.Equal(baseCategories, testComponent.Categories)
+}
+
+func (suite *ComponentTestSuite) TestComputeCategoriesWithOnlyCommandCategories() {
+	expectedResult := Categories{CategoryAdministration, CategoryUtilities}
+
+	testComponent := Component{
+		Code:       "some-component",
+		Categories: Categories{},
+	}
+
+	componentCommandMap = map[string]*Command{
+		"a": {
+			Category: CategoryAdministration,
+			c:        &testComponent,
+		},
+		"b": {
+			Category: CategoryUtilities,
+			c:        &testComponent,
+		},
+		"c": {
+			Category: CategoryAdministration,
+			c:        &testComponent,
+		},
+	}
+
+	testComponent.computeCategories()
+
+	suite.Equal(expectedResult, testComponent.Categories)
+}
+
+func (suite *ComponentTestSuite) TestComputeCategoriesWithMixedCategorySource() {
+	expectedResult := Categories{CategoryInternal, CategoryAdministration, CategoryUtilities}
+
+	testComponent := Component{
+		Code:       "some-component",
+		Categories: Categories{CategoryInternal},
+	}
+
+	componentCommandMap = map[string]*Command{
+		"a": {
+			Category: CategoryAdministration,
+			c:        &testComponent,
+		},
+		"b": {
+			Category: CategoryUtilities,
+			c:        &testComponent,
+		},
+		"c": {
+			Category: CategoryAdministration,
+			c:        &testComponent,
+		},
+	}
+
+	testComponent.computeCategories()
+
+	suite.Equal(expectedResult, testComponent.Categories)
+}
+
 func TestComponent(t *testing.T) {
 	suite.Run(t, new(ComponentTestSuite))
 }
