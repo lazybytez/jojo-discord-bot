@@ -160,7 +160,8 @@ func initAndRegisterJojoCommand() {
 				},
 			},
 		},
-		Handler: handleJojoCommand,
+		Category: api.CategoryAdministration,
+		Handler:  handleJojoCommand,
 	}
 
 	_ = C.SlashCommandManager().Register(jojoCommand)

@@ -16,37 +16,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package bot_webapi
+package util
 
-import (
-	"github.com/bwmarrin/discordgo"
-	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/webapi"
-)
+// InArrayOrSlice checks if the provided element is in
+// the provided sliceOrArray.
+func InArrayOrSlice[T comparable](sliceOrArray []T, element T) bool {
+	for _, elem := range sliceOrArray {
+		if elem == element {
+			return true
+		}
+	}
 
-var C = api.Component{
-	// Metadata
-	Code:         "bot_webapi",
-	Name:         "Bot WebAPI",
-	Categories:   api.Categories{api.CategoryInternal},
-	Description:  "This component handles setup of the web api for the bots core api endpoints.",
-	LoadPriority: 999,
-
-	State: &api.State{
-		DefaultEnabled: true,
-	},
+	return false
 }
 
-func init() {
-	api.RegisterComponent(&C, LoadComponent)
-}
+// UniqueArrayOrSlice returns the passed slice or array without any duplicates in it.
+func UniqueArrayOrSlice[T comparable](sliceOrArray []T) []T {
+	unique := make([]T, 0)
 
-// LoadComponent loads the bot core component
-// and handles migration of core entities
-// and registration of important core event handlers.
-func LoadComponent(_ *discordgo.Session) error {
-	eg := webapi.Router().Group("/components")
-	eg.GET("/", ComponentsGet)
+	for _, elem := range sliceOrArray {
+		if !InArrayOrSlice(unique, elem) {
+			unique = append(unique, elem)
+		}
+	}
 
-	return nil
+	return unique
 }

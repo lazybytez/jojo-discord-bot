@@ -27,6 +27,7 @@ var C = api.Component{
 	// Metadata
 	Code:         "bot_core",
 	Name:         "Bot Core",
+	Categories:   api.Categories{api.CategoryInternal},
 	Description:  "This component handles core routines and entity management.",
 	LoadPriority: 1000,
 

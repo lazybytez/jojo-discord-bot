@@ -21,6 +21,7 @@ package api
 import (
 	"errors"
 	"github.com/bwmarrin/discordgo"
+	"github.com/lazybytez/jojo-discord-bot/api/entities"
 	"github.com/lazybytez/jojo-discord-bot/api/util"
 	"github.com/lazybytez/jojo-discord-bot/services/logger"
 )
@@ -54,9 +55,10 @@ func init() {
 //
 // Create an instance of the struct and pass to Register a command
 type Command struct {
-	Cmd     *discordgo.ApplicationCommand
-	Handler func(s *discordgo.Session, i *discordgo.InteractionCreate)
-	c       *Component
+	Cmd      *discordgo.ApplicationCommand
+	Category Category
+	Handler  func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	c        *Component
 }
 
 // SlashCommandManager is a type that is used to hold
@@ -85,6 +87,9 @@ type CommonSlashCommandManager interface {
 	// Also orphaned commands are cleaned up.
 	// This is executed whenever a guild is joined or a component is toggled.
 	SyncApplicationComponentCommands(session *discordgo.Session, guildId string)
+	// GetCommandsForComponent returns all commands for the
+	// specified component. The component needs to be specified by its unique code.
+	GetCommandsForComponent(code entities.ComponentCode) []*Command
 	// GetCommandCount returns the number of registered slash commands
 	GetCommandCount() int
 }
@@ -228,6 +233,20 @@ func (c *SlashCommandManager) validateCommand(cmd *Command) error {
 	}
 
 	return nil
+}
+
+// GetCommandsForComponent returns all commands for the
+// specified component. The component needs to be specified by its unique code.
+func (c *SlashCommandManager) GetCommandsForComponent(code entities.ComponentCode) []*Command {
+	commands := make([]*Command, 0)
+
+	for _, command := range componentCommandMap {
+		if command.c.Code == code {
+			commands = append(commands, command)
+		}
+	}
+
+	return commands
 }
 
 // SyncApplicationComponentCommands ensures that the available discordgo.ApplicationCommand
@@ -599,10 +618,10 @@ func ProcessSubCommands(
 	i *discordgo.InteractionCreate,
 	option *discordgo.ApplicationCommandInteractionDataOption,
 	handlers map[string]func(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-	option *discordgo.ApplicationCommandInteractionDataOption,
-),
+		s *discordgo.Session,
+		i *discordgo.InteractionCreate,
+		option *discordgo.ApplicationCommandInteractionDataOption,
+	),
 ) bool {
 	// First validate that there is at least one level of nesting
 	command := i.ApplicationCommandData()
@@ -635,10 +654,10 @@ func runHandler(
 	option *discordgo.ApplicationCommandInteractionDataOption,
 	name string,
 	handlers map[string]func(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-	option *discordgo.ApplicationCommandInteractionDataOption,
-),
+		s *discordgo.Session,
+		i *discordgo.InteractionCreate,
+		option *discordgo.ApplicationCommandInteractionDataOption,
+	),
 ) bool {
 	handler, ok := handlers[name]
 

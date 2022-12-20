@@ -28,7 +28,8 @@ var pingCommand = &api.Command{
 		Name:        "ping",
 		Description: "Play ping pong with the bot!",
 	},
-	Handler: handlePing,
+	Category: api.CategoryFun,
+	Handler:  handlePing,
 }
 
 func handlePing(s *discordgo.Session, i *discordgo.InteractionCreate) {

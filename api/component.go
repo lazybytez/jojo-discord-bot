@@ -21,6 +21,7 @@ package api
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api/entities"
+	"github.com/lazybytez/jojo-discord-bot/api/util"
 	"github.com/lazybytez/jojo-discord-bot/services"
 	"strings"
 )
@@ -49,8 +50,12 @@ type State struct {
 // It holds basic metadata about the component
 type Component struct {
 	// Metadata
-	Code         entities.ComponentCode
-	Name         string
+	Code entities.ComponentCode
+	Name string
+	// Categories are filled with the categories of the commands
+	// that are owned by the component. Manually added categories will
+	// be still merged for components that do not have any command.
+	Categories   Categories
 	Description  string
 	LoadPriority int
 
@@ -146,9 +151,27 @@ func (c *Component) LoadComponent(discord *discordgo.Session) error {
 	if err != nil {
 		return err
 	}
+
+	c.computeCategories()
 	c.State.Loaded = true
 
 	return nil
+}
+
+// computeCategories computes the Categories of the component
+// by aggregating the Categories of the commands that are
+// registered by the component.
+func (c *Component) computeCategories() {
+	commands := c.SlashCommandManager().GetCommandsForComponent(c.Code)
+
+	categories := c.Categories
+	for _, command := range commands {
+		if command.Category != "" {
+			categories = append(categories, command.Category)
+		}
+	}
+
+	c.Categories = util.UniqueArrayOrSlice(categories)
 }
 
 // UnloadComponent is used by the component registration system that
