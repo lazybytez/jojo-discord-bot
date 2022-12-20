@@ -20,6 +20,7 @@ package components
 
 import (
 	_ "github.com/lazybytez/jojo-discord-bot/components/dice"
+	_ "github.com/lazybytez/jojo-discord-bot/components/events"
 	_ "github.com/lazybytez/jojo-discord-bot/components/pingpong"
 	_ "github.com/lazybytez/jojo-discord-bot/components/statistics"
 )
