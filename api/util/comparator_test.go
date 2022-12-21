@@ -19,6 +19,7 @@
 package util
 
 import (
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"testing"
 )
@@ -286,4 +287,37 @@ func (suite *MapsEqualTestSuite) TestMapsEqualEqualIntBoolean() {
 func TestComparator(t *testing.T) {
 	suite.Run(t, new(ArraysEqualTestSuite))
 	suite.Run(t, new(MapsEqualTestSuite))
+}
+
+func TestPointerValuesEqual(t *testing.T) {
+	stringA := "first string"
+	stringB := "second string"
+	stringC := "first string"
+
+	tables := []struct {
+		inputA         *string
+		inputB         *string
+		expectedResult bool
+	}{
+		{nil, nil, true},
+		{nil, &stringA, false},
+		{&stringA, nil, false},
+		{&stringA, &stringB, false},
+		{&stringB, &stringA, false},
+		{&stringA, &stringA, true},
+		{&stringA, &stringC, true},
+		{&stringC, &stringA, true},
+		{&stringC, &stringC, true},
+	}
+
+	for _, table := range tables {
+		result := PointerValuesEqual(table.inputA, table.inputB)
+
+		assert.Equalf(t,
+			table.expectedResult,
+			result,
+			"Arguments: %v, %v",
+			table.inputA,
+			table.inputB)
+	}
 }
