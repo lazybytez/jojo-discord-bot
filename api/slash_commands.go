@@ -142,12 +142,12 @@ func handleCommandDispatch(s *discordgo.Session, i *discordgo.InteractionCreate)
 				if nil == err {
 					switch globalStatus.Enabled {
 					case true:
-						resp.Embeds[0].Fields[0].Value = fmt.Sprintf("The command `%s` is disabled on this "+
+						resp.Embeds[0].Fields[0].Value = fmt.Sprintf("The command `/%s` is disabled on this "+
 							"guild! Ask your guilds administrator to enable the `%s` component to use this command!",
 							command.Cmd.Name,
 							command.c.Name)
 					case false:
-						resp.Embeds[0].Fields[0].Value = fmt.Sprintf("The command `%s` is globally disabled. "+
+						resp.Embeds[0].Fields[0].Value = fmt.Sprintf("The command `/%s` is globally disabled. "+
 							"This might be due to some maintenance on the `%s` module.",
 							command.Cmd.Name,
 							command.c.Name)
