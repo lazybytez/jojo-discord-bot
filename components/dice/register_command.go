@@ -10,7 +10,7 @@ import (
 var C = api.Component{
 	// Metadata
 	Code:        "dice",
-	Name:        "Dice Component",
+	Name:        "Dice",
 	Description: "This Component throws one or multiple dice",
 
 	State: &api.State{

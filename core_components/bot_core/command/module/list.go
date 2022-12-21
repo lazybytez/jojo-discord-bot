@@ -86,7 +86,7 @@ func generateComponentStatusTable(i *discordgo.InteractionCreate) string {
 		}
 
 		globalStatus, err := em.GlobalComponentStatus().GetDisplayString(regComp.ID)
-		if nil == err {
+		if nil == err && globalStatus != entities.GlobalComponentStatusEnabledDisplay {
 			getComponentStatusListRow(compNameAndStatus, regComp.Name, globalStatus)
 
 			continue

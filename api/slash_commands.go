@@ -106,13 +106,69 @@ func InitCommandHandling(session *discordgo.Session) error {
 		return errors.New("cannot initialize command handling system twice")
 	}
 
-	unregisterCommandHandler = session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if command, ok := componentCommandMap[i.ApplicationCommandData().Name]; ok {
-			command.Handler(s, i)
-		}
-	})
+	unregisterCommandHandler = session.AddHandler(handleCommandDispatch)
 
 	return nil
+}
+
+// handleCommandDispatch handles the processing of a command
+// that has been executed by a user. It already takes
+// component status in account to ensure that inconsistent command
+// states do not end in prohibited execution of a command.
+func handleCommandDispatch(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if command, ok := componentCommandMap[i.ApplicationCommandData().Name]; ok {
+		if !IsComponentEnabled(command.c, i.GuildID) {
+			resp := &discordgo.InteractionResponseData{
+				Flags: discordgo.MessageFlagsEphemeral,
+				Embeds: []*discordgo.MessageEmbed{
+					{
+						Title:       "JOJO Discord Bot",
+						Description: "",
+						Color:       DefaultEmbedColor,
+						Fields: []*discordgo.MessageEmbedField{
+							{
+								Name:  ":no_entry_sign: STOP :no_entry_sign:",
+								Value: "An unexpected error happened while computing your error message!",
+							},
+						},
+					},
+				},
+			}
+
+			component := command.c
+			registeredComponent, err := component.EntityManager().RegisteredComponent().Get(command.c.Code)
+			if nil == err {
+				globalStatus, err := component.EntityManager().GlobalComponentStatus().Get(registeredComponent.ID)
+				if nil == err {
+					switch globalStatus.Enabled {
+					case true:
+						resp.Embeds[0].Fields[0].Value = fmt.Sprintf("The command `%s` is disabled on this "+
+							"guild! Ask your guilds administrator to enable the `%s` component to use this command!",
+							command.Cmd.Name,
+							command.c.Name)
+					case false:
+						resp.Embeds[0].Fields[0].Value = fmt.Sprintf("The command `%s` is globally disabled. "+
+							"This might be due to some maintenance on the `%s` module.",
+							command.Cmd.Name,
+							command.c.Name)
+					}
+				}
+			}
+
+			err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: resp,
+			})
+
+			if nil != err {
+				command.c.Logger().Err(err, "Failed to deliver interaction response on slash-command!")
+			}
+
+			return
+		}
+
+		command.Handler(s, i)
+	}
 }
 
 // DeinitCommandHandling unregisters the event Handler

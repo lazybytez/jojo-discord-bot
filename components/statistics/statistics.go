@@ -27,7 +27,7 @@ import (
 var C = api.Component{
 	// Metadata
 	Code:        "statistics",
-	Name:        "Statistics Component",
+	Name:        "Statistics",
 	Description: "This Component returns statistics about the bot and the runtime.",
 
 	State: &api.State{
