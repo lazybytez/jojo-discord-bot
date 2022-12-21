@@ -37,7 +37,6 @@ var C = api.Component{
 }
 
 func init() {
-
 	api.RegisterComponent(&C, LoadComponent)
 }
 
@@ -49,6 +48,7 @@ func LoadComponent(_ *discordgo.Session) error {
 
 	_, _ = C.HandlerManager().Register("guild_join", onGuildJoin)
 	_, _ = C.HandlerManager().Register("update_registered_guilds", handleGuildUpdateOnUpdate)
+	_, _ = C.HandlerManager().Register("update_global_commands", handleGlobalCommandSyncOnReady)
 
 	// We need to handle the JOJO command special as it needs access to the component list.
 	// This is only possible after the API has been properly initialized and the components.Components

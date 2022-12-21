@@ -88,6 +88,7 @@ func sortComponents() {
 
 // IsComponentEnabled checks if a specific component is currently enabled
 // for a specific guild.
+// If the guild id is empty, the function will return the global status of the component.
 func IsComponentEnabled(comp *Component, guildId string) bool {
 	if IsCoreComponent(comp) {
 		return true
@@ -105,10 +106,9 @@ func IsComponentEnabled(comp *Component, guildId string) bool {
 	}
 
 	if "" == guildId {
-		comp.Logger().Warn("Missing guild with ID \"%v\" in database!", guildId)
-
-		return false
+		return true
 	}
+
 	guild, err := em.Guilds().Get(guildId)
 	if nil != err {
 		comp.Logger().Warn("Missing guild with ID \"%v\" in database!", comp.Name)

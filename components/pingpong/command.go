@@ -28,6 +28,7 @@ var pingCommand = &api.Command{
 		Name:        "ping",
 		Description: "Play ping pong with the bot!",
 	},
+	Global:   true,
 	Category: api.CategoryFun,
 	Handler:  handlePing,
 }
@@ -47,6 +48,7 @@ var pongCommand = &api.Command{
 		Name:        "pong",
 		Description: "Play ping pong with the bot!",
 	},
+	Global:  true,
 	Handler: handlePong,
 }
 

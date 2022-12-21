@@ -37,6 +37,7 @@ var statsCommand = &api.Command{
 		Name:        "stats",
 		Description: "Show information of the bot and runtime statistics.",
 	},
+	Global:   true,
 	Category: api.CategoryUtilities,
 	Handler:  handleStats,
 }
@@ -47,6 +48,7 @@ var infoCommand = &api.Command{
 		Name:        "info",
 		Description: "Show information of the bot and runtime statistics.",
 	},
+	Global:  true,
 	Handler: handleStats,
 }
 

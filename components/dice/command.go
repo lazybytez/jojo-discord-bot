@@ -35,6 +35,7 @@ var diceCommand = &api.Command{
 			},
 		},
 	},
+	Global:   true,
 	Category: api.CategoryFun,
 	Handler:  handleDice,
 }
