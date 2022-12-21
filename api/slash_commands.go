@@ -274,8 +274,11 @@ func (c *SlashCommandManager) removeOrphanedCommands(
 	guildId string,
 	commands []*discordgo.ApplicationCommand,
 ) []*discordgo.ApplicationCommand {
+	stillAvailableCommands := commands
+
 	for key, registeredCommand := range commands {
-		if presentCompCmd, ok := componentCommandMap[registeredCommand.Name]; !ok || (ok && "" == guildId && !presentCompCmd.Global) {
+		presentCompCmd, ok := componentCommandMap[registeredCommand.Name]
+		if !ok || (ok && "" == guildId && !presentCompCmd.Global) || (ok && "" != guildId && presentCompCmd.Global) {
 			err := session.ApplicationCommandDelete(session.State.User.ID, guildId, registeredCommand.ID)
 			if nil != err {
 				slashCommandManagerLogger.Err(
@@ -291,7 +294,8 @@ func (c *SlashCommandManager) removeOrphanedCommands(
 			if len(commands)-1 >= key+1 {
 				slicedCommands = commands[key+1:]
 			}
-			commands = append(commands[:key], slicedCommands...)
+			stillAvailableCommands = append(stillAvailableCommands[:], slicedCommands...)
+
 			slashCommandManagerLogger.Info(
 				"Removed orphaned slash-command \"%s\" %s!",
 				registeredCommand.Name,
@@ -299,7 +303,7 @@ func (c *SlashCommandManager) removeOrphanedCommands(
 		}
 	}
 
-	return commands
+	return stillAvailableCommands
 }
 
 // removeCommandsByComponentState removes commands from
@@ -309,6 +313,8 @@ func (c *SlashCommandManager) removeCommandsByComponentState(
 	guildId string,
 	commands []*discordgo.ApplicationCommand,
 ) []*discordgo.ApplicationCommand {
+	stillAvailableCommands := commands
+
 	// First of all remove disabled existing commands
 	for key, command := range commands {
 		componentCommand, ok := componentCommandMap[command.Name]
@@ -343,7 +349,7 @@ func (c *SlashCommandManager) removeCommandsByComponentState(
 		if len(commands)-1 >= key+1 {
 			slicedCommands = commands[key+1:]
 		}
-		commands = append(commands[:key], slicedCommands...)
+		stillAvailableCommands = append(stillAvailableCommands[:], slicedCommands...)
 
 		componentCommand.c.Logger().Info(
 			"Removed disabled slash-command \"%s\" %s!",
@@ -351,7 +357,7 @@ func (c *SlashCommandManager) removeCommandsByComponentState(
 			getGuildOrGlobalLogPart(guildId, "from"))
 	}
 
-	return commands
+	return stillAvailableCommands
 }
 
 // addCommandsByComponentState removes commands from

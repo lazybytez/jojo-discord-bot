@@ -89,5 +89,9 @@ func PointerValuesEqual[T comparable](a *T, b *T) bool {
 		return true
 	}
 
+	if a == nil || b == nil {
+		return false
+	}
+
 	return *a == *b
 }

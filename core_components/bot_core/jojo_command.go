@@ -44,7 +44,7 @@ func getModuleCommandChoices() []*discordgo.ApplicationCommandOptionChoice {
 
 		availableModuleChoices = append(availableModuleChoices, &discordgo.ApplicationCommandOptionChoice{
 			Name:  comp.Name,
-			Value: comp.Code,
+			Value: string(comp.Code),
 		})
 	}
 
