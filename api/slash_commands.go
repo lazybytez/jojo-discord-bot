@@ -117,6 +117,14 @@ func InitCommandHandling(session *discordgo.Session) error {
 // states do not end in prohibited execution of a command.
 func handleCommandDispatch(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if command, ok := componentCommandMap[i.ApplicationCommandData().Name]; ok {
+		user := i.User
+		if nil == user {
+			user = i.Member.User
+		}
+		if nil == user {
+			command.c.Logger().Warn("Cannot handle the command \"%s\" without a user!", command.Cmd.Name)
+		}
+
 		if !IsComponentEnabled(command.c, i.GuildID) {
 			resp := &discordgo.InteractionResponseData{
 				Flags: discordgo.MessageFlagsEphemeral,
@@ -162,13 +170,113 @@ func handleCommandDispatch(s *discordgo.Session, i *discordgo.InteractionCreate)
 
 			if nil != err {
 				command.c.Logger().Err(err, "Failed to deliver interaction response on slash-command!")
+
+				return
 			}
+
+			command.c.Logger().Info("The user \"%s#%s\" with id \"%s\" tried to execute the "+
+				"disabled command \"%s\" with options \"%s\" %s",
+				user.Username,
+				user.Discriminator,
+				user.ID,
+				command.c.SlashCommandManager().computeFullCommandStringFromInteractionData(i.ApplicationCommandData()),
+				command.c.SlashCommandManager().computeConfiguredOptionsString(i.ApplicationCommandData().Options),
+				getGuildOrGlobalLogPart(i.GuildID, "on"))
 
 			return
 		}
 
+		command.c.Logger().Info("The user \"%s#%s\" with id \"%s\" executed the "+
+			"command \"%s\" with options \"%s\" %s",
+			user.Username,
+			user.Discriminator,
+			user.ID,
+			command.c.SlashCommandManager().computeFullCommandStringFromInteractionData(i.ApplicationCommandData()),
+			command.c.SlashCommandManager().computeConfiguredOptionsString(i.ApplicationCommandData().Options),
+			getGuildOrGlobalLogPart(i.GuildID, "on"))
+
 		command.Handler(s, i)
 	}
+}
+
+// computeFullCommandStringFromInteractionData returns the full command name (e.g. jojo module enable) from the
+// passed discordgo.ApplicationCommandInteractionData.
+func (c *SlashCommandManager) computeFullCommandStringFromInteractionData(
+	cmd discordgo.ApplicationCommandInteractionData,
+) string {
+	if len(cmd.Options) < 1 {
+		return cmd.Name
+	}
+
+	option := cmd.Options[0]
+	if option == nil {
+		return cmd.Name
+	}
+
+	subCommand := c.computeSubCommandStringFromInteractionData(option)
+	if subCommand == "" {
+		return cmd.Name
+	}
+
+	return fmt.Sprintf("%s %s", cmd.Name, subCommand)
+}
+
+// computeSubCommandStringFromInteractionData returns, if available, the concatenated subcommand group name
+// and subcommand name of the passed option.
+func (c *SlashCommandManager) computeSubCommandStringFromInteractionData(
+	option *discordgo.ApplicationCommandInteractionDataOption,
+) string {
+	if option.Type == discordgo.ApplicationCommandOptionSubCommand {
+		return option.Name
+	}
+
+	if option.Type != discordgo.ApplicationCommandOptionSubCommandGroup {
+		return "<unexpected option type>"
+	}
+
+	if len(option.Options) == 0 {
+		return fmt.Sprintf("%s %s", option.Name, "<no subcommand declared>")
+	}
+
+	subCommand := option.Options[0]
+	return fmt.Sprintf("%s %s", option.Name, c.computeSubCommandStringFromInteractionData(subCommand))
+}
+
+// computeConfiguredOptions creates a string out of all configured options of a application command interaction.
+func (c *SlashCommandManager) computeConfiguredOptionsString(
+	options []*discordgo.ApplicationCommandInteractionDataOption,
+) string {
+	configuredOptions := ""
+
+	if len(options) == 0 {
+		return ""
+	}
+
+	if options[0].Type == discordgo.ApplicationCommandOptionSubCommand {
+		return c.computeConfiguredOptionsString(options[0].Options)
+	}
+
+	if options[0].Type == discordgo.ApplicationCommandOptionSubCommandGroup {
+		subCommandGroup := options[0]
+
+		if len(subCommandGroup.Options) == 0 {
+			return ""
+		}
+
+		return c.computeConfiguredOptionsString(subCommandGroup.Options)
+	}
+
+	for _, option := range options {
+		if "" == configuredOptions {
+			configuredOptions = fmt.Sprintf("%s=%v", option.Name, option.Value)
+
+			continue
+		}
+
+		configuredOptions = fmt.Sprintf("%s; %s=%v", configuredOptions, option.Name, option.Value)
+	}
+
+	return configuredOptions
 }
 
 // DeinitCommandHandling unregisters the event Handler
