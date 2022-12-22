@@ -231,7 +231,8 @@ func (c *SlashCommandManager) computeSubCommandStringFromInteractionData(
 	}
 
 	if option.Type != discordgo.ApplicationCommandOptionSubCommandGroup {
-		return "<unexpected option type>"
+		// This is not a subcommand for sure.
+		return ""
 	}
 
 	if len(option.Options) == 0 {

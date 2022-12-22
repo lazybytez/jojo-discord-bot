@@ -19,6 +19,7 @@
 package api
 
 import (
+	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api/entities"
 	"github.com/stretchr/testify/suite"
 	"testing"
@@ -36,6 +37,214 @@ func (suite *SlashCommandManagerTestSuite) SetupTest() {
 		Name: "Test Component",
 	}
 	suite.slashCommandManager = SlashCommandManager{owner: suite.owningComponent}
+}
+
+func (suite *SlashCommandManagerTestSuite) TestComputeFullCommandStringFromInteractionData() {
+	tables := []struct {
+		input    discordgo.ApplicationCommandInteractionData
+		expected string
+	}{
+		{
+			input: discordgo.ApplicationCommandInteractionData{
+				ID:   "123451234512345",
+				Name: "dice",
+				Options: []*discordgo.ApplicationCommandInteractionDataOption{
+					{
+						Type:  discordgo.ApplicationCommandOptionInteger,
+						Name:  "dice-side-number",
+						Value: 5,
+					},
+				},
+			},
+			expected: "dice",
+		},
+		{
+			input: discordgo.ApplicationCommandInteractionData{
+				ID:   "123451234512345",
+				Name: "jojo",
+				Options: []*discordgo.ApplicationCommandInteractionDataOption{
+					{
+						Type: discordgo.ApplicationCommandOptionSubCommand,
+						Name: "sync-commands",
+						Value: &discordgo.ApplicationCommandInteractionDataOption{
+							Name: "sync-commands",
+						},
+					},
+				},
+			},
+			expected: "jojo sync-commands",
+		},
+		{
+			input: discordgo.ApplicationCommandInteractionData{
+				ID:   "123451234512345",
+				Name: "jojo",
+				Options: []*discordgo.ApplicationCommandInteractionDataOption{
+					{
+						Type: discordgo.ApplicationCommandOptionSubCommand,
+						Name: "sync-commands",
+						Options: []*discordgo.ApplicationCommandInteractionDataOption{
+							{
+								Type:  discordgo.ApplicationCommandOptionString,
+								Name:  "some-random-option",
+								Value: "test",
+							},
+							{
+								Type:  discordgo.ApplicationCommandOptionInteger,
+								Name:  "some-second-option",
+								Value: 2,
+							},
+						},
+					},
+				},
+			},
+			expected: "jojo sync-commands",
+		},
+		{
+			input: discordgo.ApplicationCommandInteractionData{
+				ID:   "123451234512345",
+				Name: "jojo",
+				Options: []*discordgo.ApplicationCommandInteractionDataOption{
+					{
+						Type: discordgo.ApplicationCommandOptionSubCommandGroup,
+						Name: "module",
+						Options: []*discordgo.ApplicationCommandInteractionDataOption{
+							{
+								Type: discordgo.ApplicationCommandOptionSubCommand,
+								Name: "list",
+							},
+						},
+					},
+				},
+			},
+			expected: "jojo module list",
+		},
+		{
+			input: discordgo.ApplicationCommandInteractionData{
+				ID:   "123451234512345",
+				Name: "jojo",
+				Options: []*discordgo.ApplicationCommandInteractionDataOption{
+					{
+						Type: discordgo.ApplicationCommandOptionSubCommandGroup,
+						Name: "module",
+						Options: []*discordgo.ApplicationCommandInteractionDataOption{
+							{
+								Type: discordgo.ApplicationCommandOptionSubCommand,
+								Name: "enable",
+								Options: []*discordgo.ApplicationCommandInteractionDataOption{
+									{
+										Type:  discordgo.ApplicationCommandOptionString,
+										Name:  "module",
+										Value: "ping_pong",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: "jojo module enable",
+		},
+	}
+
+	for _, table := range tables {
+		result := suite.slashCommandManager.computeFullCommandStringFromInteractionData(table.input)
+
+		suite.Equal(table.expected, result)
+	}
+}
+
+func (suite *SlashCommandManagerTestSuite) TestComputeConfiguredOptionsString() {
+	tables := []struct {
+		input    []*discordgo.ApplicationCommandInteractionDataOption
+		expected string
+	}{
+		{
+			input: []*discordgo.ApplicationCommandInteractionDataOption{
+				{
+					Type:  discordgo.ApplicationCommandOptionInteger,
+					Name:  "dice-side-number",
+					Value: 5,
+				},
+			},
+			expected: "dice-side-number=5",
+		},
+		{
+			input: []*discordgo.ApplicationCommandInteractionDataOption{
+				{
+					Type: discordgo.ApplicationCommandOptionSubCommand,
+					Name: "sync-commands",
+					Value: &discordgo.ApplicationCommandInteractionDataOption{
+						Name: "sync-commands",
+					},
+				},
+			},
+			expected: "",
+		},
+		{
+			input: []*discordgo.ApplicationCommandInteractionDataOption{
+				{
+					Type: discordgo.ApplicationCommandOptionSubCommand,
+					Name: "sync-commands",
+					Options: []*discordgo.ApplicationCommandInteractionDataOption{
+						{
+							Type:  discordgo.ApplicationCommandOptionString,
+							Name:  "some-random-option",
+							Value: "test",
+						},
+						{
+							Type:  discordgo.ApplicationCommandOptionInteger,
+							Name:  "some-second-option",
+							Value: 2,
+						},
+					},
+				},
+			},
+			expected: "some-random-option=test; some-second-option=2",
+		},
+		{
+			input: []*discordgo.ApplicationCommandInteractionDataOption{
+				{
+					Type: discordgo.ApplicationCommandOptionSubCommandGroup,
+					Name: "module",
+					Options: []*discordgo.ApplicationCommandInteractionDataOption{
+						{
+							Type: discordgo.ApplicationCommandOptionSubCommand,
+							Name: "list",
+						},
+					},
+				},
+			},
+			expected: "",
+		},
+		{
+			input: []*discordgo.ApplicationCommandInteractionDataOption{
+				{
+					Type: discordgo.ApplicationCommandOptionSubCommandGroup,
+					Name: "module",
+					Options: []*discordgo.ApplicationCommandInteractionDataOption{
+						{
+							Type: discordgo.ApplicationCommandOptionSubCommand,
+							Name: "enable",
+							Options: []*discordgo.ApplicationCommandInteractionDataOption{
+								{
+									Type:  discordgo.ApplicationCommandOptionString,
+									Name:  "module",
+									Value: "ping_pong",
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: "module=ping_pong",
+		},
+	}
+
+	for _, table := range tables {
+		result := suite.slashCommandManager.computeConfiguredOptionsString(table.input)
+
+		suite.Equal(table.expected, result)
+	}
 }
 
 func (suite *SlashCommandManagerTestSuite) TestGetCommandsForComponentWithoutMatchingCommands() {
