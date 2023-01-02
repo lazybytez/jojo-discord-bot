@@ -19,6 +19,7 @@
 package bot_webapi
 
 import (
+	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/webapi"
@@ -48,8 +49,10 @@ func LoadComponent(_ *discordgo.Session) error {
 	compGroup := webapi.Router().Group("/components")
 	compGroup.GET("/", ComponentsGet)
 
-	commandGroup := webapi.Router().Group("/commands")
-	commandGroup.GET("/", CommandsGet)
+	commandsGroup := webapi.Router().Group("/commands")
+	commandsGroup.GET("/", CommandsGet)
+	commandsGroup.GET(fmt.Sprintf("/:%s", ParamCommandID), CommandGet)
+	commandsGroup.GET(fmt.Sprintf("/:%s/options", ParamCommandID), CommandOptionsGet)
 
 	return nil
 }
