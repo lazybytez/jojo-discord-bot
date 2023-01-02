@@ -95,6 +95,8 @@ type CommonSlashCommandManager interface {
 	// GetCommandsForComponent returns all commands for the
 	// specified component. The component needs to be specified by its unique code.
 	GetCommandsForComponent(code entities.ComponentCode) []*Command
+	// GetCommands returns all currently registered commands.
+	GetCommands() []*Command
 	// GetCommandCount returns the number of registered slash commands
 	GetCommandCount() int
 }
@@ -372,6 +374,17 @@ func (c *SlashCommandManager) validateCommand(cmd *Command) error {
 	}
 
 	return nil
+}
+
+// GetCommands returns all currently registered commands.
+func (c *SlashCommandManager) GetCommands() []*Command {
+	commands := make([]*Command, 0)
+
+	for _, command := range componentCommandMap {
+		commands = append(commands, command)
+	}
+
+	return commands
 }
 
 // GetCommandsForComponent returns all commands for the
@@ -785,10 +798,10 @@ func ProcessSubCommands(
 	i *discordgo.InteractionCreate,
 	option *discordgo.ApplicationCommandInteractionDataOption,
 	handlers map[string]func(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-	option *discordgo.ApplicationCommandInteractionDataOption,
-),
+		s *discordgo.Session,
+		i *discordgo.InteractionCreate,
+		option *discordgo.ApplicationCommandInteractionDataOption,
+	),
 ) bool {
 	// First validate that there is at least one level of nesting
 	command := i.ApplicationCommandData()
@@ -821,10 +834,10 @@ func runHandler(
 	option *discordgo.ApplicationCommandInteractionDataOption,
 	name string,
 	handlers map[string]func(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-	option *discordgo.ApplicationCommandInteractionDataOption,
-),
+		s *discordgo.Session,
+		i *discordgo.InteractionCreate,
+		option *discordgo.ApplicationCommandInteractionDataOption,
+	),
 ) bool {
 	handler, ok := handlers[name]
 

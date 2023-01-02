@@ -47,7 +47,8 @@ var pongCommand = &api.Command{
 		Name:        "pong",
 		Description: "Play ping pong with the bot!",
 	},
-	Handler: handlePong,
+	Category: api.CategoryFun,
+	Handler:  handlePong,
 }
 
 func handlePong(s *discordgo.Session, i *discordgo.InteractionCreate) {

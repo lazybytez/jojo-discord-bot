@@ -45,8 +45,11 @@ func init() {
 // and handles migration of core entities
 // and registration of important core event handlers.
 func LoadComponent(_ *discordgo.Session) error {
-	eg := webapi.Router().Group("/components")
-	eg.GET("/", ComponentsGet)
+	compGroup := webapi.Router().Group("/components")
+	compGroup.GET("/", ComponentsGet)
+
+	commandGroup := webapi.Router().Group("/commands")
+	commandGroup.GET("/", CommandsGet)
 
 	return nil
 }
