@@ -798,10 +798,10 @@ func ProcessSubCommands(
 	i *discordgo.InteractionCreate,
 	option *discordgo.ApplicationCommandInteractionDataOption,
 	handlers map[string]func(
-		s *discordgo.Session,
-		i *discordgo.InteractionCreate,
-		option *discordgo.ApplicationCommandInteractionDataOption,
-	),
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	option *discordgo.ApplicationCommandInteractionDataOption,
+),
 ) bool {
 	// First validate that there is at least one level of nesting
 	command := i.ApplicationCommandData()
@@ -834,10 +834,10 @@ func runHandler(
 	option *discordgo.ApplicationCommandInteractionDataOption,
 	name string,
 	handlers map[string]func(
-		s *discordgo.Session,
-		i *discordgo.InteractionCreate,
-		option *discordgo.ApplicationCommandInteractionDataOption,
-	),
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	option *discordgo.ApplicationCommandInteractionDataOption,
+),
 ) bool {
 	handler, ok := handlers[name]
 
@@ -860,4 +860,9 @@ func runHandler(
 // GetCommandCount returns the number of registered slash commands
 func (c *SlashCommandManager) GetCommandCount() int {
 	return len(componentCommandMap)
+}
+
+// GetComponentCode returns the code of the component that owns the command.
+func (c Command) GetComponentCode() entities.ComponentCode {
+	return c.c.Code
 }

@@ -23,6 +23,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/gin-gonic/gin"
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/api/entities"
 	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"net/http"
 	"strings"
@@ -52,10 +53,11 @@ const (
 // @Description built from the deepest level commands. This means a command is either a sub command or the
 // @Description top-level command.
 type CommandDTO struct {
-	ID          string       `json:"id"`
-	Name        string       `json:"name"`
-	Category    api.Category `json:"category"`
-	Description string       `json:"description"`
+	ID          string                 `json:"id"`
+	Name        string                 `json:"name"`
+	Component   entities.ComponentCode `json:"component"`
+	Category    api.Category           `json:"category"`
+	Description string                 `json:"description"`
 } //@Name Command
 
 // CommandDTOsFromCommands creates an array of CommandDTO instances.
@@ -82,7 +84,10 @@ func commandDTOsFromCommand(cmd *api.Command) ([]CommandDTO, error) {
 	commandDTOs := make([]CommandDTO, 0)
 
 	if nil != cmd.Cmd.Options {
-		cmdDTO, err := commandDTOsFromCommandOptions(cmd.Cmd.Name, cmd.Category, cmd.Cmd.Options)
+		cmdDTO, err := commandDTOsFromCommandOptions(cmd.Cmd.Name,
+			cmd.Category,
+			cmd.GetComponentCode(),
+			cmd.Cmd.Options)
 		if nil != err {
 			return []CommandDTO{}, err
 		}
@@ -94,6 +99,7 @@ func commandDTOsFromCommand(cmd *api.Command) ([]CommandDTO, error) {
 		commandDTO := CommandDTO{
 			ID:          getCommandIDFromCommandDTOName(cmd.Cmd.Name),
 			Name:        cmd.Cmd.Name,
+			Component:   cmd.GetComponentCode(),
 			Category:    cmd.Category,
 			Description: cmd.Cmd.Description,
 		}
@@ -109,6 +115,7 @@ func commandDTOsFromCommand(cmd *api.Command) ([]CommandDTO, error) {
 func commandDTOsFromCommandOptions(
 	parentName string,
 	category api.Category,
+	component entities.ComponentCode,
 	options []*discordgo.ApplicationCommandOption,
 ) ([]CommandDTO, error) {
 	if nil == options {
@@ -122,6 +129,7 @@ func commandDTOsFromCommandOptions(
 		case discordgo.ApplicationCommandOptionSubCommandGroup:
 			subCommandDTOs, err := commandDTOsFromCommandOptions(fmt.Sprintf("%s %s", parentName, cmdOption.Name),
 				category,
+				component,
 				cmdOption.Options)
 
 			if nil != err {
@@ -134,6 +142,7 @@ func commandDTOsFromCommandOptions(
 			cmdDTO := CommandDTO{
 				ID:          getCommandIDFromCommandDTOName(name),
 				Name:        name,
+				Component:   component,
 				Category:    category,
 				Description: cmdOption.Description,
 			}
