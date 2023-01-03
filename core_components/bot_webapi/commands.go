@@ -23,6 +23,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/gin-gonic/gin"
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"net/http"
 	"strings"
 )
@@ -30,6 +31,16 @@ import (
 // ParamCommandID is the name of the parameter that carries the
 // requested command name.
 const ParamCommandID = "id"
+
+const (
+	// CommandDTOsWebApiCacheKey is the cache key used to store and retrieve all commands
+	// as CommandDTO instances from the cache.
+	CommandDTOsWebApiCacheKey = "bot_web_api_commands_get_cache"
+	// SpecificCommandDTOWebApiCacheKey is the cache key format used to store and retrieve a specific command
+	// as CommandDTO instance from the cache. There is exactly one placeholder in this constant,
+	// that should be replaced with the ID of the command to get.
+	SpecificCommandDTOWebApiCacheKey = "bot_web_api_specific_command_get_%s_cache"
+)
 
 // CommandDTO is an intermediate data transfer object
 // that can be output or received by the WebAPI.
@@ -47,25 +58,17 @@ type CommandDTO struct {
 	Description string       `json:"description"`
 } //@Name Command
 
-// commandsWebAPICache acts as a cache to prevent multiple computation
-// of the commands web api content.
-var commandsWebAPICache []*CommandDTO = nil
-
-// singleCommandWebAPICache acts as a cache to prevent multiple computation
-// of the specific commands web api content.
-var singleCommandWebAPICache map[string]*CommandDTO = map[string]*CommandDTO{}
-
 // CommandDTOsFromCommands creates an array of CommandDTO instances.
 // The general data is computed from the passed api.Command.
 // This function returns all commands that are currently registered.
-func CommandDTOsFromCommands(cmds []*api.Command) ([]*CommandDTO, error) {
-	commandDTOs := make([]*CommandDTO, 0)
+func CommandDTOsFromCommands(cmds []*api.Command) ([]CommandDTO, error) {
+	commandDTOs := make([]CommandDTO, 0)
 
 	for _, cmd := range cmds {
 		subDTOs, err := commandDTOsFromCommand(cmd)
 
 		if nil != err {
-			return []*CommandDTO{}, err
+			return []CommandDTO{}, err
 		}
 
 		commandDTOs = append(commandDTOs, subDTOs...)
@@ -75,20 +78,20 @@ func CommandDTOsFromCommands(cmds []*api.Command) ([]*CommandDTO, error) {
 }
 
 // commandDTOsFromCommand converts a single api.Command into CommandDTO instances.
-func commandDTOsFromCommand(cmd *api.Command) ([]*CommandDTO, error) {
-	commandDTOs := make([]*CommandDTO, 0)
+func commandDTOsFromCommand(cmd *api.Command) ([]CommandDTO, error) {
+	commandDTOs := make([]CommandDTO, 0)
 
 	if nil != cmd.Cmd.Options {
 		cmdDTO, err := commandDTOsFromCommandOptions(cmd.Cmd.Name, cmd.Category, cmd.Cmd.Options)
 		if nil != err {
-			return []*CommandDTO{}, err
+			return []CommandDTO{}, err
 		}
 
 		commandDTOs = append(commandDTOs, cmdDTO...)
 	}
 
 	if 0 == len(commandDTOs) {
-		commandDTO := &CommandDTO{
+		commandDTO := CommandDTO{
 			ID:          getCommandIDFromCommandDTOName(cmd.Cmd.Name),
 			Name:        cmd.Cmd.Name,
 			Category:    cmd.Category,
@@ -107,12 +110,12 @@ func commandDTOsFromCommandOptions(
 	parentName string,
 	category api.Category,
 	options []*discordgo.ApplicationCommandOption,
-) ([]*CommandDTO, error) {
+) ([]CommandDTO, error) {
 	if nil == options {
 		return nil, nil
 	}
 
-	commandDTOs := make([]*CommandDTO, 0)
+	commandDTOs := make([]CommandDTO, 0)
 
 	for _, cmdOption := range options {
 		switch cmdOption.Type {
@@ -128,7 +131,7 @@ func commandDTOsFromCommandOptions(
 			commandDTOs = append(commandDTOs, subCommandDTOs...)
 		case discordgo.ApplicationCommandOptionSubCommand:
 			name := fmt.Sprintf("%s %s", parentName, cmdOption.Name)
-			cmdDTO := &CommandDTO{
+			cmdDTO := CommandDTO{
 				ID:          getCommandIDFromCommandDTOName(name),
 				Name:        name,
 				Category:    category,
@@ -153,21 +156,13 @@ func commandDTOsFromCommandOptions(
 // @Tags        Component System
 // @Produce     json
 // @Success     200 {array} CommandDTO "Returns an array of commands with all their available data."
-// @Router      /commands/ [get]
+// @Router      /commands [get]
 func CommandsGet(g *gin.Context) {
-	if nil != commandsWebAPICache {
-		g.JSON(http.StatusOK, commandsWebAPICache)
-
-		return
-	}
-
 	commandDTOs, err := getCommandDTOs()
 
 	if nil != err {
 		C.Logger().Err(err, "Failed to convert some commands to CommandDTO!")
 	}
-
-	commandsWebAPICache = commandDTOs
 
 	g.JSON(http.StatusOK, commandDTOs)
 }
@@ -199,22 +194,24 @@ func CommandGet(g *gin.Context) {
 		C.Logger().Err(err, "Failed to convert some commands to CommandDTO!")
 	}
 
-	cmdDTO, ok := singleCommandWebAPICache[cmdID]
+	cacheKey := getSpecificCommandDTOCacheKey(cmdID)
+	cmdDTO, ok := cache.Get(cacheKey, CommandDTO{})
 	if !ok {
 		for _, cmd := range commandDTOs {
 			if cmd.ID == cmdID {
 				cmdDTO = cmd
+				ok = true
 
 				break
 			}
 		}
 
-		if nil == cmdDTO {
+		if !ok {
 			C.Logger().Err(err, "Could not find a command with the given name!")
 			return
 		}
 
-		singleCommandWebAPICache[cmdDTO.ID] = cmdDTO
+		cache.Update(cacheKey, cmdDTO)
 	}
 
 	g.JSON(http.StatusOK, cmdDTO)
@@ -226,8 +223,9 @@ func CommandOptionsGet(g *gin.Context) {
 
 // getCommandDTOs returns the command DTOs from all commands that are currently registered in the bot.
 // If an error occurs, an error will be returned.
-func getCommandDTOs() ([]*CommandDTO, error) {
-	if nil != commandsWebAPICache {
+func getCommandDTOs() ([]CommandDTO, error) {
+	commandsWebAPICache, ok := cache.Get(CommandDTOsWebApiCacheKey, []CommandDTO{})
+	if ok {
 		return commandsWebAPICache, nil
 	}
 
@@ -235,16 +233,21 @@ func getCommandDTOs() ([]*CommandDTO, error) {
 	commandDTOs, err := CommandDTOsFromCommands(commands)
 
 	if nil != err {
-		return []*CommandDTO{}, err
+		return []CommandDTO{}, err
 	}
 
-	commandsWebAPICache = commandDTOs
+	cache.Update(CommandDTOsWebApiCacheKey, commandDTOs)
 
-	return commandsWebAPICache, nil
+	return commandDTOs, nil
 }
 
 // getCommandIDFromCommandDTOName returns the ID of a command depending on its name
 // of the CommandDTO.
 func getCommandIDFromCommandDTOName(name string) string {
 	return strings.ToLower(strings.ReplaceAll(name, " ", "_"))
+}
+
+// getSpecificCommandDTOCacheKey returns the cache key to get a specific CommandDTO from cache.
+func getSpecificCommandDTOCacheKey(id string) string {
+	return fmt.Sprintf(SpecificCommandDTOWebApiCacheKey, id)
 }
