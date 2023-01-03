@@ -23,12 +23,15 @@ import (
 	"time"
 )
 
+// ErrorResponse is an error that can be thrown on the web api.
+//
+// @Description Error holds information about an error that occurred.
 type ErrorResponse struct {
 	Status    int       `json:"status"`
 	Error     string    `json:"error"`
 	Message   string    `json:"message"`
 	Timestamp time.Time `json:"timestamp"`
-}
+} //@Name Error
 
 // RespondWithError responds to a request with the passed error.
 // Any further processing will be aborted!

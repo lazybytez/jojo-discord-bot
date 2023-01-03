@@ -155,7 +155,8 @@ func commandDTOsFromCommandOptions(
 // @Description single command options get endpoint.
 // @Tags        Component System
 // @Produce     json
-// @Success     200 {array} CommandDTO "Returns an array of commands with all their available data."
+// @Success     200 {array} CommandDTO "An array consisting of objects containing information about commands"
+// @Failure		500 {object} webapi.ErrorResponse "An error indicating that an internal error happened"
 // @Router      /commands [get]
 func CommandsGet(g *gin.Context) {
 	commandDTOs := getCommandDTOs()
@@ -174,8 +175,9 @@ func CommandsGet(g *gin.Context) {
 // @Tags        Component System
 // @Param		id path string true "ID of the command to search for"
 // @Produce     json
-// @Success     200 {array} CommandDTO "Returns an object of a specific command with all its available data."
-// @Failure		404 {object} webapi.ErrorResponse "Returns an error describing the reason the requested resource could not be found."
+// @Success     200 {array} CommandDTO "An object containing information about a specific command"
+// @Failure		404 {object} webapi.ErrorResponse "An error indicating that the requested resource could not be found"
+// @Failure		500 {object} webapi.ErrorResponse "An error indicating that an internal error happened"
 // @Router      /commands/{id} [get]
 func CommandGet(g *gin.Context) {
 	cmdID := g.Param(ParamCommandID)

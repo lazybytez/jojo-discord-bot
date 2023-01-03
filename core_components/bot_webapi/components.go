@@ -90,7 +90,8 @@ func ComponentDTOFromComponent(c *api.Component, guildId string) (ComponentDTO, 
 // @Description The guild status is currently not populated and always false!
 // @Tags        Component System
 // @Produce     json
-// @Success     200 {array} ComponentDTO "Returns an array of components with all their available data."
+// @Success     200 {array} ComponentDTO "An array consisting of objects containing information about components"
+// @Failure		500 {object} webapi.ErrorResponse "An error indicating that an internal error happened"
 // @Router      /components [get]
 func ComponentsGet(g *gin.Context) {
 	componentDTOs := make([]ComponentDTO, len(api.Components))
