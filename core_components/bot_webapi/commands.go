@@ -25,8 +25,10 @@ import (
 	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/entities"
 	"github.com/lazybytez/jojo-discord-bot/services/cache"
+	"github.com/lazybytez/jojo-discord-bot/webapi"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // ParamCommandID is the name of the parameter that carries the
@@ -63,34 +65,27 @@ type CommandDTO struct {
 // CommandDTOsFromCommands creates an array of CommandDTO instances.
 // The general data is computed from the passed api.Command.
 // This function returns all commands that are currently registered.
-func CommandDTOsFromCommands(cmds []*api.Command) ([]CommandDTO, error) {
+func CommandDTOsFromCommands(cmds []*api.Command) []CommandDTO {
 	commandDTOs := make([]CommandDTO, 0)
 
 	for _, cmd := range cmds {
-		subDTOs, err := commandDTOsFromCommand(cmd)
-
-		if nil != err {
-			return []CommandDTO{}, err
-		}
+		subDTOs := commandDTOsFromCommand(cmd)
 
 		commandDTOs = append(commandDTOs, subDTOs...)
 	}
 
-	return commandDTOs, nil
+	return commandDTOs
 }
 
 // commandDTOsFromCommand converts a single api.Command into CommandDTO instances.
-func commandDTOsFromCommand(cmd *api.Command) ([]CommandDTO, error) {
+func commandDTOsFromCommand(cmd *api.Command) []CommandDTO {
 	commandDTOs := make([]CommandDTO, 0)
 
 	if nil != cmd.Cmd.Options {
-		cmdDTO, err := commandDTOsFromCommandOptions(cmd.Cmd.Name,
+		cmdDTO := commandDTOsFromCommandOptions(cmd.Cmd.Name,
 			cmd.Category,
 			cmd.GetComponentCode(),
 			cmd.Cmd.Options)
-		if nil != err {
-			return []CommandDTO{}, err
-		}
 
 		commandDTOs = append(commandDTOs, cmdDTO...)
 	}
@@ -107,7 +102,7 @@ func commandDTOsFromCommand(cmd *api.Command) ([]CommandDTO, error) {
 		commandDTOs = append(commandDTOs, commandDTO)
 	}
 
-	return commandDTOs, nil
+	return commandDTOs
 }
 
 // commandDTOsFromCommandOptions converts options that are subcommands or subcommand groups to
@@ -117,9 +112,9 @@ func commandDTOsFromCommandOptions(
 	category api.Category,
 	component entities.ComponentCode,
 	options []*discordgo.ApplicationCommandOption,
-) ([]CommandDTO, error) {
+) []CommandDTO {
 	if nil == options {
-		return nil, nil
+		return nil
 	}
 
 	commandDTOs := make([]CommandDTO, 0)
@@ -127,14 +122,10 @@ func commandDTOsFromCommandOptions(
 	for _, cmdOption := range options {
 		switch cmdOption.Type {
 		case discordgo.ApplicationCommandOptionSubCommandGroup:
-			subCommandDTOs, err := commandDTOsFromCommandOptions(fmt.Sprintf("%s %s", parentName, cmdOption.Name),
+			subCommandDTOs := commandDTOsFromCommandOptions(fmt.Sprintf("%s %s", parentName, cmdOption.Name),
 				category,
 				component,
 				cmdOption.Options)
-
-			if nil != err {
-				return commandDTOs, err
-			}
 
 			commandDTOs = append(commandDTOs, subCommandDTOs...)
 		case discordgo.ApplicationCommandOptionSubCommand:
@@ -151,7 +142,7 @@ func commandDTOsFromCommandOptions(
 		}
 	}
 
-	return commandDTOs, nil
+	return commandDTOs
 }
 
 // CommandsGet endpoint
@@ -167,11 +158,7 @@ func commandDTOsFromCommandOptions(
 // @Success     200 {array} CommandDTO "Returns an array of commands with all their available data."
 // @Router      /commands [get]
 func CommandsGet(g *gin.Context) {
-	commandDTOs, err := getCommandDTOs()
-
-	if nil != err {
-		C.Logger().Err(err, "Failed to convert some commands to CommandDTO!")
-	}
+	commandDTOs := getCommandDTOs()
 
 	g.JSON(http.StatusOK, commandDTOs)
 }
@@ -188,6 +175,7 @@ func CommandsGet(g *gin.Context) {
 // @Param		id path string true "ID of the command to search for"
 // @Produce     json
 // @Success     200 {array} CommandDTO "Returns an object of a specific command with all its available data."
+// @Failure		404 {object} webapi.ErrorResponse "Returns an error describing the reason the requested resource could not be found."
 // @Router      /commands/{id} [get]
 func CommandGet(g *gin.Context) {
 	cmdID := g.Param(ParamCommandID)
@@ -197,11 +185,7 @@ func CommandGet(g *gin.Context) {
 		return
 	}
 
-	commandDTOs, err := getCommandDTOs()
-
-	if nil != err {
-		C.Logger().Err(err, "Failed to convert some commands to CommandDTO!")
-	}
+	commandDTOs := getCommandDTOs()
 
 	cacheKey := getSpecificCommandDTOCacheKey(cmdID)
 	cmdDTO, ok := cache.Get(cacheKey, CommandDTO{})
@@ -216,7 +200,13 @@ func CommandGet(g *gin.Context) {
 		}
 
 		if !ok {
-			C.Logger().Err(err, "Could not find a command with the given name!")
+			webapi.RespondWithError(g, webapi.ErrorResponse{
+				Status:    http.StatusNotFound,
+				Error:     "Failed to find the desired command",
+				Message:   "Could not find a command matching the given criteria",
+				Timestamp: time.Now(),
+			})
+
 			return
 		}
 
@@ -232,22 +222,18 @@ func CommandOptionsGet(g *gin.Context) {
 
 // getCommandDTOs returns the command DTOs from all commands that are currently registered in the bot.
 // If an error occurs, an error will be returned.
-func getCommandDTOs() ([]CommandDTO, error) {
+func getCommandDTOs() []CommandDTO {
 	commandsWebAPICache, ok := cache.Get(CommandDTOsWebApiCacheKey, []CommandDTO{})
 	if ok {
-		return commandsWebAPICache, nil
+		return commandsWebAPICache
 	}
 
 	commands := C.SlashCommandManager().GetCommands()
-	commandDTOs, err := CommandDTOsFromCommands(commands)
-
-	if nil != err {
-		return []CommandDTO{}, err
-	}
+	commandDTOs := CommandDTOsFromCommands(commands)
 
 	cache.Update(CommandDTOsWebApiCacheKey, commandDTOs)
 
-	return commandDTOs, nil
+	return commandDTOs
 }
 
 // getCommandIDFromCommandDTOName returns the ID of a command depending on its name

@@ -63,7 +63,40 @@ var httpServer *http.Server
 // enrichMiddlewares enriches the passed gin.Engine with
 // the default middleware for the application.
 func enrichMiddlewares(e *gin.Engine) {
-	e.Use(WebApiLogger(), gin.Recovery())
+	customRecovery := gin.CustomRecovery(func(g *gin.Context, recovered interface{}) {
+		if Config.webApiMode == gin.DebugMode {
+			if err, ok := recovered.(error); ok {
+				webapi.RespondWithError(g, webapi.ErrorResponse{
+					Status:    500,
+					Error:     "An unexpected error occurred",
+					Message:   err.Error(),
+					Timestamp: time.Now(),
+				})
+
+				return
+			}
+
+			if err, ok := recovered.(string); ok {
+				webapi.RespondWithError(g, webapi.ErrorResponse{
+					Status:    500,
+					Error:     "An unexpected error occurred",
+					Message:   err,
+					Timestamp: time.Now(),
+				})
+
+				return
+			}
+		}
+
+		webapi.RespondWithError(g, webapi.ErrorResponse{
+			Status:    500,
+			Error:     "An unexpected error occurred",
+			Message:   "An unexpected error occurred, please contact the administrator of the bot to obtain further information.",
+			Timestamp: time.Now(),
+		})
+	})
+
+	e.Use(WebApiLogger(), customRecovery)
 }
 
 // addSwaggerRedirect adds a middleware that redirects calls to "/swagger"
