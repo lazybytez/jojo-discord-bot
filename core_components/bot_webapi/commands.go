@@ -153,7 +153,7 @@ func commandDTOsFromCommandOptions(
 // @Description Note that this endpoint does not return detailed information like the options of a command.
 // @Description To obtain the available command options, the command must be queried on its own using the
 // @Description single command options get endpoint.
-// @Tags        Component System
+// @Tags        Command System
 // @Produce     json
 // @Success     200 {array} CommandDTO "An array consisting of objects containing information about commands"
 // @Failure		500 {object} webapi.ErrorResponse "An error indicating that an internal error happened"
@@ -172,7 +172,7 @@ func CommandsGet(g *gin.Context) {
 // @Description Note that this endpoint does not return detailed information like the options of a command.
 // @Description To obtain the available command options, the command must be queried on its own using the
 // @Description single command options get endpoint.
-// @Tags        Component System
+// @Tags        Command System
 // @Param		id path string true "ID of the command to search for"
 // @Produce     json
 // @Success     200 {array} CommandDTO "An object containing information about a specific command"
