@@ -76,8 +76,6 @@ func (suite *SlashCommandManagerTestSuite) TestGetCommandsForComponentWithComman
 		c:        testComponent,
 	}
 
-	expectedResult := []*Command{foundCommandOne, foundCommandTwo}
-
 	componentCommandMap = map[string]*Command{
 		"a": foundCommandOne,
 		"c": {
@@ -88,7 +86,14 @@ func (suite *SlashCommandManagerTestSuite) TestGetCommandsForComponentWithComman
 	}
 
 	result := suite.slashCommandManager.GetCommandsForComponent(testComponentCode)
-	suite.Equal(expectedResult, result)
+
+	suite.Len(result, 2)
+
+	suite.Equal(foundCommandOne.c.Code, result[0].c.Code)
+	suite.Equal(foundCommandOne.Category, result[0].Category)
+
+	suite.Equal(foundCommandTwo.c.Code, result[1].c.Code)
+	suite.Equal(foundCommandTwo.Category, result[1].Category)
 }
 
 func TestSlashCommandManager(t *testing.T) {

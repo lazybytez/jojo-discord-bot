@@ -20,6 +20,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api/entities"
 	"github.com/lazybytez/jojo-discord-bot/api/util"
@@ -42,6 +43,9 @@ var (
 	// slashCommandManagerLogger is the logger used by the slash command management
 	// when there is no component a log message could be assigned to
 	slashCommandManagerLogger *logger.Logger
+
+	// slashCommandDmPermission is used when commands are declared as global
+	slashCommandDmPermission = true
 )
 
 // init slash command sub-system
@@ -56,6 +60,7 @@ func init() {
 // Create an instance of the struct and pass to Register a command
 type Command struct {
 	Cmd      *discordgo.ApplicationCommand
+	Global   bool
 	Category Category
 	Handler  func(s *discordgo.Session, i *discordgo.InteractionCreate)
 	c        *Component
@@ -70,7 +75,7 @@ type SlashCommandManager struct {
 
 // CommonSlashCommandManager provides a standardized interface
 // how slash commands should be created and registered
-// in the application
+// in the application.
 type CommonSlashCommandManager interface {
 	// Register allows to register a command
 	//
@@ -101,36 +106,69 @@ func InitCommandHandling(session *discordgo.Session) error {
 		return errors.New("cannot initialize command handling system twice")
 	}
 
-	unregisterCommandHandler = session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if command, ok := componentCommandMap[i.ApplicationCommandData().Name]; ok {
-			command.Handler(s, i)
-		}
-	})
-
-	// Drop global registered commands, if any.
-	// We only allow guild specific commands
-	//
-	// This is for backward compatibility, as in the past
-	// we registered commands globally.
-	//
-	// TODO: Remove in some safe future version!
-	commands, err := session.ApplicationCommands(session.State.User.ID, "")
-	if nil != err {
-		slashCommandManagerLogger.Err(
-			err,
-			"Failed to retrieve globally registered commands!")
-	}
-	for _, cmd := range commands {
-		err = session.ApplicationCommandDelete(session.State.User.ID, "", cmd.ID)
-		if nil != err {
-			slashCommandManagerLogger.Err(
-				err,
-				"Failed to remove global slash-command with name \"%v\"!",
-				cmd.Name)
-		}
-	}
+	unregisterCommandHandler = session.AddHandler(handleCommandDispatch)
 
 	return nil
+}
+
+// handleCommandDispatch handles the processing of a command
+// that has been executed by a user. It already takes
+// component status in account to ensure that inconsistent command
+// states do not end in prohibited execution of a command.
+func handleCommandDispatch(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if command, ok := componentCommandMap[i.ApplicationCommandData().Name]; ok {
+		if !IsComponentEnabled(command.c, i.GuildID) {
+			resp := &discordgo.InteractionResponseData{
+				Flags: discordgo.MessageFlagsEphemeral,
+				Embeds: []*discordgo.MessageEmbed{
+					{
+						Title:       "JOJO Discord Bot",
+						Description: "",
+						Color:       DefaultEmbedColor,
+						Fields: []*discordgo.MessageEmbedField{
+							{
+								Name:  ":no_entry_sign: STOP :no_entry_sign:",
+								Value: "An unexpected error happened while computing your error message!",
+							},
+						},
+					},
+				},
+			}
+
+			component := command.c
+			registeredComponent, err := component.EntityManager().RegisteredComponent().Get(command.c.Code)
+			if nil == err {
+				globalStatus, err := component.EntityManager().GlobalComponentStatus().Get(registeredComponent.ID)
+				if nil == err {
+					switch globalStatus.Enabled {
+					case true:
+						resp.Embeds[0].Fields[0].Value = fmt.Sprintf("The command `/%s` is disabled on this "+
+							"guild! Ask your guilds administrator to enable the `%s` component to use this command!",
+							command.Cmd.Name,
+							command.c.Name)
+					case false:
+						resp.Embeds[0].Fields[0].Value = fmt.Sprintf("The command `/%s` is globally disabled. "+
+							"This might be due to some maintenance on the `%s` module.",
+							command.Cmd.Name,
+							command.c.Name)
+					}
+				}
+			}
+
+			err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: resp,
+			})
+
+			if nil != err {
+				command.c.Logger().Err(err, "Failed to deliver interaction response on slash-command!")
+			}
+
+			return
+		}
+
+		command.Handler(s, i)
+	}
 }
 
 // DeinitCommandHandling unregisters the event Handler
@@ -186,6 +224,10 @@ func (c *SlashCommandManager) Register(cmd *Command) error {
 		cmd.Cmd.Type = discordgo.ChatApplicationCommand
 	}
 
+	if cmd.Global {
+		cmd.Cmd.DMPermission = &slashCommandDmPermission
+	}
+
 	componentCommandMap[cmd.Cmd.Name] = cmd
 
 	return nil
@@ -216,18 +258,6 @@ func (c *SlashCommandManager) validateCommand(cmd *Command) error {
 			cmd.Cmd.Name,
 			c.owner.Name,
 			err.Error())
-
-		return err
-	}
-
-	if nil == cmd.Handler {
-		err := errors.New("the Handler of the passed command is nil")
-
-		c.owner.Logger().Err(
-			err,
-			"Failed to register the slash-Cmd \"%v\" for component \"%v\"!",
-			cmd.Cmd.Name,
-			c.owner.Name)
 
 		return err
 	}
@@ -271,7 +301,7 @@ func (c *SlashCommandManager) SyncApplicationComponentCommands(
 	if nil != err {
 		slashCommandManagerLogger.Err(
 			err,
-			"Failed to handle guild slash-command sync for guild \"%v\"!",
+			"Failed to handle guild slash-command sync for guild \"%s\"!",
 			guildId)
 
 		return
@@ -286,7 +316,7 @@ func (c *SlashCommandManager) SyncApplicationComponentCommands(
 	_ = c.updateRegisteredCommands(session, guildId, registeredCommands)
 
 	slashCommandManagerLogger.Info(
-		"Finished syncing slash-commands for guild \"%v\"...",
+		"Finished syncing slash-commands for guild \"%s\"...",
 		guildId)
 }
 
@@ -300,15 +330,18 @@ func (c *SlashCommandManager) removeOrphanedCommands(
 	guildId string,
 	commands []*discordgo.ApplicationCommand,
 ) []*discordgo.ApplicationCommand {
+	stillAvailableCommands := commands
+
 	for key, registeredCommand := range commands {
-		if _, ok := componentCommandMap[registeredCommand.Name]; !ok {
+		presentCompCmd, ok := componentCommandMap[registeredCommand.Name]
+		if !ok || (ok && "" == guildId && !presentCompCmd.Global) || (ok && "" != guildId && presentCompCmd.Global) {
 			err := session.ApplicationCommandDelete(session.State.User.ID, guildId, registeredCommand.ID)
 			if nil != err {
 				slashCommandManagerLogger.Err(
 					err,
-					"Failed to remove orphaned slash-command \"%v\" from guild \"%v\"!",
+					"Failed to remove orphaned slash-command \"%s\" %s!",
 					registeredCommand.Name,
-					guildId)
+					getGuildOrGlobalLogPart(guildId, "from"))
 
 				continue
 			}
@@ -317,15 +350,16 @@ func (c *SlashCommandManager) removeOrphanedCommands(
 			if len(commands)-1 >= key+1 {
 				slicedCommands = commands[key+1:]
 			}
-			commands = append(commands[:key], slicedCommands...)
+			stillAvailableCommands = append(stillAvailableCommands[:], slicedCommands...)
+
 			slashCommandManagerLogger.Info(
-				"Removed orphaned slash-command \"%v\" from guild \"%v\"!",
+				"Removed orphaned slash-command \"%s\" %s!",
 				registeredCommand.Name,
-				guildId)
+				getGuildOrGlobalLogPart(guildId, "from"))
 		}
 	}
 
-	return commands
+	return stillAvailableCommands
 }
 
 // removeCommandsByComponentState removes commands from
@@ -335,14 +369,20 @@ func (c *SlashCommandManager) removeCommandsByComponentState(
 	guildId string,
 	commands []*discordgo.ApplicationCommand,
 ) []*discordgo.ApplicationCommand {
+	stillAvailableCommands := commands
+
 	// First of all remove disabled existing commands
 	for key, command := range commands {
 		componentCommand, ok := componentCommandMap[command.Name]
 		if !ok {
 			slashCommandManagerLogger.Warn(
-				"Missing component command for registered slash-command \"%v\"!",
+				"Missing component command for registered slash-command \"%s\"!",
 				command.Name)
 
+			continue
+		}
+
+		if componentCommand.Global && "" != guildId || !componentCommand.Global && "" == guildId {
 			continue
 		}
 
@@ -354,9 +394,9 @@ func (c *SlashCommandManager) removeCommandsByComponentState(
 		if nil != err {
 			componentCommand.c.Logger().Err(
 				err,
-				"Failed to remove disabled slash-command \"%v\" from guild \"%v\"!",
+				"Failed to remove disabled slash-command \"%s\" %s!",
 				command.Name,
-				guildId)
+				getGuildOrGlobalLogPart(guildId, "from"))
 
 			continue
 		}
@@ -365,15 +405,15 @@ func (c *SlashCommandManager) removeCommandsByComponentState(
 		if len(commands)-1 >= key+1 {
 			slicedCommands = commands[key+1:]
 		}
-		commands = append(commands[:key], slicedCommands...)
+		stillAvailableCommands = append(stillAvailableCommands[:], slicedCommands...)
 
 		componentCommand.c.Logger().Info(
-			"Removed disabled slash-command \"%v\" from guild \"%v\"!",
+			"Removed disabled slash-command \"%s\" %s!",
 			command.Name,
-			guildId)
+			getGuildOrGlobalLogPart(guildId, "from"))
 	}
 
-	return commands
+	return stillAvailableCommands
 }
 
 // addCommandsByComponentState removes commands from
@@ -384,6 +424,10 @@ func (c *SlashCommandManager) addCommandsByComponentState(
 	commands []*discordgo.ApplicationCommand,
 ) []*discordgo.ApplicationCommand {
 	for _, componentCommand := range componentCommandMap {
+		if componentCommand.Global && "" != guildId || !componentCommand.Global && "" == guildId {
+			continue
+		}
+
 		if c.isCommandNameInApplicationCommandList(commands, componentCommand.Cmd.Name) {
 			continue
 		}
@@ -396,18 +440,18 @@ func (c *SlashCommandManager) addCommandsByComponentState(
 		if nil != err {
 			componentCommand.c.Logger().Err(
 				err,
-				"Failed to add enabled slash-command \"%v\" to guild \"%v\"!",
+				"Failed to add enabled slash-command \"%v\" %s!",
 				componentCommand.Cmd.Name,
-				guildId)
+				getGuildOrGlobalLogPart(guildId, "to"))
 
 			continue
 		}
 
 		commands = append(commands, createdCommand)
 		componentCommand.c.Logger().Info(
-			"Added enabled slash-command \"%v\" to guild \"%v\"!",
+			"Added enabled slash-command \"%s\" %s!",
 			componentCommand.Cmd.Name,
-			guildId)
+			getGuildOrGlobalLogPart(guildId, "to"))
 	}
 
 	return commands
@@ -423,10 +467,14 @@ func (c *SlashCommandManager) updateRegisteredCommands(
 	for key, command := range commands {
 		componentCommand, ok := componentCommandMap[command.Name]
 		if !ok {
-			slashCommandManagerLogger.Warn("Cannot check for command updates for \"%v\" "+
+			slashCommandManagerLogger.Warn("Cannot check for command updates for \"%s\" "+
 				"as a corresponding component command is missing!",
 				command.Name)
 
+			continue
+		}
+
+		if componentCommand.Global && "" != guildId || !componentCommand.Global && "" == guildId {
 			continue
 		}
 
@@ -438,18 +486,18 @@ func (c *SlashCommandManager) updateRegisteredCommands(
 		if nil != err {
 			componentCommand.c.Logger().Err(
 				err,
-				"Failed to add slash-command \"%v\" to guild \"%v\" during command update!",
+				"Failed to add slash-command \"%s\" %s during command update!",
 				componentCommand.Cmd.Name,
-				guildId)
+				getGuildOrGlobalLogPart(guildId, "to"))
 
 			continue
 		}
 
 		commands[key] = createdCommand
 		componentCommand.c.Logger().Info(
-			"Updated slash-command \"%v\" of guild \"%v\"!",
+			"Updated slash-command \"%s\" %s!",
 			componentCommand.Cmd.Name,
-			guildId)
+			getGuildOrGlobalLogPart(guildId, "for"))
 	}
 
 	return commands
@@ -467,8 +515,18 @@ func (c *SlashCommandManager) isCommandNameInApplicationCommandList(commands []*
 	return false
 }
 
+// getGuildOrGlobalLogPart returns "globally" for an empty guild id
+// or "of guild <id>" when a non-empty guild id has been passed.
+func getGuildOrGlobalLogPart(guildId string, prefix string) string {
+	if "" == guildId {
+		return "globally"
+	}
+
+	return fmt.Sprintf("%s guild \"%s\"", prefix, guildId)
+}
+
 // compareCommands compares to discordgo.Application commands
-// using some key factors and returns of they are equal or not
+// using some key factors and returns if they are equal or not
 func (c *SlashCommandManager) compareCommands(
 	a *discordgo.ApplicationCommand,
 	b *discordgo.ApplicationCommand,
@@ -488,11 +546,11 @@ func (c *SlashCommandManager) compareCommands(
 		return false
 	}
 
-	if a.DefaultMemberPermissions != b.DefaultMemberPermissions {
+	if !util.PointerValuesEqual(a.DefaultMemberPermissions, b.DefaultMemberPermissions) {
 		return false
 	}
 
-	if a.DMPermission != b.DMPermission {
+	if !util.PointerValuesEqual(a.DMPermission, b.DMPermission) {
 		return false
 	}
 
@@ -552,7 +610,7 @@ func (c *SlashCommandManager) compareCommandOptions(a *discordgo.ApplicationComm
 		return false
 	}
 
-	if a.MinLength != b.MinLength {
+	if !util.PointerValuesEqual(a.MinLength, b.MinLength) {
 		return false
 	}
 
@@ -618,10 +676,10 @@ func ProcessSubCommands(
 	i *discordgo.InteractionCreate,
 	option *discordgo.ApplicationCommandInteractionDataOption,
 	handlers map[string]func(
-		s *discordgo.Session,
-		i *discordgo.InteractionCreate,
-		option *discordgo.ApplicationCommandInteractionDataOption,
-	),
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	option *discordgo.ApplicationCommandInteractionDataOption,
+),
 ) bool {
 	// First validate that there is at least one level of nesting
 	command := i.ApplicationCommandData()
@@ -654,10 +712,10 @@ func runHandler(
 	option *discordgo.ApplicationCommandInteractionDataOption,
 	name string,
 	handlers map[string]func(
-		s *discordgo.Session,
-		i *discordgo.InteractionCreate,
-		option *discordgo.ApplicationCommandInteractionDataOption,
-	),
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	option *discordgo.ApplicationCommandInteractionDataOption,
+),
 ) bool {
 	handler, ok := handlers[name]
 

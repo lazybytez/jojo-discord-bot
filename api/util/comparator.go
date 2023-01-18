@@ -81,3 +81,17 @@ func MapsEqual[K comparable, V comparable](a *map[K]V, b *map[K]V) bool {
 
 	return true
 }
+
+// PointerValuesEqual compares two comparable variables which values are pointers.
+// The function first checks for nil and then dereferences the pointers.
+func PointerValuesEqual[T comparable](a *T, b *T) bool {
+	if a == nil && b == nil {
+		return true
+	}
+
+	if a == nil || b == nil {
+		return false
+	}
+
+	return *a == *b
+}
