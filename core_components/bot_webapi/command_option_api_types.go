@@ -20,7 +20,6 @@ package bot_webapi
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api"
-	"strings"
 )
 
 // CommandOptionDTO is an intermediate data transfer object
@@ -52,16 +51,16 @@ type CommandOptionChoiceDTO struct {
 // The function first searches for the proper command and then collects its options.
 // The options are then converted to CommandOptionDTO and CommandOptionChoiceDTO instances.
 func computeCommandOptionDTOsForCommand(commands []*api.Command, id string) ([]CommandOptionDTO, error) {
-	commandPathParts := strings.Split(id, "_")
+	//commandPathParts := strings.Split(id, "_")
 
-	var foundCommand *api.Command
-	for cmdPath := range commandPathParts {
-
-	}
-
-	for _, cmd := range commands {
-
-	}
+	//var foundCommand *api.Command
+	//for cmdPath := range commandPathParts {
+	//
+	//}
+	//
+	//for _, cmd := range commands {
+	//
+	//}
 
 	return []CommandOptionDTO{}, nil
 }

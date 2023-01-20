@@ -38,7 +38,6 @@ const CommandDTOsWebApiCacheKey = "bot_web_api_commands_get_cache"
 // @Tags        Command System
 // @Produce     json
 // @Success     200 {array} CommandDTO "An array consisting of objects containing information about commands"
-// @Failure		500 {object} webapi.ErrorResponse "An error indicating that an internal error happened"
 // @Router      /commands [get]
 func CommandsGet(g *gin.Context) {
 	commandDTOs := getCommandDTOs()
