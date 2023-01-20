@@ -21,29 +21,15 @@ package bot_webapi
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"github.com/gin-gonic/gin"
 	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/entities"
 	"github.com/lazybytez/jojo-discord-bot/services/cache"
-	"github.com/lazybytez/jojo-discord-bot/webapi"
-	"net/http"
 	"strings"
-	"time"
 )
 
-// ParamCommandID is the name of the parameter that carries the
+// ParamCommandID is the name of the parameter that carries a
 // requested command name.
 const ParamCommandID = "id"
-
-const (
-	// CommandDTOsWebApiCacheKey is the cache key used to store and retrieve all commands
-	// as CommandDTO instances from the cache.
-	CommandDTOsWebApiCacheKey = "bot_web_api_commands_get_cache"
-	// SpecificCommandDTOWebApiCacheKey is the cache key format used to store and retrieve a specific command
-	// as CommandDTO instance from the cache. There is exactly one placeholder in this constant,
-	// that should be replaced with the ID of the command to get.
-	SpecificCommandDTOWebApiCacheKey = "bot_web_api_specific_command_get_%s_cache"
-)
 
 // CommandDTO is an intermediate data transfer object
 // that can be output or received by the WebAPI.
@@ -145,83 +131,6 @@ func commandDTOsFromCommandOptions(
 	return commandDTOs
 }
 
-// CommandsGet endpoint
-//
-// @Summary     Get all available commands of the bot
-// @Description This endpoint collects all available commands and returns them.
-// @Description The result on a success contains relevant information like name, description and category of commands.
-// @Description Note that this endpoint does not return detailed information like the options of a command.
-// @Description To obtain the available command options, the command must be queried on its own using the
-// @Description single command options get endpoint.
-// @Tags        Command System
-// @Produce     json
-// @Success     200 {array} CommandDTO "An array consisting of objects containing information about commands"
-// @Failure		500 {object} webapi.ErrorResponse "An error indicating that an internal error happened"
-// @Router      /commands [get]
-func CommandsGet(g *gin.Context) {
-	commandDTOs := getCommandDTOs()
-
-	g.JSON(http.StatusOK, commandDTOs)
-}
-
-// CommandGet endpoint
-//
-// @Summary     Get a specific command of the bot.
-// @Description This endpoint returns information about the specific requested command.
-// @Description The result on a success contains relevant information like name, description and category of commands.
-// @Description Note that this endpoint does not return detailed information like the options of a command.
-// @Description To obtain the available command options, the command must be queried on its own using the
-// @Description single command options get endpoint.
-// @Tags        Command System
-// @Param		id path string true "ID of the command to search for"
-// @Produce     json
-// @Success     200 {array} CommandDTO "An object containing information about a specific command"
-// @Failure		404 {object} webapi.ErrorResponse "An error indicating that the requested resource could not be found"
-// @Failure		500 {object} webapi.ErrorResponse "An error indicating that an internal error happened"
-// @Router      /commands/{id} [get]
-func CommandGet(g *gin.Context) {
-	cmdID := g.Param(ParamCommandID)
-
-	if "" == cmdID {
-		g.AbortWithStatus(400)
-		return
-	}
-
-	commandDTOs := getCommandDTOs()
-
-	cacheKey := getSpecificCommandDTOCacheKey(cmdID)
-	cmdDTO, ok := cache.Get(cacheKey, CommandDTO{})
-	if !ok {
-		for _, cmd := range commandDTOs {
-			if cmd.ID == cmdID {
-				cmdDTO = cmd
-				ok = true
-
-				break
-			}
-		}
-
-		if !ok {
-			webapi.RespondWithError(g, webapi.ErrorResponse{
-				Status:    http.StatusNotFound,
-				Error:     "Failed to find the desired command",
-				Message:   "Could not find a command matching the given criteria",
-				Timestamp: time.Now(),
-			})
-
-			return
-		}
-
-		cache.Update(cacheKey, cmdDTO)
-	}
-
-	g.JSON(http.StatusOK, cmdDTO)
-}
-
-func CommandOptionsGet(g *gin.Context) {
-
-}
-
 // getCommandDTOs returns the command DTOs from all commands that are currently registered in the bot.
 // If an error occurs, an error will be returned.
 func getCommandDTOs() []CommandDTO {
@@ -242,9 +151,4 @@ func getCommandDTOs() []CommandDTO {
 // of the CommandDTO.
 func getCommandIDFromCommandDTOName(name string) string {
 	return strings.ToLower(strings.ReplaceAll(name, " ", "_"))
-}
-
-// getSpecificCommandDTOCacheKey returns the cache key to get a specific CommandDTO from cache.
-func getSpecificCommandDTOCacheKey(id string) string {
-	return fmt.Sprintf(SpecificCommandDTOWebApiCacheKey, id)
 }
