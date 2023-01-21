@@ -27,6 +27,8 @@ import (
 	"time"
 )
 
+// CommandOptionsDTOWebApiCacheKey is the template cache key used to cache
+// command option API responses.
 const CommandOptionsDTOWebApiCacheKey = "bot_web_api_specific_command_options_get_%s_cache"
 
 // CommandOptionsGet endpoint
@@ -66,11 +68,13 @@ func CommandOptionsGet(g *gin.Context) {
 	computedCommandOptionDTOs, err := computeCommandOptionDTOsForCommand(C.SlashCommandManager().GetCommands(), cmdID)
 	if nil != err {
 		webapi.RespondWithError(g, webapi.ErrorResponse{
-			Status:    400,
-			Error:     "Failed to find the desired command",
-			Message:   "Could not find a command matching the given criteria",
+			Status:    http.StatusNotFound,
+			Error:     "Requested command not found",
+			Message:   err.Error(),
 			Timestamp: time.Now(),
 		})
+
+		return
 	}
 
 	cache.Get(cacheKey, computedCommandOptionDTOs)

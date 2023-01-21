@@ -31,6 +31,14 @@ import (
 // requested command name.
 const ParamCommandID = "id"
 
+// CommandIdSeparator separator used for command ids.
+// A command id consists of the entire path of command names until the target is reached.
+const CommandIdSeparator = "_"
+
+// CommandDTOsWebApiCacheKey is the cache key used to store and retrieve all commands
+// as CommandDTO instances from the cache.
+const CommandDTOsWebApiCacheKey = "bot_web_api_commands_get_cache"
+
 // CommandDTO is an intermediate data transfer object
 // that can be output or received by the WebAPI.
 // This type is used, because the bot both has the general api.Command.
@@ -150,5 +158,5 @@ func getCommandDTOs() []CommandDTO {
 // getCommandIDFromCommandDTOName returns the ID of a command depending on its name
 // of the CommandDTO.
 func getCommandIDFromCommandDTOName(name string) string {
-	return strings.ToLower(strings.ReplaceAll(name, " ", "_"))
+	return strings.ToLower(strings.ReplaceAll(name, " ", CommandIdSeparator))
 }

@@ -67,7 +67,7 @@ func handlePanic(g *gin.Context, recovered interface{}) {
 	if Config.webApiMode == gin.DebugMode {
 		if err, ok := recovered.(error); ok {
 			webapi.RespondWithError(g, webapi.ErrorResponse{
-				Status:    500,
+				Status:    http.StatusInternalServerError,
 				Error:     "An unexpected error occurred",
 				Message:   err.Error(),
 				Timestamp: time.Now(),
@@ -78,7 +78,7 @@ func handlePanic(g *gin.Context, recovered interface{}) {
 
 		if err, ok := recovered.(string); ok {
 			webapi.RespondWithError(g, webapi.ErrorResponse{
-				Status:    500,
+				Status:    http.StatusInternalServerError,
 				Error:     "An unexpected error occurred",
 				Message:   err,
 				Timestamp: time.Now(),
@@ -89,9 +89,10 @@ func handlePanic(g *gin.Context, recovered interface{}) {
 	}
 
 	webapi.RespondWithError(g, webapi.ErrorResponse{
-		Status:    500,
-		Error:     "An unexpected error occurred",
-		Message:   "An unexpected error occurred, please contact the administrator of the bot to obtain further information.",
+		Status: http.StatusInternalServerError,
+		Error:  "An unexpected error occurred",
+		Message: "An unexpected error occurred, " +
+			"please contact the administrator of the bot to obtain further information.",
 		Timestamp: time.Now(),
 	})
 }
@@ -100,7 +101,7 @@ func handlePanic(g *gin.Context, recovered interface{}) {
 func handleNoRoute(g *gin.Context) {
 	path := url.PathEscape(g.Request.URL.Path)
 	webapi.RespondWithError(g, webapi.ErrorResponse{
-		Status:    404,
+		Status:    http.StatusNotFound,
 		Error:     "Resource not found",
 		Message:   fmt.Sprintf("There is no resource matching the path \"%s\"", path),
 		Timestamp: time.Now(),

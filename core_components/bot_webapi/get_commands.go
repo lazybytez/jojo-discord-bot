@@ -23,10 +23,6 @@ import (
 	"net/http"
 )
 
-// CommandDTOsWebApiCacheKey is the cache key used to store and retrieve all commands
-// as CommandDTO instances from the cache.
-const CommandDTOsWebApiCacheKey = "bot_web_api_commands_get_cache"
-
 // CommandsGet endpoint
 //
 // @Summary     Get all available commands of the bot
