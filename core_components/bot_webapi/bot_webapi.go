@@ -19,6 +19,7 @@
 package bot_webapi
 
 import (
+	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/webapi"
@@ -45,8 +46,13 @@ func init() {
 // and handles migration of core entities
 // and registration of important core event handlers.
 func LoadComponent(_ *discordgo.Session) error {
-	eg := webapi.Router().Group("/components")
-	eg.GET("/", ComponentsGet)
+	compGroup := webapi.Router().Group("/components")
+	compGroup.GET("/", ComponentsGet)
+
+	commandsGroup := webapi.Router().Group("/commands")
+	commandsGroup.GET("/", CommandsGet)
+	commandsGroup.GET(fmt.Sprintf("/:%s", ParamCommandID), CommandGet)
+	commandsGroup.GET(fmt.Sprintf("/:%s/options", ParamCommandID), CommandOptionsGet)
 
 	return nil
 }

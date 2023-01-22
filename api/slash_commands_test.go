@@ -270,7 +270,7 @@ func (suite *SlashCommandManagerTestSuite) TestGetCommandsForComponentWithoutMat
 }
 
 func (suite *SlashCommandManagerTestSuite) TestGetCommandsForComponentWithCommands() {
-	testComponentCode := entities.ComponentCode("no_commands_component")
+	testComponentCode := entities.ComponentCode("with_commands_component")
 
 	testComponent := &Component{
 		Code: testComponentCode,

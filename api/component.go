@@ -23,6 +23,7 @@ import (
 	"github.com/lazybytez/jojo-discord-bot/api/entities"
 	"github.com/lazybytez/jojo-discord-bot/api/util"
 	"github.com/lazybytez/jojo-discord-bot/services"
+	"sort"
 	"strings"
 )
 
@@ -171,7 +172,13 @@ func (c *Component) computeCategories() {
 		}
 	}
 
-	c.Categories = util.UniqueArrayOrSlice(categories)
+	sortedCategories := util.UniqueArrayOrSlice(categories)
+
+	sort.SliceStable(sortedCategories, func(i, j int) bool {
+		return sortedCategories[i] < sortedCategories[j]
+	})
+
+	c.Categories = sortedCategories
 }
 
 // UnloadComponent is used by the component registration system that

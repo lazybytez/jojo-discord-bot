@@ -48,8 +48,9 @@ var infoCommand = &api.Command{
 		Name:        "info",
 		Description: "Show information of the bot and runtime statistics.",
 	},
-	Global:  true,
-	Handler: handleStats,
+	Global:   true,
+	Category: api.CategoryUtilities,
+	Handler:  handleStats,
 }
 
 // With the m variable the command can access memory runtime statistics

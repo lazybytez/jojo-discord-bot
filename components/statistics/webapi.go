@@ -43,7 +43,8 @@ type StatsDTO struct {
 // @Description Note that some statistics might be cached and only updated every few minutes.
 // @Tags        General
 // @Produce     json
-// @Success     200 {object} StatsDTO "Returns the current statistics of the bot (e. g. current version)."
+// @Success     200 {object} StatsDTO "The statistics collected by the bot"
+// @Failure		500 {object} webapi.ErrorResponse "An error indicating that an internal error happened"
 // @Router      /stats [get]
 func StatsGet(g *gin.Context) {
 	statsDto := StatsDTO{

@@ -18,7 +18,7 @@ var diceCommand = &api.Command{
 		DefaultMemberPermissions: &memberPermissions,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
-				Name:        "die-sites-number",
+				Name:        "dice-sites-number",
 				Description: "The number of how many sites the die has, default is 6",
 				Type:        discordgo.ApplicationCommandOptionInteger,
 				MinValue:    &minValueDieSites,
@@ -44,7 +44,7 @@ var diceCommand = &api.Command{
 func handleDice(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	options := getOptionsAsMap(i)
 	n := getIntOption(options, "number-dice", 1)
-	d := getIntOption(options, "die-sites-number", 6)
+	d := getIntOption(options, "dice-sites-number", 6)
 
 	r := rollDice(d, n)
 	e := createAnswerEmbedMessage(n, d, r)

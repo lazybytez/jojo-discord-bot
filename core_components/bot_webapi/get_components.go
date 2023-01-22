@@ -19,10 +19,13 @@
 package bot_webapi
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/entities"
+	"github.com/lazybytez/jojo-discord-bot/webapi"
 	"net/http"
+	"time"
 )
 
 // ComponentDTO is an intermediate data transfer object
@@ -90,7 +93,8 @@ func ComponentDTOFromComponent(c *api.Component, guildId string) (ComponentDTO, 
 // @Description The guild status is currently not populated and always false!
 // @Tags        Component System
 // @Produce     json
-// @Success     200 {array} ComponentDTO "Returns an array of components with all their available data."
+// @Success     200 {array} ComponentDTO "An array consisting of objects containing information about components"
+// @Failure		500 {object} webapi.ErrorResponse "An error indicating that an internal error happened"
 // @Router      /components [get]
 func ComponentsGet(g *gin.Context) {
 	componentDTOs := make([]ComponentDTO, len(api.Components))
@@ -100,6 +104,15 @@ func ComponentsGet(g *gin.Context) {
 		componentDTOs[i], err = ComponentDTOFromComponent(comp, "")
 		if nil != err {
 			C.Logger().Err(err, "Failed to convert component with code \"%s\" to ComponentDTO!", comp.Code)
+
+			webapi.RespondWithError(g, webapi.ErrorResponse{
+				Status: http.StatusInternalServerError,
+				Error:  "Failed to prepare components",
+				Message: fmt.Sprintf(
+					"The server failed to prepare the component \"%s\"",
+					comp.Name),
+				Timestamp: time.Now(),
+			})
 		}
 	}
 
