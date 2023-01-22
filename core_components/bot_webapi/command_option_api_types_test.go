@@ -210,6 +210,32 @@ var optionDummyCommands = []*api.Command{
 		Category: api.CategoryFun,
 		Handler:  func(s *discordgo.Session, i *discordgo.InteractionCreate) {},
 	},
+	{
+		Cmd: &discordgo.ApplicationCommand{
+			Name:        "pong",
+			Description: "Play ping pong with the bot!",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        "test",
+					Description: "Use this to test second level attributes with options",
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Name:        "channel",
+							Description: "Some random channel you want to use",
+							Required:    true,
+							Type:        discordgo.ApplicationCommandOptionChannel,
+							ChannelTypes: []discordgo.ChannelType{
+								discordgo.ChannelTypeGuildText,
+							},
+						},
+					},
+				},
+			},
+		},
+		Category: api.CategoryFun,
+		Handler:  func(s *discordgo.Session, i *discordgo.InteractionCreate) {},
+	},
 }
 
 type CommandOptionApiTypesTestSuite struct {
@@ -223,6 +249,14 @@ func (suite *CommandOptionApiTypesTestSuite) TestComputeCommandOptionDTOsForComm
 	}{
 		{
 			id:       "ping",
+			expected: []CommandOptionDTO{},
+		},
+		{
+			id:       "jojo_sync-commands",
+			expected: []CommandOptionDTO{},
+		},
+		{
+			id:       "jojo_module_list",
 			expected: []CommandOptionDTO{},
 		},
 		{
@@ -242,6 +276,40 @@ func (suite *CommandOptionApiTypesTestSuite) TestComputeCommandOptionDTOsForComm
 				},
 			},
 		},
+		{
+			id: "jojo_module_enable",
+			expected: []CommandOptionDTO{
+				{
+					Owner: "jojo_module_enable",
+					Name:  "module",
+					Type:  int(discordgo.ApplicationCommandOptionString),
+					Choices: []CommandOptionChoiceDTO{
+						{
+							Name:  "Test",
+							Value: "test",
+						},
+						{
+							Name:  "Other",
+							Value: "other",
+						},
+						{
+							Name:  "Value",
+							Value: "value",
+						},
+					},
+				},
+			},
+		},
+		{
+			id: "pong_test",
+			expected: []CommandOptionDTO{
+				{
+					Owner:   "pong_test",
+					Name:    "channel",
+					Type:    int(discordgo.ApplicationCommandOptionChannel),
+					Choices: nil,
+				},
+			}},
 	}
 
 	for _, table := range tables {
