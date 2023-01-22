@@ -176,7 +176,7 @@ func (suite *ComponentTestSuite) TestComputeCategoriesWithOnlyCommandCategories(
 }
 
 func (suite *ComponentTestSuite) TestComputeCategoriesWithMixedCategorySource() {
-	expectedResult := Categories{CategoryInternal, CategoryAdministration, CategoryUtilities}
+	expectedResult := Categories{CategoryInternal, CategoryUtilities, CategoryAdministration}
 
 	testComponent := Component{
 		Code:       "some-component",
@@ -200,7 +200,7 @@ func (suite *ComponentTestSuite) TestComputeCategoriesWithMixedCategorySource() 
 
 	testComponent.computeCategories()
 
-	suite.Equal(expectedResult, testComponent.Categories)
+	suite.EqualValues(expectedResult, testComponent.Categories)
 }
 
 func TestComponent(t *testing.T) {
