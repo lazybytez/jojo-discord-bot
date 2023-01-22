@@ -47,7 +47,7 @@ func (suite *CommandTestSuite) TestHandleDice() {
 func getDiceTestArray() map[string]float64 {
 	t := make(map[string]float64)
 	t["number-dice"] = 3
-	t["die-sites-number"] = 1
+	t["dice-sites-number"] = 1
 
 	return t
 }

@@ -176,7 +176,7 @@ var optionDummyCommands = []*api.Command{
 			Description: "throw one or more dice of your wished type.",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Name:        "die-sites-number",
+					Name:        "dice-sites-number",
 					Description: "The number of how many sites the die has, default is 6",
 					Type:        discordgo.ApplicationCommandOptionInteger,
 					Required:    false,
@@ -224,6 +224,23 @@ func (suite *CommandOptionApiTypesTestSuite) TestComputeCommandOptionDTOsForComm
 		{
 			id:       "ping",
 			expected: []CommandOptionDTO{},
+		},
+		{
+			id: "dice",
+			expected: []CommandOptionDTO{
+				{
+					Owner:   "dice",
+					Name:    "dice-sites-number",
+					Type:    int(discordgo.ApplicationCommandOptionInteger),
+					Choices: nil,
+				},
+				{
+					Owner:   "dice",
+					Name:    "number-dice",
+					Type:    int(discordgo.ApplicationCommandOptionInteger),
+					Choices: nil,
+				},
+			},
 		},
 	}
 

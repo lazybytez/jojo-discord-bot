@@ -176,7 +176,7 @@ func (suite *ComponentTestSuite) TestComputeCategoriesWithOnlyCommandCategories(
 }
 
 func (suite *ComponentTestSuite) TestComputeCategoriesWithMixedCategorySource() {
-	expectedResult := Categories{CategoryInternal, CategoryUtilities, CategoryAdministration}
+	expectedResult := []Category{CategoryAdministration, CategoryInternal, CategoryUtilities}
 
 	testComponent := Component{
 		Code:       "some-component",
