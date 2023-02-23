@@ -32,3 +32,6 @@ docs/
 
 # Development test database
 jojo.db
+
+# Output of SDK's
+./dist

@@ -1,0 +1,59 @@
+# This is a workflow for automatically generating
+# multiple SDK, based on swagger docs
+name: Generate SDK
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      CI_COMMIT_AUTHOR: Continuous Integration
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install CLI for documentation generation
+        run: go install github.com/swaggo/swag/cmd/swag@latest
+
+      - name: Generate OpenAPI documentation
+        run: swag init
+
+      - name: Build typescript client
+        run: |
+          docker run -u $(id -u):$(id -g) --network=host --rm --workdir=/local \
+          -v $(pwd):/local openapitools/openapi-generator-cli generate \
+          -i docs/swagger.json \
+          -g typescript \
+          -o dist/typescript-client \
+          --package-name=jojo-discord-bot-api-client
+
+      - name: Build go client
+        run: |
+          docker run -u $(id -u):$(id -g) --network=host --rm --workdir=/local \
+          -v $(pwd):/local openapitools/openapi-generator-cli generate \
+          -i docs/swagger.json \
+          -g go \
+          -o dist/go-client \
+          --package-name=jojo-discord-bot-api-client
+
+      - name: Push code into external sdk repository
+        run: |
+          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+          git config --global user.email "83846103+lazybytez-cloud@users.noreply.github.com"
+          git clone https://lazybytez-cloud:"${{ secrets.GIT_TOKEN }}"@github.com/lazybytez/jojo-bot-sdk.git sdk
+          rm -rf sdk/typescript-client
+          rm -rf sdk/go-client
+          mv dist/* sdk
+          cd sdk
+          git add .
+          git commit -m "chore(deps): update api clients"
+          git push
