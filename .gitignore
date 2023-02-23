@@ -28,7 +28,8 @@ jojo-discord-bot
 go.work
 
 # Auto generated docs
-docs/
+docs/*
+!docs/keep.go
 
 # Development test database
 jojo.db
