@@ -48,7 +48,7 @@ jobs:
       - name: Push code into external sdk repository
         run: |
           git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
-          git config --global user.email "lazybytez-cloud@users.noreply.github.com"
+          git config --global user.email "83846103+lazybytez-cloud@users.noreply.github.com"
           git clone https://lazybytez-cloud:"${{ secrets.GIT_TOKEN }}"@github.com/lazybytez/jojo-bot-sdk.git sdk
           rm -rf sdk/typescript-client
           rm -rf sdk/go-client
