@@ -11,7 +11,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      IS_CI: true
       CI_COMMIT_AUTHOR: Continuous Integration
     steps:
       - name: Install Go
