@@ -2,11 +2,10 @@
 # multiple SDK, based on swagger docs
 name: Generate SKD
 
-# TODO: Replace on push with on tag creation
 on:
   push:
-    branches:
-      - 'feature/sdk-gen'
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
   build:
@@ -28,15 +27,6 @@ jobs:
 
       - name: Generate OpenAPI documentation
         run: swag init
-
-      - name: Build typescript axios client
-        run: |
-          docker run -u $(id -u):$(id -g) --network=host --rm --workdir=/local \
-          -v $(pwd):/local openapitools/openapi-generator-cli generate \
-          -i docs/swagger.json \
-          -g typescript-axios \
-          -o dist/typescript-axios-client \
-          --package-name=jojo-discord-bot-api-client
 
       - name: Build typescript client
         run: |
@@ -61,8 +51,7 @@ jobs:
           git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
           git config --global user.email "lazybytez-cloud@users.noreply.github.com"
           git clone https://lazybytez-cloud:"${{ secrets.GIT_TOKEN }}"@github.com/lazybytez/jojo-bot-sdk.git sdk
-          rm -rf sdk/typescript-axios-client
-          rm -rf sdk/typescript--client
+          rm -rf sdk/typescript-client
           rm -rf sdk/go-client
           mv dist/* sdk
           cd sdk
