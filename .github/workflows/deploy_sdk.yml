@@ -1,6 +1,6 @@
 # This is a workflow for automatically generating
 # multiple SDK, based on swagger docs
-name: Generate SKD
+name: Generate SDK
 
 on:
   push:
