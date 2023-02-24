@@ -49,7 +49,7 @@ jobs:
         run: echo "::set-output name=short::$(git rev-parse --short HEAD)"
 
       - name: Build and publish public image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         id: build_push
         with:
           context: .
