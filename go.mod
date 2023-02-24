@@ -8,7 +8,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gin-gonic/gin v1.9.0
-	github.com/joho/godotenv v1.4.0
+	github.com/joho/godotenv v1.5.1
 	github.com/rs/zerolog v1.28.0
 	github.com/rzajac/zltest v0.12.0
 	github.com/stretchr/testify v1.8.1
