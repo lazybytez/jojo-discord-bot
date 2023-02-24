@@ -45,6 +45,23 @@ run: openapi/generate
 build: openapi/generate
 	go build -ldflags "-X github.com/lazybytez/jojo-discord-bot/build.Version=edge -X github.com/lazybytez/jojo-discord-bot/build.CommitSHA=`git rev-parse --short HEAD`" .
 
+# === Database services ===
+# =====================
+# Start database and redis development instances
+.PHONY: services/start
+services/start:
+	docker-compose up -d
+
+# Stop database and redis development instances
+.PHONY: services/stop
+services/stop:
+	docker-compose stop
+
+# Destroy database and redis development instances
+.PHONY: services/destroy
+services/destroy:
+	docker-compose down -v
+
 # === Quality Assurance ===
 # =========================
 # Runs tests with specified arguments
