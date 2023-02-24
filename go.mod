@@ -17,7 +17,7 @@ require (
 	github.com/swaggo/swag v1.8.10
 	gorm.io/driver/postgres v1.4.8
 	gorm.io/driver/sqlite v1.4.4
-	gorm.io/gorm v1.24.2
+	gorm.io/gorm v1.24.5
 )
 
 require (
