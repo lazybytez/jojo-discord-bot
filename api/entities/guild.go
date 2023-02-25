@@ -73,7 +73,7 @@ func (gem *GuildEntityManager) Get(guildId string) (*Guild, error) {
 		return &Guild{}, err
 	}
 
-	cache.Update(gem.getCacheKeyFromStringGuildId(guildId), *guild)
+	err = cache.Update(gem.getCacheKeyFromStringGuildId(guildId), *guild)
 
 	return guild, err
 }

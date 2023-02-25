@@ -163,7 +163,7 @@ func (provider *InMemoryCacheProvider) Get(key string, t interface{}) (interface
 }
 
 // Update adds and item to the cache or updates it.
-func (provider *InMemoryCacheProvider) Update(key string, t reflect.Type, value interface{}) {
+func (provider *InMemoryCacheProvider) Update(key string, t reflect.Type, value interface{}) error {
 	provider.mu.RLock()
 	typedCache, ok := provider.cachePool[t]
 	provider.mu.RUnlock()
@@ -195,6 +195,8 @@ func (provider *InMemoryCacheProvider) Update(key string, t reflect.Type, value 
 
 	item.value = value
 	item.since = time.Now()
+
+	return nil
 }
 
 // Invalidate manually invalidates the cache item behind

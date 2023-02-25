@@ -99,7 +99,8 @@ func (suite *GuildEntityManagerTestSuite) TestGetWithCache() {
 		GuildID: testId,
 	}
 
-	cache.Update(testCacheKey, *testGuild)
+	err := cache.Update(testCacheKey, *testGuild)
+	suite.NoError(err)
 
 	// Do not expect call of GetFirstEntity or DB calls
 	// When GetFirstEntity is called, test will fail as call is unexpected

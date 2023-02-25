@@ -83,7 +83,12 @@ func HandleSyncCommandSubCommand(
 	C.SlashCommandManager().SyncApplicationComponentCommands(s, i.GuildID)
 
 	currentTime := time.Now()
-	cache.Update(cacheKey, currentTime)
+	err = cache.Update(cacheKey, currentTime)
+	if nil != err {
+		C.Logger().Err(err, fmt.Sprintf(
+			"Failed to store time of last command sync for guild \"%s\" in the cache.",
+			dgoGuild.ID))
+	}
 
 	finishWitSuccess(s, i, resp)
 	C.BotAuditLogger().Log(

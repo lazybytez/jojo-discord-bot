@@ -50,7 +50,8 @@ func (suite *AuditLogConfigEntityManagerTestSuite) SetupTest() {
 		&suite.em,
 	}
 
-	cache.Init(cache.ModeMemory, 10*time.Minute, "")
+	err := cache.Init(cache.ModeMemory, 10*time.Minute, "")
+	suite.NoError(err)
 }
 
 func (suite *AuditLogConfigEntityManagerTestSuite) TestNewAuditLogConfigEntityManager() {
@@ -98,7 +99,8 @@ func (suite *AuditLogConfigEntityManagerTestSuite) TestGetByGuildIDWithCache() {
 		GuildID: testGuildId,
 	}
 
-	cache.Update(testCacheKey, *testAuditLogConfig)
+	err := cache.Update(testCacheKey, *testAuditLogConfig)
+	suite.NoError(err)
 
 	// Do not expect call of GetFirstEntity or DB calls
 	// When GetFirstEntity is called, test will fail as call is unexpected

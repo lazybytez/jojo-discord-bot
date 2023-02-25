@@ -29,5 +29,9 @@ const cacheLifetime = 10 * time.Minute
 
 // initCache initializes the cache service
 func initCache() {
-	cache.Init(Config.cacheMode, cacheLifetime, Config.cacheDsn)
+	err := cache.Init(Config.cacheMode, cacheLifetime, Config.cacheDsn)
+
+	if nil != err {
+		ExitFatal(err.Error())
+	}
 }

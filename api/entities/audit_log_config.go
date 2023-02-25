@@ -66,9 +66,9 @@ func (alcem *AuditLogConfigEntityManager) GetByGuildId(guildId uint) (*AuditLogC
 		return auditLogConfig, err
 	}
 
-	cache.Update(cacheKey, *auditLogConfig)
+	err = cache.Update(cacheKey, *auditLogConfig)
 
-	return auditLogConfig, nil
+	return auditLogConfig, err
 }
 
 // Create saves the passed AuditLogConfig in the database.

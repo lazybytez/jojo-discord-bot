@@ -150,7 +150,10 @@ func getCommandDTOs() []CommandDTO {
 	commands := C.SlashCommandManager().GetCommands()
 	commandDTOs := CommandDTOsFromCommands(commands)
 
-	cache.Update(CommandDTOsWebApiCacheKey, commandDTOs)
+	err := cache.Update(CommandDTOsWebApiCacheKey, commandDTOs)
+	if nil != err {
+		C.Logger().Warn(fmt.Sprintf("Failed to cache aggregated CommandDTOs: %s", err.Error()))
+	}
 
 	return commandDTOs
 }

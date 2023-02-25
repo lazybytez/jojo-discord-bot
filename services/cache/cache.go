@@ -20,6 +20,7 @@ package cache
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/services/cache/memory"
+	"github.com/lazybytez/jojo-discord-bot/services/cache/redis"
 	"reflect"
 	"time"
 )
@@ -41,7 +42,7 @@ type Dsn string
 // Provider specifies the interface that different cache implementations must provide.
 type Provider interface {
 	Get(key string, t interface{}) (interface{}, bool)
-	Update(key string, t reflect.Type, value interface{})
+	Update(key string, t reflect.Type, value interface{}) error
 	Invalidate(key string, t reflect.Type) bool
 }
 
@@ -51,19 +52,25 @@ var cache Provider
 
 // Init initializes the caching system.
 // The cache implementation used is chosen by the supplied Mode.
-func Init(mode Mode, lifetime time.Duration, _ Dsn) {
+// The function might return an error if a configuration issue occurred.
+func Init(mode Mode, lifetime time.Duration, dsn Dsn) error {
 	switch mode {
 	case ModeMemory:
 		inMemoryCache := memory.New(lifetime)
 		inMemoryCache.UseGarbageCollector()
 		cache = inMemoryCache
 	case ModeRedis:
-		panic("Cache mode redis is not implemented yet!")
+		var err error
+		cache, err = redis.New(string(dsn), lifetime)
+
+		return err
 	default:
 		inMemoryCache := memory.New(lifetime)
 		inMemoryCache.UseGarbageCollector()
 		cache = inMemoryCache
 	}
+
+	return nil
 }
 
 // Get returns a value from the cache.
@@ -71,6 +78,11 @@ func Init(mode Mode, lifetime time.Duration, _ Dsn) {
 // the function will return the passed parameter t.
 func Get[T any](key string, t T) (T, bool) {
 	result, ok := cache.Get(key, t)
+
+	resultValue := reflect.ValueOf(result)
+	if resultValue.Kind() == reflect.Pointer {
+		result = resultValue.Elem().Interface()
+	}
 
 	switch v := result.(type) {
 	case T:
@@ -81,8 +93,8 @@ func Get[T any](key string, t T) (T, bool) {
 }
 
 // Update adds or updates the given value to the cache with the given key.
-func Update[T any](key string, value T) {
-	cache.Update(key, reflect.TypeOf(value), value)
+func Update[T any](key string, value T) error {
+	return cache.Update(key, reflect.TypeOf(value), value)
 }
 
 // Invalidate the cache item with the given key and type.

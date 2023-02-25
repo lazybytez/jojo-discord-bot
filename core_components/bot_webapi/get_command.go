@@ -86,7 +86,13 @@ func CommandGet(g *gin.Context) {
 			return
 		}
 
-		cache.Update(cacheKey, cmdDTO)
+		err := cache.Update(cacheKey, cmdDTO)
+		if nil != err {
+			C.Logger().Warn(fmt.Sprintf(
+				"Failed to cache web api response for CommandGet endpoint for command \"%s\": %s",
+				cmdID,
+				err.Error()))
+		}
 	}
 
 	g.JSON(http.StatusOK, cmdDTO)

@@ -69,7 +69,7 @@ func (gem *GlobalComponentStatusEntityManager) Get(registeredComponentStatusId u
 	}
 
 	// Invalidate cache item (if present)
-	cache.Update(gem.getCacheKey(registeredComponentStatusId), *globalCompStatus)
+	err = cache.Update(gem.getCacheKey(registeredComponentStatusId), *globalCompStatus)
 
 	return globalCompStatus, err
 }

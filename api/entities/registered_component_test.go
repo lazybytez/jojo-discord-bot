@@ -51,7 +51,8 @@ func (suite *RegisteredComponentEntityManagerTestSuite) SetupTest() {
 		[]ComponentCode{},
 	}
 
-	cache.Init(cache.ModeMemory, 10*time.Minute, "")
+	err := cache.Init(cache.ModeMemory, 10*time.Minute, "")
+	suite.NoError(err)
 }
 
 func (suite *RegisteredComponentEntityManagerTestSuite) TestNewRegisteredComponentEntityManager() {
@@ -99,7 +100,8 @@ func (suite *RegisteredComponentEntityManagerTestSuite) TestGetWithCache() {
 		Code: testCode,
 	}
 
-	cache.Update(testCacheKey, *testRegisteredComponent)
+	err := cache.Update(testCacheKey, *testRegisteredComponent)
+	suite.NoError(err)
 
 	// Do not expect call of GetFirstEntity or DB calls
 	// When GetFirstEntity is called, test will fail as call is unexpected
