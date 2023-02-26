@@ -25,6 +25,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"net/url"
 	"reflect"
+	"sync"
 	"time"
 )
 
@@ -32,6 +33,7 @@ import (
 // cache entries in Redis. It uses a basic go-redis redis.Client to
 // communicate with Redis.
 type GoRedisCacheProvider struct {
+	mu       sync.RWMutex
 	cacheDsn string
 	lifetime time.Duration
 	context  context.Context
@@ -54,6 +56,7 @@ func New(cacheDsn string, lifetime time.Duration) (*GoRedisCacheProvider, error)
 	}
 
 	cacheProvider := &GoRedisCacheProvider{
+		mu:       sync.RWMutex{},
 		cacheDsn: cacheDsn,
 		lifetime: lifetime,
 		client: redis.NewClient(&redis.Options{
@@ -64,7 +67,7 @@ func New(cacheDsn string, lifetime time.Duration) (*GoRedisCacheProvider, error)
 		context: context.Background(),
 	}
 
-	err = cacheProvider.client.Ping(cacheProvider.context).Err()
+	err = cacheProvider.getClient().Ping(cacheProvider.context).Err()
 	if nil != err {
 		return nil, err
 	}
@@ -78,7 +81,7 @@ func New(cacheDsn string, lifetime time.Duration) (*GoRedisCacheProvider, error)
 //  1. for the given type and key an item can be found.
 //  2. the found items lifetime is not exceeded
 func (cache *GoRedisCacheProvider) Get(key string, t interface{}) (interface{}, bool) {
-	result, err := cache.client.Get(cache.context, computeCacheKey(key, t)).Result()
+	result, err := cache.getClient().Get(cache.getContext(), computeCacheKey(key, t)).Result()
 
 	if err != nil {
 		return nil, false
@@ -108,7 +111,7 @@ func (cache *GoRedisCacheProvider) Update(key string, t reflect.Type, value inte
 		return err
 	}
 
-	result := cache.client.Set(cache.context, computeCacheKey(key, t), string(object), cache.lifetime)
+	result := cache.getClient().Set(cache.getContext(), computeCacheKey(key, t), string(object), cache.lifetime)
 
 	return result.Err()
 }
@@ -116,13 +119,9 @@ func (cache *GoRedisCacheProvider) Update(key string, t reflect.Type, value inte
 // Invalidate manually invalidates the cache item behind
 // the supplied key, if there is a cache item.
 func (cache *GoRedisCacheProvider) Invalidate(key string, t reflect.Type) bool {
-	result := cache.client.Del(cache.context, computeCacheKey(key, t))
+	result := cache.getClient().Del(cache.getContext(), computeCacheKey(key, t))
 
-	if result.Val() < 1 {
-		return false
-	}
-
-	return true
+	return result.Val() >= 1
 }
 
 // computeCacheKey creates a cache key from the passed key and value (t) that has been passed.
@@ -140,4 +139,20 @@ func computeCacheKey(key string, t interface{}) string {
 // The format is "PackagePath_TypeName_Key".
 func computeCacheKeyFromKeyAndType(key string, t reflect.Type) string {
 	return fmt.Sprintf("%s_%s_%s", t.PkgPath(), t.Name(), key)
+}
+
+// getClient provides synchronized access to the client of a GoRedisCacheProvider.
+func (cache *GoRedisCacheProvider) getClient() *redis.Client {
+	cache.mu.RLock()
+	defer cache.mu.RUnlock()
+
+	return cache.client
+}
+
+// getContext provides synchronized access to the context of a GoRedisCacheProvider.
+func (cache *GoRedisCacheProvider) getContext() context.Context {
+	cache.mu.RLock()
+	defer cache.mu.RUnlock()
+
+	return cache.context
 }

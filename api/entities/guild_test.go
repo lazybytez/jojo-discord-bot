@@ -50,7 +50,8 @@ func (suite *GuildEntityManagerTestSuite) SetupTest() {
 		&suite.em,
 	}
 
-	cache.Init(cache.ModeMemory, 10*time.Minute, "")
+	err := cache.Init(cache.ModeMemory, 10*time.Minute, "")
+	suite.NoError(err)
 }
 
 func (suite *GuildEntityManagerTestSuite) TestNewGuildEntityManager() {
