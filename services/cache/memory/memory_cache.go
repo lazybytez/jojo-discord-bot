@@ -129,9 +129,9 @@ func (provider *InMemoryCacheProvider) UseGarbageCollector() bool {
 // A valid cache entry is present when:
 //  1. for the given type and key an item can be found.
 //  2. the found items lifetime is not exceeded
-func (provider *InMemoryCacheProvider) Get(key string, t interface{}) (interface{}, bool) {
+func (provider *InMemoryCacheProvider) Get(key string, t reflect.Type) (interface{}, bool) {
 	provider.mu.RLock()
-	typedCache, ok := provider.cachePool[reflect.TypeOf(t)]
+	typedCache, ok := provider.cachePool[t]
 	lifetime := provider.lifetime
 	provider.mu.RUnlock()
 

@@ -41,7 +41,7 @@ type Dsn string
 
 // Provider specifies the interface that different cache implementations must provide.
 type Provider interface {
-	Get(key string, t interface{}) (interface{}, bool)
+	Get(key string, t reflect.Type) (interface{}, bool)
 	Update(key string, t reflect.Type, value interface{}) error
 	Invalidate(key string, t reflect.Type) bool
 }
@@ -77,14 +77,11 @@ func Init(mode Mode, lifetime time.Duration, dsn Dsn) error {
 // When there is no valid cache item available,
 // the function will return the passed parameter t.
 func Get[T any](key string, t T) (T, bool) {
-	result, ok := cache.Get(key, t)
-
-	resultValue := reflect.ValueOf(result)
-	if resultValue.Kind() == reflect.Pointer {
-		result = resultValue.Elem().Interface()
-	}
+	result, ok := cache.Get(key, reflect.TypeOf(t))
 
 	switch v := result.(type) {
+	case *T:
+		return *v, ok
 	case T:
 		return v, ok
 	default:
