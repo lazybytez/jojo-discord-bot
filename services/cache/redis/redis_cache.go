@@ -86,7 +86,7 @@ func New(cacheDsn string, lifetime time.Duration) (*GoRedisCacheProvider, error)
 //  1. for the given type and key an item can be found.
 //  2. the found items defaultLifetime is not exceeded
 func (grc *GoRedisCacheProvider) Get(key string, t reflect.Type) (interface{}, bool) {
-	prototype := reflect.New(t).Interface()
+	prototype := reflect.Indirect(reflect.New(t)).Interface()
 
 	err := grc.cache.Get(context.TODO(), computeCacheKeyFromKeyAndType(key, t), &prototype)
 

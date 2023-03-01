@@ -80,8 +80,6 @@ func Get[T any](key string, t T) (T, bool) {
 	result, ok := cache.Get(key, reflect.TypeOf(t))
 
 	switch v := result.(type) {
-	case *T:
-		return *v, ok
 	case T:
 		return v, ok
 	default:
