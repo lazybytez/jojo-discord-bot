@@ -19,6 +19,7 @@
 package cache
 
 import (
+	"fmt"
 	"github.com/lazybytez/jojo-discord-bot/services/cache/memory"
 	"github.com/lazybytez/jojo-discord-bot/services/cache/redis"
 	"reflect"
@@ -77,6 +78,8 @@ func Init(mode Mode, lifetime time.Duration, dsn Dsn) error {
 // When there is no valid cache item available,
 // the function will return the passed parameter t.
 func Get[T any](key string, t T) (T, bool) {
+	validatePointersAreNotAllowed(t)
+
 	result, ok := cache.Get(key, reflect.TypeOf(t))
 
 	switch v := result.(type) {
@@ -89,11 +92,27 @@ func Get[T any](key string, t T) (T, bool) {
 
 // Update adds or updates the given value to the cache with the given key.
 func Update[T any](key string, value T) error {
+	validatePointersAreNotAllowed(value)
+
 	return cache.Update(key, reflect.TypeOf(value), value)
 }
 
 // Invalidate the cache item with the given key and type.
 // The function returns whether an item has been invalidated or not.
 func Invalidate[T any](key string, t T) bool {
+	validatePointersAreNotAllowed(t)
+
 	return cache.Invalidate(key, reflect.TypeOf(t))
+}
+
+// validatePointersAreNotAllowed panics if t is a pointer.
+// The cache is not designed to deal with pointers, therefore it is
+// not allowed to pass some. Passing a pointer is considered a fatal error
+// that should be fixed in code!
+func validatePointersAreNotAllowed[T any](t T) {
+	if reflect.ValueOf(t).Kind() == reflect.Pointer {
+		panic(fmt.Sprintf(
+			"It is not allowed to pass a pointer as type for cache.Get! Got: %s",
+			reflect.TypeOf(t).Name()))
+	}
 }
