@@ -20,6 +20,7 @@ package redis
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/go-redis/cache/v8"
 	"github.com/go-redis/redis/v8"
@@ -69,6 +70,12 @@ func New(cacheDsn string, lifetime time.Duration) (*GoRedisCacheProvider, error)
 		cache: cache.New(&cache.Options{
 			Redis:      client,
 			LocalCache: cache.NewTinyLFU(localCacheCount, localCacheTtl),
+			// Unfortunately MessagePack has a bug when decoding zero time values
+			// nested in an interface.
+			// Issue: https://github.com/vmihailenco/msgpack/issues/332
+			// For now, we use JSON as a workaround.
+			Marshal:   json.Marshal,
+			Unmarshal: json.Unmarshal,
 		}),
 	}
 
@@ -86,13 +93,15 @@ func New(cacheDsn string, lifetime time.Duration) (*GoRedisCacheProvider, error)
 //  1. for the given type and key an item can be found.
 //  2. the found items defaultLifetime is not exceeded
 func (grc *GoRedisCacheProvider) Get(key string, t reflect.Type) (interface{}, bool) {
-	prototype := reflect.Indirect(reflect.New(t)).Interface()
+	prototype := reflect.New(t).Interface()
 
-	err := grc.cache.Get(context.TODO(), computeCacheKeyFromKeyAndType(key, t), &prototype)
+	err := grc.cache.Get(context.TODO(), computeCacheKeyFromKeyAndType(key, t), prototype)
 
 	if err != nil {
 		return nil, false
 	}
+
+	prototype = reflect.Indirect(reflect.ValueOf(prototype).Elem()).Interface()
 
 	return prototype, true
 }
