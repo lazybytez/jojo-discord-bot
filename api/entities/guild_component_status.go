@@ -71,9 +71,9 @@ func (gcsem *GuildComponentStatusEntityManager) Get(guildId uint, componentId ui
 		return guildCompStatus, err
 	}
 
-	err = cache.Update(cacheKey, *guildCompStatus)
+	_ = cache.Update(cacheKey, *guildCompStatus)
 
-	return guildCompStatus, err
+	return guildCompStatus, nil
 }
 
 // GetDisplay returns the status of a component in a form

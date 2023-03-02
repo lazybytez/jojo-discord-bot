@@ -18,7 +18,6 @@
 
 package entities
 
-import "C"
 import (
 	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"gorm.io/gorm"
@@ -81,9 +80,9 @@ func (rgem *RegisteredComponentEntityManager) Get(registeredComponentCode Compon
 		return regComp, err
 	}
 
-	err = cache.Update(cacheKey, *regComp)
+	_ = cache.Update(cacheKey, *regComp)
 
-	return regComp, err
+	return regComp, nil
 }
 
 // GetAvailable returns all components that have been registered

@@ -40,14 +40,16 @@ const (
 // cache entries in Redis. It uses a basic go-redis redis.Client to
 // communicate with Redis.
 type GoRedisCacheProvider struct {
+	// defaultLifetime is the lifetime set by default for
+	// cache entries stored in Redis.
 	defaultLifetime time.Duration
-	cache           *cache.Cache
+	// cache is the cache.Cache instance used to store and retrieve values.
+	cache *cache.Cache
 }
 
 // New creates a new cache with the specified defaultLifetime (in seconds) and given redis DSN.
 func New(cacheDsn string, lifetime time.Duration) (*GoRedisCacheProvider, error) {
 	cacheUrl, err := url.Parse(cacheDsn)
-
 	if nil != err {
 		return nil, err
 	}

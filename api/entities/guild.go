@@ -73,9 +73,9 @@ func (gem *GuildEntityManager) Get(guildId string) (*Guild, error) {
 		return &Guild{}, err
 	}
 
-	err = cache.Update(gem.getCacheKeyFromStringGuildId(guildId), *guild)
+	_ = cache.Update(gem.getCacheKeyFromStringGuildId(guildId), *guild)
 
-	return guild, err
+	return guild, nil
 }
 
 // Count returns the number of all guilds stored in the entities
