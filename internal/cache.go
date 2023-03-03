@@ -19,6 +19,7 @@
 package internal
 
 import (
+	"fmt"
 	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"time"
 )
@@ -32,6 +33,6 @@ func initCache() {
 	err := cache.Init(Config.cacheMode, cacheLifetime, Config.cacheDsn)
 
 	if nil != err {
-		ExitFatal(err.Error())
+		ExitFatal(fmt.Sprintf("Failed to initialize cache: %s", err.Error()))
 	}
 }

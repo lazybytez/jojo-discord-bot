@@ -45,27 +45,17 @@ type GoRedisCacheProvider struct {
 	defaultLifetime time.Duration
 	// cache is the cache.Cache instance used to store and retrieve values.
 	cache *cache.Cache
+	// client is the Redis client that is used.
+	// The client used by cache and client should be always the same.
+	client redis.UniversalClient
 }
 
 // New creates a new cache with the specified defaultLifetime (in seconds) and given redis DSN.
 func New(cacheDsn string, lifetime time.Duration) (*GoRedisCacheProvider, error) {
-	cacheUrl, err := url.Parse(cacheDsn)
-	if nil != err {
+	client, err := createClientFromDsn(cacheDsn)
+	if err != nil {
 		return nil, err
 	}
-
-	user := cacheUrl.User.Username()
-	password, hasPassword := cacheUrl.User.Password()
-	if !hasPassword {
-		user = ""
-		password = cacheUrl.User.Username()
-	}
-
-	client := redis.NewClient(&redis.Options{
-		Username: user,
-		Password: password,
-		Addr:     cacheUrl.Host,
-	})
 
 	cacheProvider := &GoRedisCacheProvider{
 		defaultLifetime: lifetime,
@@ -79,14 +69,52 @@ func New(cacheDsn string, lifetime time.Duration) (*GoRedisCacheProvider, error)
 			Marshal:   json.Marshal,
 			Unmarshal: json.Unmarshal,
 		}),
+		client: client,
 	}
 
-	err = client.Ping(context.TODO()).Err()
+	return cacheProvider, nil
+}
+
+// createClientFromDsn creates a new Redis client instance using the passed
+// DSN. The function supports a DSN made out of a URL with a hostname or ip, a port
+// and a username and password. If only one of username/password is provided, the value is used as
+// the password.
+func createClientFromDsn(cacheDsn string) (*redis.Client, error) {
+	cacheUrl, err := url.Parse(cacheDsn)
 	if nil != err {
 		return nil, err
 	}
 
-	return cacheProvider, nil
+	user, password := extractCredentialsFromDsnUrl(cacheUrl)
+
+	client := redis.NewClient(&redis.Options{
+		Username: user,
+		Password: password,
+		Addr:     cacheUrl.Host,
+	})
+
+	return client, nil
+}
+
+// extractCredentialsFromDsnUrl extracts the username (if set) and password from the passed
+// URL instance.
+// The function will use the username as password, when only one of username and password has
+// been specified.
+func extractCredentialsFromDsnUrl(cacheUrl *url.URL) (string, string) {
+	user := cacheUrl.User.Username()
+	password, hasPassword := cacheUrl.User.Password()
+	if !hasPassword {
+		user = ""
+		password = cacheUrl.User.Username()
+	}
+
+	return user, password
+}
+
+// CheckRedisReachable checks if the configured Redis instance is reachable
+// by sending a ping command.
+func (grc *GoRedisCacheProvider) CheckRedisReachable() error {
+	return grc.client.Ping(context.TODO()).Err()
 }
 
 // Get an Item from the cache, if there is a valid one.

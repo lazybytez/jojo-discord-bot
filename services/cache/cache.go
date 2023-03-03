@@ -61,10 +61,13 @@ func Init(mode Mode, lifetime time.Duration, dsn Dsn) error {
 		inMemoryCache.UseGarbageCollector()
 		cache = inMemoryCache
 	case ModeRedis:
-		var err error
-		cache, err = redis.New(string(dsn), lifetime)
+		redisCache, err := redis.New(string(dsn), lifetime)
+		if nil != err {
+			return err
+		}
+		cache = redisCache
 
-		return err
+		return redisCache.CheckRedisReachable()
 	default:
 		inMemoryCache := memory.New(lifetime)
 		inMemoryCache.UseGarbageCollector()
