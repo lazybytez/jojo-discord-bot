@@ -45,6 +45,7 @@ type Provider interface {
 	Get(key string, t reflect.Type) (interface{}, bool)
 	Update(key string, t reflect.Type, value interface{}) error
 	Invalidate(key string, t reflect.Type) bool
+	Shutdown()
 }
 
 // cache is the currently active Provider that manages the underlying
@@ -106,6 +107,12 @@ func Invalidate[T any](key string, t T) bool {
 	validatePointersAreNotAllowed(t)
 
 	return cache.Invalidate(key, reflect.TypeOf(t))
+}
+
+// Deinit stops the cache and ensures that all open connections
+// to external services are closed before the application exits.
+func Deinit() {
+	cache.Shutdown()
 }
 
 // validatePointersAreNotAllowed panics if t is a pointer.

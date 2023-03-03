@@ -223,3 +223,6 @@ func (provider *InMemoryCacheProvider) Invalidate(key string, t reflect.Type) bo
 
 	return true
 }
+
+// Shutdown on in-memory cache does nothing, as no external services are used.
+func (provider *InMemoryCacheProvider) Shutdown() {}

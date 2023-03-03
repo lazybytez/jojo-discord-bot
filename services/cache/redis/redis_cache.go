@@ -152,6 +152,11 @@ func (grc *GoRedisCacheProvider) Invalidate(key string, t reflect.Type) bool {
 	return grc.cache.Delete(context.TODO(), computeCacheKeyFromKeyAndType(key, t)) == nil
 }
 
+// Shutdown closes the Redis client attached to the cache instance.
+func (grc *GoRedisCacheProvider) Shutdown() {
+	_ = grc.client.Close()
+}
+
 // computeCacheKeyFromKeyAndType creates a new cache key from a key and a type.
 // The format is "PackagePath_TypeName_Key".
 func computeCacheKeyFromKeyAndType(key string, t reflect.Type) string {
