@@ -1,6 +1,6 @@
 /*
  * JOJO Discord Bot - An advanced multi-purpose discord bot
- * Copyright (C) 2022 Lazy Bytez (Elias Knodel, Pascal Zarrad)
+ * Copyright (C) 2023 Lazy Bytez (Elias Knodel, Pascal Zarrad)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -16,11 +16,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package components
+package meme
 
 import (
-	_ "github.com/lazybytez/jojo-discord-bot/components/dice"
-	_ "github.com/lazybytez/jojo-discord-bot/components/meme"
-	_ "github.com/lazybytez/jojo-discord-bot/components/pingpong"
-	_ "github.com/lazybytez/jojo-discord-bot/components/statistics"
+	"github.com/bwmarrin/discordgo"
+	"github.com/lazybytez/jojo-discord-bot/api"
 )
+
+// C is the instance of the meme component
+var C = api.Component{
+	// Metadata
+	Code:        "meme",
+	Name:        "Meme",
+	Description: "This module allows to post some memes from different sources.",
+
+	State: &api.State{
+		DefaultEnabled: true,
+	},
+}
+
+// init initializes the component with its metadata
+func init() {
+	api.RegisterComponent(&C, LoadComponent)
+}
+
+// LoadComponent loads the Meme Component
+func LoadComponent(_ *discordgo.Session) error {
+	_ = C.SlashCommandManager().Register(memeCommand)
+
+	return nil
+}
