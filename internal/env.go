@@ -35,6 +35,7 @@ const (
 	sqlUrl         = "DATABASE_URL"
 	cacheMode      = "CACHE_MODE"
 	cacheDsn       = "CACHE_DSN"
+	redisUrl       = "REDIS_URL"
 	webApiMode     = "WEBAPI_MODE"
 	webApiBind     = "WEBAPI_BIND"
 	webApiHost     = "WEBAPI_HOST"
@@ -115,7 +116,7 @@ func initEnv() {
 		sqlMode:        getEnvOrFail(sqlMode),
 		sqlUrl:         getEnvOrDefault(sqlUrl, ""),
 		cacheMode:      cache.Mode(getEnvOrFail(cacheMode)),
-		cacheDsn:       cache.Dsn(getEnvOrDefault(cacheDsn, "")),
+		cacheDsn:       findCacheDsn(),
 		webApiMode:     getEnvOrDefault(webApiMode, DefaultWebApiMode),
 		webApiBind:     getEnvOrDefault(webApiBind, DefaultWebApiBind),
 		webApiHost:     getEnvOrDefault(webApiHost, DefaultWebApiHost),
@@ -123,4 +124,17 @@ func initEnv() {
 		webApiSchemes:  getEnvOrDefault(webApiSchemes, DefaultWebApiSchemes),
 	}
 	coreLogger.Info("Successfully loaded environment configuration!")
+}
+
+// findCacheDsn  returns the configured cache DSN for the application.
+// The function allows the use of aliases as REDIS_URL for the CACHE_DSN variable.
+// The function will return on the first found valid alias.
+// When no alias is set, the CACHE_DSN variable will be used by default.
+func findCacheDsn() cache.Dsn {
+	redisUrl := getEnvOrDefault(redisUrl, "")
+	if "" != redisUrl {
+		return cache.Dsn(redisUrl)
+	}
+
+	return cache.Dsn(getEnvOrDefault(cacheDsn, ""))
 }

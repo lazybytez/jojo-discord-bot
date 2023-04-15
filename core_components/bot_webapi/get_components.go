@@ -23,10 +23,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lazybytez/jojo-discord-bot/api"
 	"github.com/lazybytez/jojo-discord-bot/api/entities"
+	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"github.com/lazybytez/jojo-discord-bot/webapi"
 	"net/http"
 	"time"
 )
+
+// ComponentDTOsResponseWebApiCacheKey is the cache key used to store and retrieve all components
+// as ComponentDTO instances from the cache.
+const ComponentDTOsResponseWebApiCacheKey = "bot_web_api_components_get_cache"
 
 // ComponentDTO is an intermediate data transfer object
 // that can be output or received by the WebAPI.
@@ -97,6 +102,13 @@ func ComponentDTOFromComponent(c *api.Component, guildId string) (ComponentDTO, 
 // @Failure		500 {object} webapi.ErrorResponse "An error indicating that an internal error happened"
 // @Router      /components [get]
 func ComponentsGet(g *gin.Context) {
+	cachedResponse, ok := cache.Get(ComponentDTOsResponseWebApiCacheKey, []ComponentDTO{})
+	if ok {
+		g.JSON(http.StatusOK, cachedResponse)
+
+		return
+	}
+
 	componentDTOs := make([]ComponentDTO, len(api.Components))
 	var err error
 
@@ -114,6 +126,11 @@ func ComponentsGet(g *gin.Context) {
 				Timestamp: time.Now(),
 			})
 		}
+	}
+
+	err = cache.Update(ComponentDTOsResponseWebApiCacheKey, componentDTOs)
+	if nil != err {
+		C.Logger().Err(err, "Failed to cache ComponentDTOs for GET components web api endpoint!")
 	}
 
 	g.JSON(http.StatusOK, componentDTOs)

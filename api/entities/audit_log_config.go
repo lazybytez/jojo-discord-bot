@@ -66,7 +66,7 @@ func (alcem *AuditLogConfigEntityManager) GetByGuildId(guildId uint) (*AuditLogC
 		return auditLogConfig, err
 	}
 
-	cache.Update(cacheKey, *auditLogConfig)
+	_ = cache.Update(cacheKey, *auditLogConfig)
 
 	return auditLogConfig, nil
 }

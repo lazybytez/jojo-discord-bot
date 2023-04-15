@@ -20,6 +20,7 @@ package internal
 
 import (
 	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/services/cache"
 	"github.com/rs/zerolog/log"
 	"os"
 )
@@ -66,5 +67,6 @@ func releaseResources() {
 	UnloadComponents(discord)
 	api.DeinitCommandHandling()
 	shutdownApiWebserver()
+	cache.Deinit()
 	stopBot()
 }

@@ -50,7 +50,8 @@ func (suite *GuildEntityManagerTestSuite) SetupTest() {
 		&suite.em,
 	}
 
-	cache.Init(cache.ModeMemory, 10*time.Minute, "")
+	err := cache.Init(cache.ModeMemory, 10*time.Minute, "")
+	suite.NoError(err)
 }
 
 func (suite *GuildEntityManagerTestSuite) TestNewGuildEntityManager() {
@@ -99,7 +100,8 @@ func (suite *GuildEntityManagerTestSuite) TestGetWithCache() {
 		GuildID: testId,
 	}
 
-	cache.Update(testCacheKey, *testGuild)
+	err := cache.Update(testCacheKey, *testGuild)
+	suite.NoError(err)
 
 	// Do not expect call of GetFirstEntity or DB calls
 	// When GetFirstEntity is called, test will fail as call is unexpected

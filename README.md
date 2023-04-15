@@ -78,6 +78,25 @@ Local linting to assure code styling.
 make lint
 ```
 
+### Database services
+To use the local PostgreSQL and Redis it is necesary to have `Docker` and `docker-compose`
+installed locally.
+
+Start local database and redis:
+```bash
+make services/start
+```
+
+Stop local database and redis:
+```bash
+make services/stop
+```
+
+Destroy local database and redis:
+```bash
+make services/start
+```
+
 ## Contributing
 
 If you want to take part in contribution, like fixing issues and contributing directly to the code base, please visit

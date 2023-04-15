@@ -129,9 +129,9 @@ func (provider *InMemoryCacheProvider) UseGarbageCollector() bool {
 // A valid cache entry is present when:
 //  1. for the given type and key an item can be found.
 //  2. the found items lifetime is not exceeded
-func (provider *InMemoryCacheProvider) Get(key string, t interface{}) (interface{}, bool) {
+func (provider *InMemoryCacheProvider) Get(key string, t reflect.Type) (interface{}, bool) {
 	provider.mu.RLock()
-	typedCache, ok := provider.cachePool[reflect.TypeOf(t)]
+	typedCache, ok := provider.cachePool[t]
 	lifetime := provider.lifetime
 	provider.mu.RUnlock()
 
@@ -163,7 +163,7 @@ func (provider *InMemoryCacheProvider) Get(key string, t interface{}) (interface
 }
 
 // Update adds and item to the cache or updates it.
-func (provider *InMemoryCacheProvider) Update(key string, t reflect.Type, value interface{}) {
+func (provider *InMemoryCacheProvider) Update(key string, t reflect.Type, value interface{}) error {
 	provider.mu.RLock()
 	typedCache, ok := provider.cachePool[t]
 	provider.mu.RUnlock()
@@ -195,6 +195,8 @@ func (provider *InMemoryCacheProvider) Update(key string, t reflect.Type, value 
 
 	item.value = value
 	item.since = time.Now()
+
+	return nil
 }
 
 // Invalidate manually invalidates the cache item behind
@@ -221,3 +223,6 @@ func (provider *InMemoryCacheProvider) Invalidate(key string, t reflect.Type) bo
 
 	return true
 }
+
+// Shutdown on in-memory cache does nothing, as no external services are used.
+func (provider *InMemoryCacheProvider) Shutdown() {}

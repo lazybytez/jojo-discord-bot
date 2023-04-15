@@ -69,9 +69,9 @@ func (gem *GlobalComponentStatusEntityManager) Get(registeredComponentStatusId u
 	}
 
 	// Invalidate cache item (if present)
-	cache.Update(gem.getCacheKey(registeredComponentStatusId), *globalCompStatus)
+	_ = cache.Update(gem.getCacheKey(registeredComponentStatusId), *globalCompStatus)
 
-	return globalCompStatus, err
+	return globalCompStatus, nil
 }
 
 // GetDisplayString returns the string that indicates whether a component is

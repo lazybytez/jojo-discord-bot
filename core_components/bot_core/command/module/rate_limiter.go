@@ -61,7 +61,12 @@ func increaseRateLimitCount(guild *entities.Guild) bool {
 	}
 
 	toggleCount += 1
-	cache.Update(cacheKey, toggleCount)
+	err := cache.Update(cacheKey, toggleCount)
+	if nil != err {
+		C.Logger().Err(err, fmt.Sprintf(
+			"Failed to store incremented module toggle rate limit count in cache for guild %d",
+			guild.GuildID))
+	}
 
 	return true
 }

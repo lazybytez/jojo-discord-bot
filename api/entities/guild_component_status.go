@@ -71,7 +71,7 @@ func (gcsem *GuildComponentStatusEntityManager) Get(guildId uint, componentId ui
 		return guildCompStatus, err
 	}
 
-	cache.Update(cacheKey, *guildCompStatus)
+	_ = cache.Update(cacheKey, *guildCompStatus)
 
 	return guildCompStatus, nil
 }
