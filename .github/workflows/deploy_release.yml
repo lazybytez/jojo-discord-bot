@@ -4,8 +4,7 @@ name: Deploy Release
 
 on:
   push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+    tags: []
 
 jobs:
   release:
@@ -63,13 +62,14 @@ jobs:
             build_commit_sha=${{ steps.commit_sha.outputs.short }}
 
       # Handle prod deployment
-      - name: Mask hidden URLs
-        run: |
-          echo "::add-mask::${{ secrets.SSH_URL }}" 
-      - name: Do deployment
-        uses: dokku/github-action@master
-        with:
-          git_remote_url: ${{ secrets.DEPLOYMENT_HOST }}
-          ssh_private_key: ${{ secrets.DEPLOYMENT_KEY }}
-          ssh_host_key: ${{ secrets.DEPLOYMENT_HOST_KEY }}
-          deploy_docker_image: "ghcr.io/lazybytez/jojo-discord-bot@${{ steps.build_push.outputs.digest }}"
+      # Currently disdabled
+      # - name: Mask hidden URLs
+      #   run: |
+      #     echo "::add-mask::${{ secrets.SSH_URL }}" 
+      # - name: Do deployment
+      #   uses: dokku/github-action@master
+      #   with:
+      #     git_remote_url: ${{ secrets.DEPLOYMENT_HOST }}
+      #     ssh_private_key: ${{ secrets.DEPLOYMENT_KEY }}
+      #     ssh_host_key: ${{ secrets.DEPLOYMENT_HOST_KEY }}
+      #     deploy_docker_image: "ghcr.io/lazybytez/jojo-discord-bot@${{ steps.build_push.outputs.digest }}"
