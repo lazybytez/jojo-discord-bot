@@ -4,7 +4,8 @@ name: Deploy Edge
 
 on:
   push:
-    branches: []
+    branches:
+      - 'main'
 
 jobs:
   edge:
