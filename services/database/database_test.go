@@ -20,6 +20,8 @@ package database
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/lazybytez/jojo-discord-bot/services"
 	"github.com/lazybytez/jojo-discord-bot/test/logmock"
@@ -28,7 +30,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"testing"
 )
 
 type DatabaseTestSuite struct {
@@ -130,8 +131,8 @@ func (suite *DatabaseTestSuite) TestGetFirstEntityWithSuccess() {
 		Name: "test entity",
 	}
 
-	suite.sqlMock.ExpectQuery("SELECT (.+) FROM \"test_entities\" (.+) LIMIT 1").
-		WithArgs(42).
+	suite.sqlMock.ExpectQuery("SELECT (.+) FROM \"test_entities\" (.+) LIMIT \\D+").
+		WithArgs(42, 1).
 		WillReturnRows(
 			sqlmock.NewRows([]string{"id", "name"}).
 				AddRow(expectedResult.ID, expectedResult.Name))
@@ -156,8 +157,8 @@ func (suite *DatabaseTestSuite) TestGetFirstEntityWithFailure() {
 	expectedErr := fmt.Errorf("no records found")
 
 	suite.sqlMock.ExpectQuery(
-		"SELECT (.+) FROM \"test_entities\" (.+) LIMIT 1",
-	).WithArgs(42).WillReturnError(expectedErr)
+		"SELECT (.+) FROM \"test_entities\" (.+) LIMIT \\D+",
+	).WithArgs(42, 1).WillReturnError(expectedErr)
 
 	resultEntity := &TestEntity{}
 
@@ -176,8 +177,8 @@ func (suite *DatabaseTestSuite) TestGetLastEntityWithSuccess() {
 		Name: "test entity",
 	}
 
-	suite.sqlMock.ExpectQuery("SELECT (.+) FROM \"test_entities\" (.+) LIMIT 1").
-		WithArgs(42).
+	suite.sqlMock.ExpectQuery("SELECT (.+) FROM \"test_entities\" (.+) LIMIT \\D+").
+		WithArgs(42, 1).
 		WillReturnRows(
 			sqlmock.NewRows([]string{"id", "name"}).
 				AddRow(expectedResult.ID, expectedResult.Name))
@@ -202,8 +203,8 @@ func (suite *DatabaseTestSuite) TestGetLastEntityWithFailure() {
 	expectedErr := fmt.Errorf("no records found")
 
 	suite.sqlMock.ExpectQuery(
-		"SELECT (.+) FROM \"test_entities\" (.+) LIMIT 1",
-	).WithArgs(42).WillReturnError(expectedErr)
+		"SELECT (.+) FROM \"test_entities\" (.+) LIMIT \\D+",
+	).WithArgs(42, 1).WillReturnError(expectedErr)
 
 	resultEntity := &TestEntity{}
 
