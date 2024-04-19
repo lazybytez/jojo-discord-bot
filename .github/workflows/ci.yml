@@ -26,9 +26,9 @@ jobs:
         run: make install
 
       - name: Run Go linters
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v4
         with:
-          version: v1.50.1
+          version: v1.57.2
           skip-cache: true
           
   tests:
