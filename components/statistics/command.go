@@ -21,14 +21,15 @@ package statistics
 import (
 	"bytes"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
-	"github.com/dustin/go-humanize"
-	"github.com/lazybytez/jojo-discord-bot/api"
-	"github.com/lazybytez/jojo-discord-bot/build"
 	"io"
 	"runtime"
 	"text/tabwriter"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
+	"github.com/dustin/go-humanize"
+	"github.com/lazybytez/jojo-discord-bot/api"
+	"github.com/lazybytez/jojo-discord-bot/build"
 )
 
 // statsCommand registers the alias /stats
@@ -90,7 +91,7 @@ func buildInfoEmbed(s *discordgo.Session) []*discordgo.MessageEmbed {
 				},
 				{
 					Name:  "Links",
-					Value: "[GitHub](https://github.com/lazybytez/jojo-discord-bot)",
+					Value: "[GitHub / Source](https://github.com/lazybytez/jojo-discord-bot)",
 				},
 			},
 		},
