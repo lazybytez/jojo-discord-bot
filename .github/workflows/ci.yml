@@ -15,7 +15,7 @@ jobs:
       IS_CI: true
     steps:
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: 1.22.2
 
@@ -37,7 +37,7 @@ jobs:
       IS_CI: true
     steps:
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: 1.22.2
 
