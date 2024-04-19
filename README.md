@@ -18,9 +18,6 @@ This is an open source Discord bot mainly developed by [Lazy Bytez][gh-team].
 If you want to take part in the development of the bot please check out
 the [Contributing](https://github.com/lazybytez/jojo-discord-bot#contributing) section.
 
-Open source doesn't mean everyone can do whatever they want with the bot so there is a
-strict [LICENSE](https://github.com/lazybytez/jojo-discord-bot/blob/main/LICENSE) we want you to respect.
-
 ## Getting started
 
 ### Requirements
