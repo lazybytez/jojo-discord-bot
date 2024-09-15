@@ -1,0 +1,22 @@
+{
+  "healthchecks": {
+    "web": [
+        {
+            "type":        "startup",
+            "name":        "check swagger",
+            "description": "Checking if the app responds to the /swagger endpoint",
+            "path":        "/swagger",
+            "content": "<!DOCTYPE html>",
+            "attempts": 3
+        },
+        {
+            "type":        "startup",
+            "name":        "check stats",
+            "description": "Checking if the app responds to the /v1/stats endpoint",
+            "path":        "/v1/stats/",
+            "content": "{",
+            "attempts": 3
+        }
+    ]
+  }
+}
