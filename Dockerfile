@@ -31,11 +31,9 @@ RUN mkdir -p /app
 WORKDIR /app
 COPY --from=0 /app/jojo-discord-bot jojo-discord-bot
 COPY ./scripts/entrypoint.sh /usr/bin/entrypoint.sh
+COPY ./app.json /app/app.json
 RUN chmod 755 jojo-discord-bot
 RUN chmod 755 /usr/bin/entrypoint.sh
-
-RUN echo "/v1/stats/	{" > CHECKS \
-	&& echo "/swagger	<!DOCTYPE html>" >> CHECKS
 
 VOLUME ["/app/data", "/app/log"]
 
